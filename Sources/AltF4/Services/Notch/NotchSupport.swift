@@ -738,8 +738,16 @@ struct NotchGeometry: Equatable {
         let available = min(44, max(0, compactSideRoom ?? 0)).rounded(.down)
         return available >= 44 ? available : 0
     }
+    /// On a notched Mac the resting shape is the notch itself, so it has to be
+    /// the notch's height and not the menu bar's. Those differ — the bar is
+    /// taller than the cutout — and the gap is visible the moment the panel
+    /// settles: the silhouette closes to something taller than the hardware it
+    /// is supposed to be hiding behind, which reads as the animation missing
+    /// its mark rather than as a deliberate shape. Machines without a cutout
+    /// keep the bar height, which is the only sensible resting height there.
     var collapsed: CGSize {
-        CGSize(width: min(screen.width - 24, cameraWidth + restingWingWidth * 2), height: menuBarHeight)
+        CGSize(width: min(screen.width - 24, cameraWidth + restingWingWidth * 2),
+               height: isNotched ? cameraHeight : menuBarHeight)
     }
     func restingSize(showsContent: Bool) -> CGSize {
         showsContent ? collapsed : CGSize(width: cameraWidth, height: cameraHeight)
