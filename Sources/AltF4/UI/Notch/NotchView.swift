@@ -202,18 +202,15 @@ struct NotchView: View {
                     withAnimation(.easeOut(duration: 0.15)) { launcher.isEditing.toggle() }
                 }
             }
-            // Keeping the island open is one click, like the floating buttons;
-            // a header button steps aside when the same action floats beside it.
-            if !quickActions.contains(.pin) {
-                NotchIconButton(symbol: service.pinned ? "pin.fill" : "pin",
-                                title: service.pinned ? text.unpin : text.pin, selected: service.pinned) {
-                    service.pinned.toggle()
-                }
-            }
+            // Pin and the collapse chevron are gone from the header. Both
+            // duplicated something the pointer already does — the panel closes
+            // when you leave it, and staying open is what not leaving it means —
+            // so they cost a permanent slot in a row that has to stay readable
+            // at a glance. Settings is the one header action with no gesture
+            // equivalent, so it stays.
             if !quickActions.contains(.settings) {
                 NotchIconButton(symbol: "gearshape", title: l10n.s.menuSettings, action: service.openSettings)
             }
-            NotchIconButton(symbol: "chevron.up", title: text.collapse, action: service.collapse)
         }
         .frame(height: NotchLayout.headerHeight)
         .onAppear { UpdateService.shared.checkIfStale() }
