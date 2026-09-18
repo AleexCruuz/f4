@@ -599,7 +599,7 @@ private final class NotchCanvas: NSView {
             contentCover.opacity = 0
             let transition = CATransition()
             transition.type = .fade
-            transition.duration = 0.10
+            transition.duration = NotchSupport.Timing.moduleFade()
             transition.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
             host.layer?.add(transition, forKey: kCATransition)
         } else {
@@ -611,7 +611,7 @@ private final class NotchCanvas: NSView {
             // content. Reversals continue from the opacity already on screen.
             animation.values = [start, start, 0]
             animation.keyTimes = kind == .dismiss ? [0, 0.65, 1] : [0, 0.625, 1]
-            animation.duration = 0.20
+            animation.duration = NotchSupport.Timing.reveal()
             animation.calculationMode = .linear
             animation.timingFunctions = [CAMediaTimingFunction(name: .linear), CAMediaTimingFunction(name: .easeOut)]
             contentCover.opacity = 0

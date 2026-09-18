@@ -718,6 +718,9 @@ enum DefaultsKey {
     static let notchOpenOnHover = "notchOpenOnHover"
     static let notchHideUntilHover = "notchHideUntilHover"
     static let notchHoverDelay = "notchHoverDelay"
+    // Developer-only animation overrides; see NotchSupport.Timing.
+    static let notchRevealDuration = "notchRevealDuration"
+    static let notchModuleFadeDuration = "notchModuleFadeDuration"
     static let notchReturnHome = "notchReturnHome"
     static let notchHomeModule = "notchHomeModule"
     static let notchHiddenModules = "notchHiddenModules"

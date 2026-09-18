@@ -438,6 +438,38 @@ enum NotchSupport {
     static let defaultHoverDelay = 0.10
     static let hoverDelayRange = 0.10...1.0
 
+    /// Animation timings, overridable at runtime so they can be tuned without a
+    /// rebuild. Tuning a feel is a loop of change-a-number, look, change again,
+    /// and a 25-second compile between each look breaks it: by the time the
+    /// build lands you have lost what you were comparing against.
+    ///
+    ///     defaults write com.altf4.utils.dev notchRevealDuration -float 0.12
+    ///
+    /// then relaunch. Developer builds only — the shipped app always uses the
+    /// constants here, so a stray default cannot change what users get.
+    enum Timing {
+        static let reveal: TimeInterval = 0.20
+        static let moduleFade: TimeInterval = 0.10
+
+        static func reveal(in defaults: UserDefaults = .standard) -> TimeInterval {
+            resolve(DefaultsKey.notchRevealDuration, fallback: reveal, in: defaults)
+        }
+
+        static func moduleFade(in defaults: UserDefaults = .standard) -> TimeInterval {
+            resolve(DefaultsKey.notchModuleFadeDuration, fallback: moduleFade, in: defaults)
+        }
+
+        /// Zero is a legitimate "no animation", so it is the ABSENCE of the key
+        /// that falls back, not a falsy value.
+        private static func resolve(_ key: String,
+                                    fallback: TimeInterval,
+                                    in defaults: UserDefaults) -> TimeInterval {
+            guard AppInfo.isDeveloperBuild, defaults.object(forKey: key) != nil else { return fallback }
+            let value = defaults.double(forKey: key)
+            return value.isFinite && (0...2).contains(value) ? value : fallback
+        }
+    }
+
     static func sanitizedHoverDelay(_ value: TimeInterval) -> TimeInterval {
         value.isFinite ? min(hoverDelayRange.upperBound, max(hoverDelayRange.lowerBound, value)) : defaultHoverDelay
     }
