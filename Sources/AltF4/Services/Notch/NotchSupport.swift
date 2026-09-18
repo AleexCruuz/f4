@@ -345,7 +345,7 @@ enum NotchQuickAccessLayout {
     static let rowSpacing: CGFloat = 54
     static let withdrawalDuration = 0.16
     static let hoverMargin: CGFloat = 16
-    static let hoverExitDelay = 0.18
+    static let hoverExitDelay = 0.04
 
     static func center(index: Int, progress: CGFloat, edge: CGFloat, top: CGFloat,
                        side: NotchQuickAccessSide) -> CGPoint {

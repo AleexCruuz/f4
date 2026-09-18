@@ -209,7 +209,7 @@ extension AppFeature {
     /// letting someone hollow the app out by accident. Its own enable keys
     /// still work normally: this is about the feature existing, not about it
     /// being forced on.
-    var isEssential: Bool { self == .clipboardHistory }
+    var isEssential: Bool { self == .clipboardHistory || self == .notch }
 
     /// Availability read straight from defaults. Existing features stay
     /// available on update; explicit beta opt-ins may start unavailable.

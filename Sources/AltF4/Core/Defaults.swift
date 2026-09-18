@@ -1151,7 +1151,7 @@ enum Defaults {
         DefaultsKey.notchSize: NotchSize.spacious.rawValue,
         DefaultsKey.notchCustomWidth: NotchSize.defaultWidth,
         DefaultsKey.notchCustomHeight: NotchSize.defaultHeight,
-        DefaultsKey.notchHapticFeedback: true,
+        DefaultsKey.notchHapticFeedback: false,
         DefaultsKey.notchShelf: true,
         DefaultsKey.notchDragReveal: true,
         DefaultsKey.notchCaptureControls: true,

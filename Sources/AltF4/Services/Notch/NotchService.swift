@@ -476,7 +476,7 @@ final class NotchService: ObservableObject {
                 self.collapse()
             }
             hoverWork = work
-            DispatchQueue.main.asyncAfter(deadline: .now() + (expanded ? NotchQuickAccessLayout.hoverExitDelay : 0.12), execute: work)
+            DispatchQueue.main.asyncAfter(deadline: .now() + (expanded ? NotchQuickAccessLayout.hoverExitDelay : 0.04), execute: work)
         }
     }
 

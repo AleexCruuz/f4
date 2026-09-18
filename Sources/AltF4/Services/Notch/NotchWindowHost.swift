@@ -610,7 +610,7 @@ private final class NotchCanvas: NSView {
             // Give the silhouette a head start before revealing full-width
             // content. Reversals continue from the opacity already on screen.
             animation.values = [start, start, 0]
-            animation.keyTimes = kind == .dismiss ? [0, 0.65, 1] : [0, 0.625, 1]
+            animation.keyTimes = kind == .dismiss ? [0, 0.18, 1] : [0, 0.22, 1]
             animation.duration = NotchSupport.Timing.reveal()
             animation.calculationMode = .linear
             animation.timingFunctions = [CAMediaTimingFunction(name: .linear), CAMediaTimingFunction(name: .easeOut)]
