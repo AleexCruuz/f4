@@ -69,7 +69,7 @@ enum NotchDestinationContract {
     }
 
     static func run(expect: (Bool, String) -> Void) {
-        let domain = "com.vorssaint.tests.notch-destinations"
+        let domain = "com.altf4.tests.notch-destinations"
         let defaults = UserDefaults(suiteName: domain)!
         defaults.removePersistentDomain(forName: domain)
         ReviewDefaults.current = defaults

@@ -1,5 +1,11 @@
 # Changelog
 
+> **This file is the upstream Vorssaint release history, kept verbatim.**
+> It records releases made by the Vorssaint project, not by this fork, so the
+> "Vorssaint" name is left in place throughout — rewriting it would misattribute
+> their releases to AltF4. Changes made by this fork are recorded in
+> [NOTICE.md](NOTICE.md), as GPL-3.0 §5(a) requires.
+
 All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).

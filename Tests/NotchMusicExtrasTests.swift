@@ -175,7 +175,7 @@ enum NotchMusicExtrasTests {
         expect(NotchPlayback.decode(noPosition)?.hasPosition == false,
                "missing player position never masquerades as a synchronized lyric clock")
 
-        let suite = "com.vorssaint.tests.notch-music-extras"
+        let suite = "com.altf4.tests.notch-music-extras"
         let defaults = UserDefaults(suiteName: suite)!
         defaults.removePersistentDomain(forName: suite)
         defer { defaults.removePersistentDomain(forName: suite) }

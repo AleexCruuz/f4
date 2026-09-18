@@ -261,7 +261,7 @@ enum NotchTests {
         NotchKeyboardLightTests.run(expect: expect)
         NotchActivityTests.run(expect: expect)
         NotchMusicExtrasTests.run(expect: expect)
-        let suite = "com.vorssaint.tests.notch"
+        let suite = "com.altf4.tests.notch"
         let defaults = UserDefaults(suiteName: suite)!
         defaults.removePersistentDomain(forName: suite)
         defer { defaults.removePersistentDomain(forName: suite) }
@@ -1063,7 +1063,7 @@ enum NotchTests {
                "invalid internal positions cannot be serialized into adapter input")
     }
     private static func calendarContracts(expect: (Bool, String) -> Void) {
-        let entitlements = NSDictionary(contentsOfFile: "Resources/Vorssaint.entitlements") as? [String: Any]
+        let entitlements = NSDictionary(contentsOfFile: "Resources/AltF4.entitlements") as? [String: Any]
         let info = NSDictionary(contentsOfFile: "Resources/Info.plist") as? [String: Any]
         expect(entitlements?["com.apple.security.personal-information.calendars"] as? Bool == true
                && !(info?["NSCalendarsFullAccessUsageDescription"] as? String ?? "").isEmpty,
@@ -1092,9 +1092,9 @@ enum NotchTests {
                && !NotchSupport.keepsPermissionSurface(requesting: false, resolvedAt: 10, now: 11)
                && !NotchSupport.keepsPermissionSurface(requesting: false, resolvedAt: 10, now: 9),
                "permission resolution protects only the short reactivation interval")
-        let defaults = UserDefaults(suiteName: "com.vorssaint.tests.notch-calendar")!
-        defaults.removePersistentDomain(forName: "com.vorssaint.tests.notch-calendar")
-        defer { defaults.removePersistentDomain(forName: "com.vorssaint.tests.notch-calendar") }
+        let defaults = UserDefaults(suiteName: "com.altf4.tests.notch-calendar")!
+        defaults.removePersistentDomain(forName: "com.altf4.tests.notch-calendar")
+        defer { defaults.removePersistentDomain(forName: "com.altf4.tests.notch-calendar") }
         for (key, value) in Defaults.registeredDefaults where key.hasPrefix("notch") { defaults.set(value, forKey: key) }
         for (key, value) in AppFeature.availabilityDefaults { defaults.set(value, forKey: key) }
         expect(!NotchCalendarSupport.isEnabled(in: defaults), "calendar starts off")

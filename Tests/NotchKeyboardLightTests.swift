@@ -17,7 +17,7 @@ enum NotchKeyboardLightTests {
                 }
             }
         }
-        let suite = "com.vorssaint.tests.notch-keyboard-light"
+        let suite = "com.altf4.tests.notch-keyboard-light"
         let defaults = UserDefaults(suiteName: suite)!
         defaults.removePersistentDomain(forName: suite)
         defer { defaults.removePersistentDomain(forName: suite) }

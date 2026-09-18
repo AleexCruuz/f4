@@ -33,7 +33,7 @@ struct ClipboardHistoryAccessTests {
         expect(!capture.needsBaseline, "normal captures follow the accepted baseline")
         capture.finish()
 
-        let lane = GeneralPasteboardAccess(label: "Vorssaint.Tests.ClipboardDeadline")
+        let lane = GeneralPasteboardAccess(label: "AltF4.Tests.ClipboardDeadline")
         let release = DispatchSemaphore(value: 0)
         let entered = DispatchSemaphore(value: 0)
         var completions = 0
