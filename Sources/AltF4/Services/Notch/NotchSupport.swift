@@ -142,7 +142,7 @@ enum NotchCompactActivity: Equatable {
 
 enum NotchControlItem: String, CaseIterable, Identifiable {
     case volume, brightness, music, mixer, keepAwake, timer, calendar, microphone, screenshot, recording, speedTest, panel, commandBar
-    static let defaultHidden = "microphone,screenshot,recording,speedTest,panel,commandBar"
+    static let defaultHidden = ""
     var id: String { rawValue }
 
     var symbol: String {
