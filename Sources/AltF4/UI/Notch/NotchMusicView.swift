@@ -172,34 +172,34 @@ private struct NotchMusicTransport: View {
     }
 
     private var transportButtons: some View {
-        HStack(spacing: 22) {
+        HStack(spacing: 28) {
             playbackButton("backward.end.fill", title: text.mediaPrevious, command: .previous)
             Button { service.send(.toggle, context: playback.commandContext) } label: {
                 Image(systemName: playback.isPlaying ? "pause.fill" : "play.fill")
-                    .font(.system(size: 17, weight: .semibold))
+                    .font(.system(size: 23, weight: .semibold))
                     .foregroundStyle(.black)
                     .contentTransition(.symbolEffect(.replace))
                     .animation(reduceMotion ? nil : .smooth(duration: 0.22), value: playback.isPlaying)
-                    .frame(width: 44, height: 44)
+                    .frame(width: 56, height: 56)
                     .background(.white, in: Circle())
                     .contentShape(Circle())
             }
-            .buttonStyle(NotchButtonStyle(cornerRadius: 20))
+            .buttonStyle(NotchButtonStyle(cornerRadius: 28))
             .disabled(!service.canPerform(.toggle))
             .keyboardShortcut(.space, modifiers: [])
             .accessibilityLabel(text.mediaPlayPause)
             .help(text.mediaPlayPause)
             playbackButton("forward.end.fill", title: text.mediaNext, command: .next)
         }
-        .frame(height: 44)
+        .frame(height: 56)
     }
 
     private func playbackButton(_ symbol: String, title: String, command: NotchMusicService.Command) -> some View {
         Button { service.send(command, context: playback.commandContext) } label: {
             Image(systemName: symbol)
-                .font(.system(size: 18, weight: .medium))
+                .font(.system(size: 24, weight: .medium))
                 .foregroundStyle(.white.opacity(0.85))
-                .frame(width: 32, height: 36)
+                .frame(width: 46, height: 46)
                 .contentShape(RoundedRectangle(cornerRadius: 10))
         }
         .buttonStyle(NotchButtonStyle())
