@@ -1175,7 +1175,7 @@ enum Defaults {
         DefaultsKey.notchLiveEqualizer: false,
         DefaultsKey.notchQueueEnabled: false,
         DefaultsKey.notchDownloadsEnabled: false,
-        DefaultsKey.notchEnabled: false,
+        DefaultsKey.notchEnabled: true,
         DefaultsKey.notchDisplay: NotchDisplay.automatic.rawValue,
         DefaultsKey.notchOpenOnHover: true,
         DefaultsKey.notchHideUntilHover: false,

@@ -8,6 +8,7 @@ struct NotchClipboardView: View {
     @ObservedObject private var history = ClipboardHistoryService.shared
     @ObservedObject private var l10n = L10n.shared
     @ObservedObject private var permissions = Permissions.shared
+    @ObservedObject private var ai = ClipboardAIService.shared
     @State private var query = ""
     @State private var copiedID: UUID?
     @State private var pinnedOnly = false
@@ -74,6 +75,26 @@ struct NotchClipboardView: View {
                                 }
                                 .buttonStyle(NotchButtonStyle(lifts: false))
                                 .help(permissions.accessibility ? text.clickRowShortcut : text.copy)
+                                if ai.canRun(on: entry) {
+                                    Menu {
+                                        ForEach(ClipboardAIAction.allCases) { action in
+                                            Button {
+                                                ai.perform(action, on: entry)
+                                            } label: {
+                                                Label(action.title, systemImage: action.symbolName)
+                                            }
+                                        }
+                                    } label: {
+                                        Image(systemName: ai.isWorking ? "hourglass" : "sparkles")
+                                            .font(.system(size: 12, weight: .semibold))
+                                            .frame(width: 26, height: 26)
+                                    }
+                                    .menuStyle(.borderlessButton)
+                                    .menuIndicator(.hidden)
+                                    .fixedSize()
+                                    .disabled(ai.isWorking)
+                                    .help("AI")
+                                }
                                 NotchIconButton(symbol: copiedID == entry.id ? "checkmark" : "doc.on.doc",
                                                 title: copiedID == entry.id ? text.copied : text.copy) {
                                     history.copy(entry) { copied in
