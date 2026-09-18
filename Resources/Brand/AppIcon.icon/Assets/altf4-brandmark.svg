@@ -17,26 +17,19 @@
     </rdf:RDF>
   </metadata>
 
-  <!-- A keycap with its top-right corner open, and a stroke leaving through
-       the gap. Geometric only, so it still reads at menu-bar size. -->
-  <g fill="none"
-     stroke="#000000"
-     stroke-width="44"
-     stroke-linecap="round"
-     stroke-linejoin="round">
+  <!-- "F4" drawn as plain rectangles rather than type, so it renders
+       identically wherever it is rasterised and carries no font dependency.
+       Bar thickness is a constant 56 across both glyphs. -->
+  <g fill="#000000">
 
-    <!-- Keycap, open from the top-right corner round to the right edge. -->
-    <path d="M 344 120
-             H 152
-             a 56 56 0 0 0 -56 56
-             v 192
-             a 56 56 0 0 0 56 56
-             h 192
-             a 56 56 0 0 0 56 -56
-             v -80" />
+    <!-- F -->
+    <rect x="80"  y="128" width="56"  height="256" />
+    <rect x="80"  y="128" width="160" height="56"  />
+    <rect x="80"  y="228" width="132" height="56"  />
 
-    <!-- The stroke on its way out. -->
-    <path d="M 264 248 L 424 88" />
-    <path d="M 328 88 H 424 V 184" />
+    <!-- 4 -->
+    <rect x="272" y="128" width="56"  height="156" />
+    <rect x="272" y="228" width="160" height="56"  />
+    <rect x="376" y="128" width="56"  height="256" />
   </g>
 </svg>
