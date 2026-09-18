@@ -474,6 +474,16 @@ enum DefaultsKey {
     static let clipboardHistoryIgnoredApps = "clipboardHistoryIgnoredApps" // apps whose copies are never saved
     static let clipboardHistoryQuickPreview = "clipboardHistoryQuickPreview"
 
+    // Clipboard AI: rewrites a history entry through a model running on this
+    // Mac. Off by default, and does nothing until the user installs a local
+    // runner themselves. The endpoint is user-visible so a non-default port
+    // works, but it is validated as loopback before every request: the point of
+    // the feature is that clipboard contents never leave the machine.
+    static let clipboardAIEnabled = "clipboardAIEnabled"
+    static let clipboardAIModel = "clipboardAIModel"
+    static let clipboardAIEndpoint = "clipboardAIEndpoint"
+    static let clipboardAITargetLanguage = "clipboardAITargetLanguage"
+
     // Auto clear: wipes the system pasteboard on a delay or on sleep and lock.
     // Deliberately outside the clipboardHistory family, since it clears the
     // pasteboard without touching saved entries, and runs with capture off.
@@ -936,6 +946,10 @@ enum Defaults {
     static let allowedClipboardHistoryLimits = [20, 50, 100, 250, 500, 1_000, 10_000, 0]
     static let allowedClipboardAutoClearDelayRange = 5...3_600
     static let defaultClipboardAutoClearDelay = 20
+    /// Ollama's own default port, on loopback. Small enough to run beside the
+    /// app on an 8 GB machine; a 7B model is not.
+    static let defaultClipboardAIEndpoint = "http://127.0.0.1:11434"
+    static let defaultClipboardAIModel = "qwen2.5:3b"
     static let allowedMonitorAlertCooldowns = [2, 5, 15, 30, 60]
 
     static let registeredDefaults: [String: Any] = [
@@ -1386,6 +1400,10 @@ enum Defaults {
         DefaultsKey.clipboardHistoryIncludeImagesFiles: true,
         DefaultsKey.clipboardHistoryIgnoredApps: [String](),
         DefaultsKey.clipboardHistoryQuickPreview: false,
+        DefaultsKey.clipboardAIEnabled: false,
+        DefaultsKey.clipboardAIModel: Defaults.defaultClipboardAIModel,
+        DefaultsKey.clipboardAIEndpoint: Defaults.defaultClipboardAIEndpoint,
+        DefaultsKey.clipboardAITargetLanguage: "",
         DefaultsKey.clipboardAutoClearOnDelay: false,
         DefaultsKey.clipboardAutoClearDelay: Defaults.defaultClipboardAutoClearDelay,
         DefaultsKey.clipboardAutoClearOnSleep: false,

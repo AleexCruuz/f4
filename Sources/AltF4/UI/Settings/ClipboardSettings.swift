@@ -23,6 +23,12 @@ struct ClipboardSettings: View {
     @AppStorage(DefaultsKey.clipboardAutoClearOnSleep) private var autoClearOnSleep = false
     @AppStorage(DefaultsKey.clipboardAutoClearOnDisplaySleep) private var autoClearOnDisplaySleep = false
     @AppStorage(DefaultsKey.clipboardAutoClearOnScreenLock) private var autoClearOnScreenLock = false
+    @ObservedObject private var clipboardAI = ClipboardAIService.shared
+    @AppStorage(DefaultsKey.clipboardAIEnabled) private var aiEnabled = false
+    @AppStorage(DefaultsKey.clipboardAIModel) private var aiModel = Defaults.defaultClipboardAIModel
+    @AppStorage(DefaultsKey.clipboardAIEndpoint)
+    private var aiEndpoint = Defaults.defaultClipboardAIEndpoint
+    @AppStorage(DefaultsKey.clipboardAITargetLanguage) private var aiTargetLanguage = ""
 
     private var text: ClipboardFeatureStrings {
         FeatureStrings.clipboard(l10n.language)
@@ -82,6 +88,7 @@ struct ClipboardSettings: View {
                 }
 
                 clipboardAutoClearSection
+                clipboardAISection
             }
 
             if AppFeature.finderCutPaste.isAvailable {
@@ -177,6 +184,80 @@ struct ClipboardSettings: View {
                 Label(text.shortcut, systemImage: "doc.on.clipboard")
             }
             .disabled(history.entries.isEmpty)
+        }
+    }
+
+    // Needs saved entries to act on, so it follows the capture toggle. The
+    // runner is the user's own install and may not be there at all, which is
+    // the normal first-run state rather than an error — the status row says so
+    // and names the command that fixes it.
+    @ViewBuilder
+    private var clipboardAISection: some View {
+        Section {
+            Toggle("Clipboard AI", isOn: $aiEnabled)
+                .disabled(!enabled)
+                .onChange(of: aiEnabled) { _, isOn in
+                    guard isOn else { return }
+                    Task {
+                        await clipboardAI.refreshInstalledModels()
+                        // Paying the ~35 s model load now, while the user is
+                        // still in settings, means the first real action is
+                        // the warm ~2 s one.
+                        clipboardAI.warmUp()
+                    }
+                }
+            Text("Adds translate, summarise, clean up and explain to the right-click menu of a saved text entry. The result is placed on the clipboard.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Text("Runs a model on this Mac through Ollama. Nothing is sent anywhere — the endpoint below is refused unless it is on loopback.")
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+
+            if aiEnabled {
+                TextField("Model", text: $aiModel)
+                    .textFieldStyle(.roundedBorder)
+                TextField("Translate into", text: $aiTargetLanguage,
+                          prompt: Text("This Mac's language"))
+                    .textFieldStyle(.roundedBorder)
+                TextField("Endpoint", text: $aiEndpoint)
+                    .textFieldStyle(.roundedBorder)
+                    .font(.system(.body, design: .monospaced))
+
+                clipboardAIStatusRow
+            }
+        }
+        .disabled(!AppFeature.clipboardHistory.isAvailable)
+    }
+
+    @ViewBuilder
+    private var clipboardAIStatusRow: some View {
+        HStack(spacing: 6) {
+            switch clipboardAI.installedModels {
+            case .none:
+                Label("No model runner is answering", systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+            case let .some(models) where models.contains(clipboardAI.model):
+                Label("Ready — \(clipboardAI.model)", systemImage: "checkmark.circle.fill")
+                    .font(.caption)
+                    .foregroundStyle(.green)
+            case let .some(models):
+                Label(models.isEmpty
+                        ? "Runner is up, but has no models. Run “ollama pull \(clipboardAI.model)”."
+                        : "Runner is up, but “\(clipboardAI.model)” is not installed. Available: \(models.joined(separator: ", "))",
+                      systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+            }
+            Spacer()
+            Button("Check") {
+                Task { await clipboardAI.refreshInstalledModels() }
+            }
+            .controlSize(.small)
+        }
+        .task {
+            // Probe once when the pane appears so the row is never blank.
+            await clipboardAI.refreshInstalledModels()
         }
     }
 

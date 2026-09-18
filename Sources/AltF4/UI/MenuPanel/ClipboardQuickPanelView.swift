@@ -294,6 +294,7 @@ private struct QuickEntryRow: View, Equatable {
     private var history: ClipboardHistoryService { .shared }
     private var l10n: L10n { .shared }
     private var text: ClipboardFeatureStrings { FeatureStrings.clipboard(language) }
+    private var ai: ClipboardAIService { .shared }
 
     // The bindings are channels back to the list, not part of what the row
     // looks like, so they stay out of the comparison.
@@ -492,9 +493,50 @@ private struct QuickEntryRow: View, Equatable {
             history.move(entry, .down)
         }
         .disabled(!canReorderEntries || !history.canMove(entry, .down))
+        aiActions(entry)
         Divider()
         Button(text.delete, role: .destructive) {
             history.remove(entry)
+        }
+    }
+
+    /// Only for text, and only once the user has turned the feature on: an
+    /// image or a file list has nothing to hand a language model, and an
+    /// always-visible menu that errors on click is worse than no menu.
+    @ViewBuilder
+    private func aiActions(_ entry: ClipboardHistoryEntry) -> some View {
+        if ai.isEnabled, entry.kind == .text,
+           !entry.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            Divider()
+            Menu("AI") {
+                ForEach(ClipboardAIAction.allCases) { action in
+                    Button {
+                        runAI(action, on: entry)
+                    } label: {
+                        Label(action.title, systemImage: action.symbolName)
+                    }
+                }
+            }
+        }
+    }
+
+    /// The result goes onto the pasteboard rather than replacing the entry:
+    /// the original stays in history, and the capture timer picks the result up
+    /// as a new entry a moment later, so both are there to compare.
+    private func runAI(_ action: ClipboardAIAction, on entry: ClipboardHistoryEntry) {
+        let source = entry.text
+        Task { @MainActor in
+            do {
+                let result = try await ai.run(action, on: source)
+                let pasteboard = NSPasteboard.general
+                pasteboard.clearContents()
+                pasteboard.setString(result, forType: .string)
+            } catch {
+                // Every failure here is something the user can act on — the
+                // runner is not started, the model is not pulled — so the
+                // message carries the fix rather than a status code.
+                Notifier.post(title: AppInfo.name, body: error.localizedDescription)
+            }
         }
     }
 
