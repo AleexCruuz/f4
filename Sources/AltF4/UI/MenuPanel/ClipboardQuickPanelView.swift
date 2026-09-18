@@ -437,6 +437,28 @@ private struct QuickEntryRow: View, Equatable {
                                isHovered: Bool) -> some View {
         if isHovered {
             HStack(spacing: 4) {
+                if ai.canRun(on: entry) {
+                    Menu {
+                        ForEach(ClipboardAIAction.allCases) { action in
+                            Button {
+                                ai.perform(action, on: entry)
+                            } label: {
+                                Label(action.title, systemImage: action.symbolName)
+                            }
+                        }
+                    } label: {
+                        Image(systemName: ai.isWorking ? "hourglass" : "sparkles")
+                            .font(.system(size: 11, weight: .semibold))
+                            .frame(width: 24, height: 24)
+                            .background(Color.accentColor.opacity(0.16),
+                                        in: RoundedRectangle(cornerRadius: 6))
+                    }
+                    .menuStyle(.borderlessButton)
+                    .menuIndicator(.hidden)
+                    .fixedSize()
+                    .disabled(ai.isWorking)
+                    .help("AI")
+                }
                 Button {
                     history.copyOnlyQuickEntry(entry)
                 } label: {
@@ -500,42 +522,20 @@ private struct QuickEntryRow: View, Equatable {
         }
     }
 
-    /// Only for text, and only once the user has turned the feature on: an
-    /// image or a file list has nothing to hand a language model, and an
-    /// always-visible menu that errors on click is worse than no menu.
+    /// Kept in the context menu as well as the hover button: the button is the
+    /// discoverable path, this is the one muscle memory reaches for.
     @ViewBuilder
     private func aiActions(_ entry: ClipboardHistoryEntry) -> some View {
-        if ai.isEnabled, entry.kind == .text,
-           !entry.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        if ai.canRun(on: entry) {
             Divider()
             Menu("AI") {
                 ForEach(ClipboardAIAction.allCases) { action in
                     Button {
-                        runAI(action, on: entry)
+                        ai.perform(action, on: entry)
                     } label: {
                         Label(action.title, systemImage: action.symbolName)
                     }
                 }
-            }
-        }
-    }
-
-    /// The result goes onto the pasteboard rather than replacing the entry:
-    /// the original stays in history, and the capture timer picks the result up
-    /// as a new entry a moment later, so both are there to compare.
-    private func runAI(_ action: ClipboardAIAction, on entry: ClipboardHistoryEntry) {
-        let source = entry.text
-        Task { @MainActor in
-            do {
-                let result = try await ai.run(action, on: source)
-                let pasteboard = NSPasteboard.general
-                pasteboard.clearContents()
-                pasteboard.setString(result, forType: .string)
-            } catch {
-                // Every failure here is something the user can act on — the
-                // runner is not started, the model is not pulled — so the
-                // message carries the fix rather than a status code.
-                Notifier.post(title: AppInfo.name, body: error.localizedDescription)
             }
         }
     }

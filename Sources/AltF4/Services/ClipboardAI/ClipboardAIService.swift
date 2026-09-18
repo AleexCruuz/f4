@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 AltF4 contributors
 
+import AppKit
 import Foundation
 
 /// What the model is asked to do with a clipboard entry.
@@ -206,6 +207,37 @@ final class ClipboardAIService: ObservableObject {
     }
 
     // MARK: - Running an action
+
+    /// An image or a file list has nothing to hand a language model, so the
+    /// affordance is hidden rather than shown and then failed on click.
+    func canRun(on entry: ClipboardHistoryEntry) -> Bool {
+        isEnabled
+            && entry.kind == .text
+            && !entry.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    /// Runs the action and puts the result on the pasteboard. Every surface
+    /// that offers these actions wants exactly this, so the delivery lives here
+    /// once instead of being re-implemented per view.
+    ///
+    /// The result does not replace the entry: the original stays in history and
+    /// the capture timer picks the result up as a new entry a moment later, so
+    /// both are there to compare and nothing is lost if the model is wrong.
+    func perform(_ action: ClipboardAIAction, on entry: ClipboardHistoryEntry) {
+        let source = entry.text
+        Task { @MainActor in
+            do {
+                let result = try await run(action, on: source)
+                let pasteboard = NSPasteboard.general
+                pasteboard.clearContents()
+                pasteboard.setString(result, forType: .string)
+            } catch {
+                // Every failure here is a setup step the user has not done yet,
+                // so the message carries the fix rather than a status code.
+                Notifier.post(title: AppInfo.name, body: error.localizedDescription)
+            }
+        }
+    }
 
     func run(_ action: ClipboardAIAction, on text: String) async throws -> String {
         guard isEnabled else { throw ClipboardAIError.disabled }

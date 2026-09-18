@@ -87,6 +87,11 @@ final class FeatureRuntime: ObservableObject {
     /// feature reporting itself unsupported.
     private func mayFlip(_ feature: AppFeature, to available: Bool) -> Bool {
         guard feature.isAvailable != available else { return false }
+        // Essential features have no uninstall. The per-row control and the
+        // "remove all" button both route through here, so refusing at this
+        // level is what stops a single click taking the app's reason to exist
+        // with it.
+        if !available && feature.isEssential { return false }
         return !available || feature.isHardwareSupported
     }
 

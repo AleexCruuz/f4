@@ -203,6 +203,14 @@ extension AppFeature {
 
     var isBeta: Bool { self == .fanControl || self == .killProcess }
 
+    /// Ships installed and cannot be removed. Clipboard history is what this
+    /// fork is for — the AI actions are built on top of it and have nothing to
+    /// act on without it — so the hub offers no uninstall for it rather than
+    /// letting someone hollow the app out by accident. Its own enable keys
+    /// still work normally: this is about the feature existing, not about it
+    /// being forced on.
+    var isEssential: Bool { self == .clipboardHistory }
+
     /// Availability read straight from defaults. Existing features stay
     /// available on update; explicit beta opt-ins may start unavailable.
     var isAvailable: Bool {

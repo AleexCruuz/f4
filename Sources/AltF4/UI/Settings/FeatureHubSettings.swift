@@ -354,6 +354,15 @@ private struct FeatureHubRow: View {
             if working {
                 ProgressView()
                     .controlSize(.small)
+            } else if feature.isEssential {
+                // No uninstall control at all rather than a disabled one: the
+                // runtime refuses the flip anyway, and a greyed-out button
+                // invites clicking at something that will never respond.
+                Label("Always on", systemImage: "lock.fill")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .labelStyle(.titleAndIcon)
+                    .accessibilityLabel("\(accessibilityTitle) is always installed")
             } else if installed {
                 Button(hub.uninstallButton) {
                     if installedExtensions.isEmpty { flip(to: false) } else { confirmingExtensions = true }

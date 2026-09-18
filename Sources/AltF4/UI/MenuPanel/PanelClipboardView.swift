@@ -6,6 +6,7 @@ import SwiftUI
 struct PanelClipboardView: View {
     @ObservedObject private var l10n = L10n.shared
     @ObservedObject private var history = ClipboardHistoryService.shared
+    @ObservedObject private var ai = ClipboardAIService.shared
     @AppStorage(DefaultsKey.clipboardHistoryEnabled) private var enabled = false
     @AppStorage(DefaultsKey.clipboardHistoryShortcutEnabled) private var shortcutEnabled = true
     @State private var query = ""
@@ -233,6 +234,27 @@ struct PanelClipboardView: View {
                 .buttonStyle(.bordered)
                 .controlSize(.mini)
                 .help(entry.isPinned ? text.unpin : text.pin)
+                if ai.canRun(on: entry) {
+                    Menu {
+                        ForEach(ClipboardAIAction.allCases) { action in
+                            Button {
+                                ai.perform(action, on: entry)
+                            } label: {
+                                Label(action.title, systemImage: action.symbolName)
+                            }
+                        }
+                    } label: {
+                        Image(systemName: ai.isWorking ? "hourglass" : "sparkles")
+                            .font(.system(size: 10, weight: .bold))
+                    }
+                    .menuStyle(.button)
+                    .buttonStyle(.bordered)
+                    .controlSize(.mini)
+                    .menuIndicator(.hidden)
+                    .fixedSize()
+                    .disabled(ai.isWorking)
+                    .help("AI")
+                }
                 Button {
                     // The tick means "it is on the clipboard", so it waits for
                     // the write instead of announcing one still queued behind
