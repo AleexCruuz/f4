@@ -152,8 +152,24 @@ final class FeatureRuntime: ObservableObject {
     /// Launch path: replaces the old unconditional sync block. Only available
     /// features get their binding run, so nothing else even instantiates.
     func syncAtLaunch() {
+        restoreEssentialFeatures()
         for feature in AppFeature.allCases where feature.isAvailable {
             Self.bindings[feature]?()
+        }
+    }
+
+    /// Refusing new uninstalls is not enough on its own: a profile that was
+    /// already carrying an essential feature as uninstalled — from a preset, a
+    /// "remove all", or a build where the feature was not yet essential — would
+    /// stay stranded forever, because registered defaults only apply to keys
+    /// that have no stored value at all. Repairing here is what makes
+    /// "essential" true of existing installs and not just new ones.
+    private func restoreEssentialFeatures() {
+        let stranded = AppFeature.allCases.filter { $0.isEssential && !$0.isAvailable }
+        guard !stranded.isEmpty else { return }
+        for feature in stranded {
+            UserDefaults.standard.set(true, forKey: feature.availabilityKey)
+            loadedThisSession.insert(feature)
         }
     }
 
