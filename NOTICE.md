@@ -81,6 +81,17 @@ rest of the repository.
 Remaining screenshots under `docs/assets/readme/` still show the upstream UI and
 are stale; they need retaking before any release.
 
+### 2026-09-18 — Added Clipboard AI
+
+New feature not present upstream. Right-clicking a saved text entry in the
+clipboard panel offers translate, summarise, clean up and explain, answered by a
+model running on the user's own machine via Ollama. Off by default; the endpoint
+is rejected unless it is on loopback, so clipboard contents never leave the Mac.
+
+- New: `Sources/AltF4/Services/ClipboardAI/ClipboardAIService.swift`
+- Modified: `Core/Defaults.swift`, `UI/MenuPanel/ClipboardQuickPanelView.swift`,
+  `UI/Settings/ClipboardSettings.swift`
+
 ### 2026-09-18 — Redirected project links away from upstream
 
 `AppInfo` previously carried upstream's website, donation page, Discord invite
