@@ -435,7 +435,7 @@ enum NotchEvent: String, CaseIterable {
 
 enum NotchSupport {
     static let toolColumns = 5
-    static let defaultHoverDelay = 0.25
+    static let defaultHoverDelay = 0.10
     static let hoverDelayRange = 0.10...1.0
 
     static func sanitizedHoverDelay(_ value: TimeInterval) -> TimeInterval {

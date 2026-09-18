@@ -25,9 +25,9 @@ struct NotchButtonStyle: ButtonStyle {
             .opacity(enabled ? (configuration.isPressed ? 0.8 : 1) : 0.4)
             .scaleEffect(reduceMotion || !lifts ? 1
                          : configuration.isPressed ? 0.965 : (active ? 1.022 : 1))
-            .animation(reduceMotion ? nil : .spring(response: 0.28, dampingFraction: 0.7),
+            .animation(reduceMotion ? nil : .spring(response: 0.16, dampingFraction: 0.78),
                        value: configuration.isPressed)
-            .animation(reduceMotion ? nil : .spring(response: 0.32, dampingFraction: 0.75), value: hovered)
+            .animation(reduceMotion ? nil : .spring(response: 0.18, dampingFraction: 0.8), value: hovered)
             .onHover { hovered = $0 }
     }
 }
