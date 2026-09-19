@@ -188,9 +188,6 @@ struct SnippetLibraryView: View {
 
     private var footer: some View {
         HStack(spacing: 6) {
-            Text(text.libraryFooterHint)
-                .font(.caption)
-                .foregroundStyle(.tertiary)
             Spacer()
             Button(text.manageButton) {
                 openSnippetSettings()

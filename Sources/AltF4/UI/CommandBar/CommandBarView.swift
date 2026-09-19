@@ -162,12 +162,6 @@ struct CommandBarView: View {
                 Divider()
                 shortcutCard(entryID: entryID)
             }
-            // A footer under a bare field reads as a second row of chrome on
-            // something meant to be one strip.
-            if !service.isCompactHome {
-                Divider()
-                footer
-            }
         }
         .frame(width: 560)
         .background(HUDBackdrop(cornerRadius: 22, contrast: .high))
@@ -195,10 +189,7 @@ struct CommandBarView: View {
                 .opacity(0.85)
                 .frame(width: 22, height: 22)
                 .allowsHitTesting(false)
-                .overlay(
-                    DragHandle()
-                        .help(text.dragHint)
-                )
+                .overlay(DragHandle())
             if case .naming(let entryID) = service.mode,
                let entry = service.entry(withID: entryID) {
                 Text(entry.title)
@@ -224,7 +215,6 @@ struct CommandBarView: View {
                 .focused($searchFocused)
                 .disableAutocorrection(true)
                 .accessibilityLabel(text.pageTitle)
-            if service.isCompactHome { compactHints }
             if !service.query.isEmpty {
                 Button {
                     service.query = ""
@@ -238,23 +228,6 @@ struct CommandBarView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
-    }
-
-    /// The collapsed bar has no footer, so the keys that still work (↓ to
-    /// peek, Esc to close) say so inline instead, in the footer's own glyphs.
-    private var compactHints: some View {
-        HStack(spacing: 4) {
-            Text("↓")
-                .font(.system(size: 9, weight: .semibold, design: .rounded))
-            Text(text.suggestionsLabel)
-                .font(.system(size: 9))
-            Text("Esc")
-                .font(.system(size: 9, weight: .semibold, design: .rounded))
-                .padding(.leading, 4)
-        }
-        .foregroundStyle(.tertiary)
-        .lineLimit(1)
-        .fixedSize()
     }
 
     /// Everything that can be done to the selected row, in the same list
@@ -322,13 +295,14 @@ struct CommandBarView: View {
                 .padding(.horizontal, 17)
                 .padding(.top, 12)
             }
-            Text(service.aliasWarning ?? text.argumentHint)
-                .font(.system(size: 10.5))
-                .foregroundStyle(service.aliasWarning == nil
-                                 ? AnyShapeStyle(.tertiary) : AnyShapeStyle(Color.orange))
-                .padding(.horizontal, 17)
-                .padding(.bottom, 12)
+            if let warning = service.aliasWarning {
+                Text(warning)
+                    .font(.system(size: 10.5))
+                    .foregroundStyle(Color.orange)
+                    .padding(.horizontal, 17)
+            }
         }
+        .padding(.bottom, 12)
     }
 
     /// Listening for the combination one row should answer to. The card says
@@ -762,13 +736,8 @@ struct CommandBarView: View {
                 .padding(.horizontal, 17)
                 .padding(.top, 12)
             }
-            Text(text.argumentHint)
-                .font(.system(size: 10.5))
-                .foregroundStyle(.tertiary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 17)
-                .padding(.bottom, 12)
         }
+        .padding(.bottom, 12)
     }
 
     private func confirmCard(entryID: String) -> some View {
@@ -779,9 +748,6 @@ struct CommandBarView: View {
                     VStack(alignment: .leading, spacing: 1.5) {
                         Text(entry.confirmationPrompt ?? entry.title)
                             .font(.system(size: 13, weight: .semibold))
-                        Text(text.confirmHint)
-                            .font(.system(size: 10.5))
-                            .foregroundStyle(.secondary)
                     }
                     Spacer()
                     // Someone who opened the bar with the mouse has to be able
@@ -1125,49 +1091,6 @@ struct CommandBarView: View {
                 .padding(.vertical, 12)
             }
         }
-    }
-
-    // MARK: - Footer
-
-    private var footer: some View {
-        HStack(spacing: 5) {
-            Image(systemName: "keyboard")
-                .font(.system(size: 8.5))
-                .foregroundStyle(.tertiary)
-            Text(GlobalShortcut.saved(for: DefaultsKey.commandBarShortcut,
-                                      fallback: .commandBarDefault).displayString)
-                .font(.system(size: 9, weight: .semibold, design: .rounded))
-                .foregroundStyle(.tertiary)
-            Spacer()
-            if service.canOpenActions {
-                Text("⌘K")
-                    .font(.system(size: 9, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.tertiary)
-                Text(text.actionsHint)
-                    .font(.system(size: 9))
-                    .foregroundStyle(.tertiary)
-                    .padding(.trailing, 4)
-            }
-            Text(service.isShowingSuggestions && !service.categoryChips.isEmpty ? "⌃P ⌃N ↑↓ ←→" : "⌃P ⌃N ↑↓")
-                .font(.system(size: 9, weight: .semibold, design: .rounded))
-                .foregroundStyle(.tertiary)
-            if service.selectedEntry?.id == "math.result" {
-                Text("⇥")
-                    .font(.system(size: 9, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.tertiary)
-                Text(text.reuseHint)
-                    .font(.system(size: 9))
-                    .foregroundStyle(.tertiary)
-            }
-            Image(systemName: "return")
-                .font(.system(size: 8))
-                .foregroundStyle(.tertiary)
-            Text("Esc")
-                .font(.system(size: 9, weight: .semibold, design: .rounded))
-                .foregroundStyle(.tertiary)
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
     }
 }
 

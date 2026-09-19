@@ -16,29 +16,18 @@ struct ShelfSettings: View {
     @AppStorage(DefaultsKey.shelfClearOnClose) private var clearOnClose = false
     @State private var showingAppPicker = false
 
+    private var layoutText: SettingsLayoutStrings { FeatureStrings.settingsLayout(l10n.language) }
+
     var body: some View {
         Form {
             Section {
-                Toggle(l10n.s.shelfEnable, isOn: $enabled)
+                SettingsToggleWithCaption(title: l10n.s.shelfEnable,
+                                          caption: l10n.s.shelfEnableCaption,
+                                          isOn: $enabled)
                     .onChange(of: enabled) { _, _ in
                         ShelfService.shared.syncWithPreferences()
                     }
-                Text(l10n.s.shelfEnableCaption)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Label(l10n.s.shelfNoPermission, systemImage: "checkmark.shield")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
-            Section(l10n.s.shelfHowTitle) {
-                bullet("1", l10n.s.shelfStep1)
-                bullet("2", l10n.s.shelfStep2)
-                bullet("3", l10n.s.shelfStep3)
-            }
-
-            if enabled {
-                Section {
+                if enabled {
                     Toggle(l10n.s.shelfShortcutToggle, isOn: $shortcutEnabled)
                         .onChange(of: shortcutEnabled) { _, _ in
                             ShelfService.shared.syncHotkey()
@@ -48,35 +37,8 @@ struct ShelfSettings: View {
                     }
                     if shortcutEnabled, shelf.hotkeyRegistrationFailed {
                         Text(l10n.s.shortcutUnavailable)
-                            .font(.caption)
+                            .font(.subheadline)
                             .foregroundStyle(.orange)
-                    }
-                    VStack(alignment: .leading, spacing: 3) {
-                        Toggle(l10n.s.shelfShakeToggle, isOn: $shake)
-                            .onChange(of: shake) { _, _ in
-                                ShelfService.shared.syncDragMonitor()
-                            }
-                        Text(l10n.s.shelfShakeCaption)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    VStack(alignment: .leading, spacing: 3) {
-                        Toggle(l10n.s.shelfDropZoneToggle, isOn: $dropZone)
-                            .onChange(of: dropZone) { _, _ in
-                                ShelfService.shared.syncDragMonitor()
-                            }
-                        Text(l10n.s.shelfDropZoneCaption)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    VStack(alignment: .leading, spacing: 3) {
-                        Toggle(l10n.s.shelfEdgeToggle, isOn: $edgeDrag)
-                            .onChange(of: edgeDrag) { _, _ in
-                                ShelfService.shared.syncDragMonitor()
-                            }
-                        Text(l10n.s.shelfEdgeCaption)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
                     }
                     Button {
                         ShelfService.shared.summon()
@@ -84,29 +46,51 @@ struct ShelfSettings: View {
                         Label(l10n.s.shelfOpenNow, systemImage: "tray.and.arrow.down")
                     }
                 }
+            } footer: {
+                SettingsCaptionText(l10n.s.shelfNoPermission)
+            }
 
-                Section(l10n.s.shelfBehaviorTitle) {
-                    VStack(alignment: .leading, spacing: 3) {
-                        Toggle(l10n.s.shelfCloseAfterDrop, isOn: $closeAfterDrop)
-                        Text(l10n.s.shelfCloseAfterDropCaption)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    VStack(alignment: .leading, spacing: 3) {
-                        Toggle(l10n.s.shelfRemoveAfterDrop, isOn: $removeAfterDrop)
-                        Text(l10n.s.shelfRemoveAfterDropCaption)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    VStack(alignment: .leading, spacing: 3) {
-                        Toggle(l10n.s.shelfClearOnClose, isOn: $clearOnClose)
-                        Text(l10n.s.shelfClearOnCloseCaption)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
+            Section(l10n.s.shelfHowTitle) {
+                bullet("1", l10n.s.shelfStep1)
+                bullet("2", l10n.s.shelfStep2)
+                bullet("3", l10n.s.shelfStep3)
+            }
+
+            if enabled {
+                Section(layoutText.behavior) {
+                    SettingsToggleWithCaption(title: l10n.s.shelfShakeToggle,
+                                              caption: l10n.s.shelfShakeCaption,
+                                              isOn: $shake)
+                        .onChange(of: shake) { _, _ in
+                            ShelfService.shared.syncDragMonitor()
+                        }
+                    SettingsToggleWithCaption(title: l10n.s.shelfDropZoneToggle,
+                                              caption: l10n.s.shelfDropZoneCaption,
+                                              isOn: $dropZone)
+                        .onChange(of: dropZone) { _, _ in
+                            ShelfService.shared.syncDragMonitor()
+                        }
+                    SettingsToggleWithCaption(title: l10n.s.shelfEdgeToggle,
+                                              caption: l10n.s.shelfEdgeCaption,
+                                              isOn: $edgeDrag)
+                        .onChange(of: edgeDrag) { _, _ in
+                            ShelfService.shared.syncDragMonitor()
+                        }
                 }
 
-                Section(l10n.s.shelfExclusionsTitle) {
+                Section(l10n.s.shelfBehaviorTitle) {
+                    SettingsToggleWithCaption(title: l10n.s.shelfCloseAfterDrop,
+                                              caption: l10n.s.shelfCloseAfterDropCaption,
+                                              isOn: $closeAfterDrop)
+                    SettingsToggleWithCaption(title: l10n.s.shelfRemoveAfterDrop,
+                                              caption: l10n.s.shelfRemoveAfterDropCaption,
+                                              isOn: $removeAfterDrop)
+                    SettingsToggleWithCaption(title: l10n.s.shelfClearOnClose,
+                                              caption: l10n.s.shelfClearOnCloseCaption,
+                                              isOn: $clearOnClose)
+                }
+
+                Section {
                     if sortedExclusions.isEmpty {
                         Text(l10n.s.shelfExclusionsEmpty)
                             .font(.callout)
@@ -134,9 +118,10 @@ struct ShelfSettings: View {
                     } label: {
                         Label(l10n.s.autoQuitAddApp, systemImage: "plus")
                     }
-                    Text(l10n.s.shelfExclusionsCaption)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                } header: {
+                    Text(l10n.s.shelfExclusionsTitle)
+                } footer: {
+                    SettingsCaptionText(l10n.s.shelfExclusionsCaption)
                 }
             }
         }

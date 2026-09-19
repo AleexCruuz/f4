@@ -521,13 +521,11 @@ enum NotchActivityTests {
         /// Distance from a centred box, anchored at `inset`, to the silhouette.
         func clearance(_ geometry: NotchGeometry, inset: CGFloat, boxHeight: CGFloat, radius: CGFloat) -> CGFloat {
             let surface = geometry.compactActivitySize
-            let shoulder = geometry.compactActivityShoulder
-            let corner = min(NotchLayout.surfaceRadius(height: surface.height),
-                             (surface.width - shoulder * 2) / 2)
-            let centre = CGPoint(x: shoulder + corner, y: surface.height - corner)
+            let corner = min(NotchLayout.surfaceRadius(height: surface.height), surface.width / 2)
+            let centre = CGPoint(x: corner, y: surface.height - corner)
             let x = inset + geometry.compactActivityHorizontalPadding + radius
             let y = surface.height - (geometry.compactActivityContentHeight - boxHeight) / 2 - radius
-            if y <= centre.y { return x - radius - shoulder }
+            if y <= centre.y { return x - radius }
             if x >= centre.x { return surface.height - y - radius }
             return corner - hypot(x - centre.x, y - centre.y) - radius
         }
@@ -610,22 +608,22 @@ enum NotchActivityTests {
         defer { defaults.removePersistentDomain(forName: suite) }
         for (key, value) in Defaults.registeredDefaults where key.hasPrefix("notch") { defaults.set(value, forKey: key) }
         for (key, value) in AppFeature.availabilityDefaults { defaults.set(value, forKey: key) }
-        defaults.set(true, forKey: DefaultsKey.notchEnabled)
-        expect(NotchTimerSupport.isEnabled(in: defaults) && !NotchCameraSupport.isEnabled(in: defaults)
-               && !NotchAccessorySupport.isEnabled(in: defaults), "on-demand timer is available by default while camera and accessory monitoring remain opt-in")
-        let preferenceKeys = [DefaultsKey.notchTimerEnabled, DefaultsKey.notchCameraEnabled, DefaultsKey.notchAccessoriesEnabled]
+        expect(NotchTimerSupport.isEnabled(in: defaults) && NotchCameraSupport.isEnabled(in: defaults)
+               && !NotchAccessorySupport.isEnabled(in: defaults),
+               "the timer and the always-installed mirror are there by default while accessory monitoring remains opt-in")
+        let preferenceKeys = [DefaultsKey.notchTimerEnabled, DefaultsKey.notchAccessoriesEnabled]
         for key in preferenceKeys { defaults.set(true, forKey: key) }
         expect(NotchTimerSupport.isEnabled(in: defaults) && NotchCameraSupport.isEnabled(in: defaults)
                && NotchAccessorySupport.isEnabled(in: defaults), "each explicit opt-in enables its activity")
-        expect(NotchCameraSupport.canPresent(expanded: true, selected: .camera, appPanel: false,
+        expect(NotchCameraSupport.canPresent(expanded: true, selected: .camera, covered: false,
             captureControls: false, in: defaults), "the mirror can start only on its selected, expanded surface")
-        expect(!NotchCameraSupport.canPresent(expanded: false, selected: .camera, appPanel: false,
+        expect(!NotchCameraSupport.canPresent(expanded: false, selected: .camera, covered: false,
             captureControls: false, in: defaults)
-            && !NotchCameraSupport.canPresent(expanded: true, selected: .music, appPanel: false,
+            && !NotchCameraSupport.canPresent(expanded: true, selected: .music, covered: false,
                 captureControls: false, in: defaults)
-            && !NotchCameraSupport.canPresent(expanded: true, selected: .camera, appPanel: true,
+            && !NotchCameraSupport.canPresent(expanded: true, selected: .camera, covered: true,
                 captureControls: false, in: defaults)
-            && !NotchCameraSupport.canPresent(expanded: true, selected: .camera, appPanel: false,
+            && !NotchCameraSupport.canPresent(expanded: true, selected: .camera, covered: false,
                 captureControls: true, in: defaults), "collapse, section changes and replacement surfaces all stop embedded capture")
         defaults.set("timer,camera", forKey: DefaultsKey.notchHiddenModules)
         expect(!NotchTimerSupport.isEnabled(in: defaults) && !NotchCameraSupport.isEnabled(in: defaults),
@@ -639,9 +637,9 @@ enum NotchActivityTests {
         for feature in [AppFeature.notchTimer, .cameraPreview, .notchAccessories, .monitorPower] {
             defaults.set(true, forKey: feature.availabilityKey)
         }
-        defaults.set(false, forKey: DefaultsKey.notchEnabled)
+        defaults.set(false, forKey: AppFeature.notch.availabilityKey)
         expect(!NotchTimerSupport.isEnabled(in: defaults) && !NotchCameraSupport.isEnabled(in: defaults)
-               && !NotchAccessorySupport.isEnabled(in: defaults), "the notch master switch gates all activities")
+               && !NotchAccessorySupport.isEnabled(in: defaults), "removing the island gates all activities")
         expect(SettingsBackupSupport.exportKeys().isSuperset(of: Set(preferenceKeys + [
             AppFeature.notchTimer.availabilityKey, AppFeature.notchAccessories.availabilityKey])),
                "activity preferences and feature availability round-trip through settings backup")

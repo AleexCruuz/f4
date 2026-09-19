@@ -160,10 +160,6 @@ struct ShelfView: View {
 
     private var bottomBar: some View {
         HStack(spacing: 8) {
-            Text(l10n.s.shelfHint)
-                .font(.system(size: 10))
-                .foregroundStyle(.tertiary)
-                .lineLimit(1)
             Spacer(minLength: 8)
             shareButton
             clearButton

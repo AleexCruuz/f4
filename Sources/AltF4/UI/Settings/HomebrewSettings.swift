@@ -211,10 +211,7 @@ struct HomebrewSettings: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(l10n.s.homebrewShellSetupTitle)
                     .font(.system(size: 12, weight: .semibold))
-                Text(homebrew.didOpenShellConfig ? l10n.s.homebrewShellSetupOpened : l10n.s.homebrewShellSetupBody)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                SettingsCaptionText(homebrew.didOpenShellConfig ? l10n.s.homebrewShellSetupOpened : l10n.s.homebrewShellSetupBody)
             }
             Spacer(minLength: 0)
             Button {
@@ -327,7 +324,7 @@ struct HomebrewSettings: View {
             ProgressView()
                 .controlSize(.small)
             Text(text)
-                .font(.caption)
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
         .padding(.horizontal, 6)
@@ -337,7 +334,7 @@ struct HomebrewSettings: View {
 
     private func packageMessage(_ text: String) -> some View {
         Text(text)
-            .font(.caption)
+            .font(.subheadline)
             .foregroundStyle(.secondary)
             .fixedSize(horizontal: false, vertical: true)
             .padding(.horizontal, 6)
@@ -463,7 +460,7 @@ struct HomebrewSettings: View {
                     }
                     if let error = homebrew.errorMessage, !error.isEmpty {
                         Label(error, systemImage: "exclamationmark.triangle.fill")
-                            .font(.caption)
+                            .font(.subheadline)
                             .foregroundStyle(.orange)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -582,13 +579,13 @@ struct HomebrewSettings: View {
             }
             .buttonStyle(.borderedProminent)
             Text(homebrew.didOpenInstaller ? l10n.s.homebrewInstallHomebrewOpened : l10n.s.homebrewInstallHomebrewCaption)
-                .font(.caption)
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 360)
             if let error = homebrew.errorMessage, !error.isEmpty {
                 Label(error, systemImage: "exclamationmark.triangle.fill")
-                    .font(.caption)
+                    .font(.subheadline)
                     .foregroundStyle(.orange)
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: 360)
@@ -815,7 +812,7 @@ struct HomebrewTrustCard: View {
             Label(l10n.s.homebrewTrustTitle, systemImage: "checkmark.shield")
                 .font(compact ? .system(size: 11, weight: .semibold) : .headline)
             Text(String(format: l10n.s.homebrewTrustCaption, tap))
-                .font(compact ? .system(size: 9.5) : .caption)
+                .font(compact ? .system(size: 9.5) : .subheadline)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             Button {

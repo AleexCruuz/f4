@@ -40,6 +40,14 @@ struct RecentCapturesView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             if notchHeight == nil { header }
+            // In the notch the trail names the page, so only the clearing
+            // action is left of the header.
+            else if !visibleEntries.isEmpty {
+                HStack {
+                    Spacer(minLength: 0)
+                    NotchIconButton(symbol: "trash", title: text.clear) { confirmingClear = true }
+                }
+            }
             content
         }
         .onAppear { history.reload() }
@@ -101,7 +109,7 @@ struct RecentCapturesView: View {
                     }
                 }
             }
-            .frame(maxHeight: notchHeight ?? 300)
+            .frame(maxHeight: notchHeight.map { max(80, $0 - 38) } ?? 300)
         }
     }
 

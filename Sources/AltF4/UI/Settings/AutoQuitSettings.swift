@@ -13,32 +13,32 @@ struct AutoQuitSettings: View {
     var body: some View {
         Form {
             Section {
-                Toggle(l10n.s.autoQuitEnable, isOn: $enabled)
+                SettingsToggleWithCaption(title: l10n.s.autoQuitEnable,
+                                          caption: l10n.s.autoQuitEnableCaption,
+                                          isOn: $enabled)
                     .onChange(of: enabled) { _, _ in
                         AutoQuitService.shared.syncWithPreferences()
                     }
-                Text(l10n.s.autoQuitEnableCaption)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
                 if enabled, service.isRunning {
                     Label(l10n.s.autoQuitActiveNow, systemImage: "checkmark.circle.fill")
-                        .font(.caption)
+                        .font(.subheadline)
                         .foregroundStyle(.green)
                 }
             }
 
-            Section(l10n.s.autoQuitHowTitle) {
+            Section {
                 bullet("rectangle.badge.xmark", l10n.s.autoQuitStep1)
                 bullet("bolt.fill", l10n.s.autoQuitStep2)
-                Text(l10n.s.autoQuitPredictableNote)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+            } header: {
+                Text(l10n.s.autoQuitHowTitle)
+            } footer: {
+                SettingsCaptionText(l10n.s.autoQuitPredictableNote)
             }
 
             // The exception list has one reader, the window check, and that only
             // runs while the feature does. With the switch off every edit here
             // is a no-op, so the list follows it.
-            Section(l10n.s.autoQuitExceptionsTitle) {
+            Section {
                 if sortedExceptions.isEmpty {
                     Text(l10n.s.autoQuitExceptionsEmpty)
                         .font(.callout)
@@ -73,10 +73,10 @@ struct AutoQuitSettings: View {
                     Label(l10n.s.autoQuitAddApp, systemImage: "plus")
                 }
                 .disabled(!enabled)
-
-                Text(l10n.s.autoQuitExceptionsCaption)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+            } header: {
+                Text(l10n.s.autoQuitExceptionsTitle)
+            } footer: {
+                SettingsCaptionText(l10n.s.autoQuitExceptionsCaption)
             }
 
             if enabled, !permissions.accessibility {

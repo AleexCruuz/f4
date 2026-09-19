@@ -94,7 +94,7 @@ struct NotchLayoutEditor: View {
                             width = NotchSize.clamped(Double(start.width + value.translation.width / 0.6), to: NotchSize.widthRange, fallback: NotchSize.defaultWidth)
                             height = NotchSize.clamped(Double(start.height + value.translation.height / 0.35), to: NotchSize.heightRange, fallback: NotchSize.defaultHeight)
                         }.onEnded { _ in resizeStart = nil })
-                        .position(x: frame.maxX - NotchLayout.shoulder - 17, y: frame.maxY - 17)
+                        .position(x: frame.maxX - 17, y: frame.maxY - 17)
                         .accessibilityLabel(text.size)
                 }
                 .coordinateSpace(name: "island.editor")
@@ -107,11 +107,8 @@ struct NotchLayoutEditor: View {
     }
 
     private var actualWidth: CGFloat {
-        switch NotchSize(rawValue: size) ?? .compact {
-        case .compact: return 480
-        case .spacious: return 560
-        case .custom: return NotchSize.clamped(width, to: NotchSize.widthRange, fallback: NotchSize.defaultWidth)
-        }
+        (NotchSize(rawValue: size) ?? .compact).presetWidth
+            ?? CGFloat(NotchSize.clamped(width, to: NotchSize.widthRange, fallback: NotchSize.defaultWidth))
     }
 
     private func islandFrame(in canvas: CGSize) -> CGRect {

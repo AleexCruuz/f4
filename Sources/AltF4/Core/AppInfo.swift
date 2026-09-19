@@ -12,7 +12,7 @@ enum AppInfo {
     /// TODO: point this at the published fork before distributing any binary.
     /// GPL-3.0 §6 requires anyone who receives a build to be able to get the
     /// corresponding source.
-    static let repositoryURL = URL(string: "https://github.com/aleexcruzz/altf4")!
+    static let repositoryURL = URL(string: "https://github.com/AleexCruuz/f4")!
 
     /// The fork has no site, donation page, chat server or social account of its
     /// own. The upstream ones are deliberately NOT reused: they belong to the

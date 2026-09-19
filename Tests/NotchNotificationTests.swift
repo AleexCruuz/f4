@@ -106,7 +106,6 @@ enum NotchNotificationTests {
         defer { defaults.removePersistentDomain(forName: suite) }
         for (key, value) in Defaults.registeredDefaults where key.hasPrefix("notch") { defaults.set(value, forKey: key) }
         for (key, value) in AppFeature.availabilityDefaults { defaults.set(value, forKey: key) }
-        defaults.set(true, forKey: DefaultsKey.notchEnabled)
         expect(!NotchNotificationSupport.isEnabled(in: defaults), "enabling the notch never enables message mirroring")
         defaults.set(true, forKey: DefaultsKey.notchNotificationsEnabled)
         expect(NotchSupport.routes(.systemNotification, in: defaults), "an explicit opt-in enables new notification banners")
@@ -119,8 +118,8 @@ enum NotchNotificationTests {
         defaults.set("notifications", forKey: DefaultsKey.notchHiddenModules)
         expect(!NotchNotificationSupport.isEnabled(in: defaults), "hiding notifications also stops reading messages")
         defaults.set("", forKey: DefaultsKey.notchHiddenModules)
-        defaults.set(false, forKey: DefaultsKey.notchEnabled)
-        expect(!NotchNotificationSupport.isEnabled(in: defaults), "the master switch gates mirroring")
+        defaults.set(false, forKey: AppFeature.notch.availabilityKey)
+        expect(!NotchNotificationSupport.isEnabled(in: defaults), "removing the island gates mirroring")
         expect(SettingsBackupSupport.exportKeys().isSuperset(of: [DefaultsKey.notchNotificationsEnabled,
                                                                  AppFeature.notchNotifications.availabilityKey, DefaultsKey.notchDismissNativeNotifications]),
                "notification preferences are included in settings backup")

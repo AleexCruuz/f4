@@ -32,48 +32,46 @@ struct CutPasteSettings: View {
         Form {
             if AppFeature.finderCutPaste.isAvailable {
                 Section {
-                    Toggle(l10n.s.cutPasteEnable, isOn: $enabled)
+                    SettingsToggleWithCaption(title: l10n.s.cutPasteEnable,
+                                              caption: l10n.s.cutPasteEnableCaption,
+                                              isOn: $enabled)
                         .onChange(of: enabled) { _, _ in
                             FinderCutPaste.shared.syncWithPreferences()
                         }
-                    Text(l10n.s.cutPasteEnableCaption)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
                     if enabled {
-                        Toggle(l10n.s.cutPasteShowHUD, isOn: $showHUD)
+                        SettingsToggleWithCaption(title: l10n.s.cutPasteShowHUD,
+                                                  caption: l10n.s.cutPasteShowHUDCaption,
+                                                  isOn: $showHUD)
                             .onChange(of: showHUD) { _, _ in
                                 FinderCutPaste.shared.syncWithPreferences()
                             }
-                        Text(l10n.s.cutPasteShowHUDCaption)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
                     }
                     if enabled, service.isRunning {
                         Label(l10n.s.cutPasteActiveNow, systemImage: "checkmark.circle.fill")
-                            .font(.caption)
+                            .font(.subheadline)
                             .foregroundStyle(.green)
                     }
                 }
                 .settingsSectionAnchor(.finderCutPaste)
 
-                Section(l10n.s.cutPasteHowTitle) {
+                Section {
                     howRow(keys: ["⌘", "X"], text: l10n.s.cutPasteStep1)
                     howRow(keys: ["⌘", "V"], text: l10n.s.cutPasteStep2)
-                    Text(l10n.s.cutPasteTextNote)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                } header: {
+                    Text(l10n.s.cutPasteHowTitle)
+                } footer: {
+                    SettingsCaptionText(l10n.s.cutPasteTextNote)
                 }
             }
 
             if AppFeature.finderRename.isAvailable {
                 Section {
-                    Toggle(renameText.enableLabel, isOn: $renameEnabled)
+                    SettingsToggleWithCaption(title: renameText.enableLabel,
+                                              caption: renameText.caption,
+                                              isOn: $renameEnabled)
                         .onChange(of: renameEnabled) { _, _ in
                             FinderRenameService.shared.syncWithPreferences()
                         }
-                    Text(renameText.caption)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
                     HStack(spacing: 8) {
                         Text(renameText.shortcutLabel)
                         Spacer()
@@ -91,20 +89,22 @@ struct CutPasteSettings: View {
                         )
                         .frame(width: 108)
                         .disabled(!renameEnabled)
-                        Button(l10n.s.shortcutReset) {
-                            renameShortcutRaw = GlobalShortcut.finderRenameDefault.storageValue
-                            renameError = nil
-                            FinderRenameService.shared.syncWithPreferences()
+                        if renameShortcut != .finderRenameDefault {
+                            Button(l10n.s.shortcutReset) {
+                                renameShortcutRaw = GlobalShortcut.finderRenameDefault.storageValue
+                                renameError = nil
+                                FinderRenameService.shared.syncWithPreferences()
+                            }
+                            .disabled(!renameEnabled)
                         }
-                        .disabled(!renameEnabled || renameShortcut == .finderRenameDefault)
                     }
                     if let renameError {
                         Text(renameError)
-                            .font(.caption)
+                            .font(.subheadline)
                             .foregroundStyle(.orange)
                     } else if recordingRename {
                         Text(ShortcutRecordingCaption.text(l10n.s, canClear: false))
-                            .font(.caption)
+                            .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
                 } header: {
@@ -114,12 +114,13 @@ struct CutPasteSettings: View {
             }
 
             if needsAccessibility, !permissions.accessibility {
-                Section(l10n.s.permissionRequired) {
+                Section {
                     PermissionRow(kind: .accessibility)
+                } header: {
+                    Text(l10n.s.permissionRequired)
+                } footer: {
                     if AppFeature.finderCutPaste.isAvailable, enabled {
-                        Text(l10n.s.cutPasteAutomationNote)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                        SettingsCaptionText(l10n.s.cutPasteAutomationNote)
                     }
                 }
             }

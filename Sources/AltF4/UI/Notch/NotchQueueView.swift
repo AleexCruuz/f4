@@ -55,6 +55,6 @@ struct NotchQueueView: View {
             }
         }
         .padding(12)
-        .background(.white.opacity(0.045), in: RoundedRectangle(cornerRadius: 14))
+        .background(.white.opacity(NotchFill.quiet), in: RoundedRectangle(cornerRadius: 14))
     }
 }

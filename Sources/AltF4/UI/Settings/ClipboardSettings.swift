@@ -15,7 +15,6 @@ struct ClipboardSettings: View {
     @AppStorage(DefaultsKey.clipboardHistorySkipSensitive) private var skipSensitive = true
     @AppStorage(DefaultsKey.clipboardHistoryIncludeImagesFiles) private var includeImagesFiles = true
     @AppStorage(DefaultsKey.clipboardHistoryShortcutEnabled) private var shortcutEnabled = true
-    @AppStorage(DefaultsKey.panelUtilityClipboard) private var showInPanel = true
     @AppStorage(DefaultsKey.finderPasteImageAsFile) private var pasteImageAsFile = false
     @AppStorage(DefaultsKey.clipboardAutoClearOnDelay) private var autoClearOnDelay = false
     @AppStorage(DefaultsKey.clipboardAutoClearDelay)
@@ -29,46 +28,45 @@ struct ClipboardSettings: View {
     @AppStorage(DefaultsKey.clipboardAIEndpoint)
     private var aiEndpoint = Defaults.defaultClipboardAIEndpoint
     @AppStorage(DefaultsKey.clipboardAITargetLanguage) private var aiTargetLanguage = ""
+    @AppStorage(DefaultsKey.clipboardAIBlockSensitive) private var aiBlockSensitive = true
 
     private var text: ClipboardFeatureStrings {
         FeatureStrings.clipboard(l10n.language)
     }
 
+    private var layoutText: SettingsLayoutStrings { FeatureStrings.settingsLayout(l10n.language) }
+
     var body: some View {
         Form {
             if AppFeature.clipboardHistory.isAvailable {
                 Section {
-                    Toggle(text.enable, isOn: $enabled)
+                    SettingsToggleWithCaption(title: text.enable,
+                                              caption: text.caption,
+                                              isOn: $enabled)
                         .onChange(of: enabled) { _, _ in
                             ClipboardHistoryService.shared.syncWithPreferences()
                         }
-                    Text(text.caption)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Text(text.localNote)
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
                     if enabled, history.isRunning {
                         Label(text.active, systemImage: "checkmark.circle.fill")
-                            .font(.caption)
+                            .font(.subheadline)
                             .foregroundStyle(.green)
                     }
+                } footer: {
+                    SettingsCaptionText(text.localNote)
                 }
                 .settingsSectionAnchor(.clipboardHistory)
 
                 clipboardShortcutSection
 
-                Section {
-                    Toggle(text.includeImagesFiles, isOn: $includeImagesFiles)
+                Section(layoutText.behavior) {
+                    SettingsToggleWithCaption(title: text.includeImagesFiles,
+                                              caption: text.includeImagesFilesCaption,
+                                              isOn: $includeImagesFiles)
                         .disabled(!enabled)
-                    Text(text.includeImagesFilesCaption)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Toggle(text.skipSensitive, isOn: $skipSensitive)
+                    SettingsToggleWithCaption(title: text.skipSensitive,
+                                              caption: text.skipSensitiveCaption,
+                                              isOn: $skipSensitive)
                         .disabled(!enabled)
-                    Text(text.skipSensitiveCaption)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
                     ClipboardIgnoredAppsList()
                         .disabled(!enabled)
                     Picker(text.limit, selection: $limit) {
@@ -77,14 +75,7 @@ struct ClipboardSettings: View {
                         }
                     }
                     .disabled(!enabled)
-                }
-
-                // Its own section because it is the one setting here that keeps
-                // working with capture off: the panel entry stays, saying so,
-                // and still opens the saved items. Sitting among the disabled
-                // rows it read as one that had been missed.
-                Section {
-                    Toggle(text.showInPanel, isOn: $showInPanel)
+                    clipboardStatsRow
                 }
 
                 clipboardAutoClearSection
@@ -93,35 +84,35 @@ struct ClipboardSettings: View {
 
             if AppFeature.finderCutPaste.isAvailable {
                 Section {
-                    Toggle(text.pasteImageAsFile, isOn: $pasteImageAsFile)
+                    SettingsToggleWithCaption(title: text.pasteImageAsFile,
+                                              caption: text.pasteImageAsFileCaption,
+                                              isOn: $pasteImageAsFile)
                         .onChange(of: pasteImageAsFile) { _, _ in
                             FinderCutPaste.shared.syncWithPreferences()
                         }
-                    Text(text.pasteImageAsFileCaption)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
                     if pasteImageAsFile, !permissions.accessibility {
                         PermissionRow(kind: .accessibility)
                     }
+                } header: {
+                    Text(l10n.s.cutPasteName)
                 }
             }
 
             if AppFeature.pastePlain.isAvailable {
                 Section {
-                    Toggle(l10n.s.pastePlainName, isOn: $pastePlainEnabled)
+                    SettingsDescribedToggle(title: l10n.s.pastePlainName,
+                                              caption: l10n.s.pastePlainCaption,
+                                              isOn: $pastePlainEnabled)
                         .onChange(of: pastePlainEnabled) { _, _ in
                             PastePlainService.shared.syncWithPreferences()
                         }
-                    Text(l10n.s.pastePlainCaption)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
                     ShortcutPreferenceRow(role: .pastePlain,
                                           isEnabled: pastePlainEnabled) {
                         PastePlainService.shared.syncWithPreferences()
                     }
                     if pastePlainEnabled, pastePlain.shortcutRegistrationFailed {
                         Text(l10n.s.shortcutUnavailable)
-                            .font(.caption)
+                            .font(.subheadline)
                             .foregroundStyle(.orange)
                     }
                     if pastePlainEnabled, !permissions.accessibility {
@@ -131,10 +122,6 @@ struct ClipboardSettings: View {
                     Text(l10n.s.pastePlainName)
                 }
                 .settingsSectionAnchor(.pastePlain)
-            }
-
-            if AppFeature.clipboardHistory.isAvailable {
-                clipboardStatsSection
             }
         }
         .formStyle(.grouped)
@@ -159,7 +146,7 @@ struct ClipboardSettings: View {
 
     @ViewBuilder
     private var clipboardShortcutSection: some View {
-        Section(text.shortcut) {
+        Section {
             Toggle(text.shortcut, isOn: $shortcutEnabled)
                 .onChange(of: shortcutEnabled) { _, _ in
                     ClipboardHistoryService.shared.syncHotkey()
@@ -172,18 +159,19 @@ struct ClipboardSettings: View {
             }
             if enabled, shortcutEnabled, history.shortcutRegistrationFailed {
                 Text(l10n.s.shortcutUnavailable)
-                    .font(.caption)
+                    .font(.subheadline)
                     .foregroundStyle(.orange)
             }
-            Text(text.shortcutCaption)
-                .font(.caption)
-                .foregroundStyle(.secondary)
             Button {
                 ClipboardHistoryService.shared.showHistoryWindow()
             } label: {
                 Label(text.shortcut, systemImage: "doc.on.clipboard")
             }
             .disabled(history.entries.isEmpty)
+        } header: {
+            Text(layoutText.shortcuts)
+        } footer: {
+            SettingsCaptionText(text.shortcutCaption)
         }
     }
 
@@ -193,8 +181,11 @@ struct ClipboardSettings: View {
     // and names the command that fixes it.
     @ViewBuilder
     private var clipboardAISection: some View {
+        let aiText = FeatureStrings.clipboardAI(l10n.language)
         Section {
-            Toggle("Clipboard AI", isOn: $aiEnabled)
+            SettingsToggleWithCaption(title: aiText.settingsEnable,
+                                      caption: aiText.settingsCaption,
+                                      isOn: $aiEnabled)
                 .disabled(!enabled)
                 .onChange(of: aiEnabled) { _, isOn in
                     guard isOn else { return }
@@ -206,51 +197,55 @@ struct ClipboardSettings: View {
                         clipboardAI.warmUp()
                     }
                 }
-            Text("Adds translate, summarise, clean up and explain to the right-click menu of a saved text entry. The result is placed on the clipboard.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            Text("Runs a model on this Mac through Ollama. Nothing is sent anywhere — the endpoint below is refused unless it is on loopback.")
-                .font(.caption2)
-                .foregroundStyle(.tertiary)
 
             if aiEnabled {
-                TextField("Model", text: $aiModel)
+                SettingsToggleWithCaption(title: aiText.settingsBlockSensitive,
+                                          caption: aiText.settingsBlockSensitiveCaption,
+                                          isOn: $aiBlockSensitive)
+                TextField(aiText.settingsModel, text: $aiModel)
                     .textFieldStyle(.roundedBorder)
-                TextField("Translate into", text: $aiTargetLanguage,
-                          prompt: Text("This Mac's language"))
+                TextField(aiText.settingsTargetLanguage, text: $aiTargetLanguage,
+                          prompt: Text(aiText.settingsTargetLanguagePlaceholder))
                     .textFieldStyle(.roundedBorder)
-                TextField("Endpoint", text: $aiEndpoint)
-                    .textFieldStyle(.roundedBorder)
-                    .font(.system(.body, design: .monospaced))
 
                 clipboardAIStatusRow
+
+                SettingsMoreOptions {
+                    TextField(aiText.settingsEndpoint, text: $aiEndpoint)
+                        .textFieldStyle(.roundedBorder)
+                        .font(.system(.body, design: .monospaced))
+                }
             }
+        } header: {
+            Text(aiText.title)
+        } footer: {
+            SettingsCaptionText(aiText.settingsLocalNote)
         }
         .disabled(!AppFeature.clipboardHistory.isAvailable)
     }
 
     @ViewBuilder
     private var clipboardAIStatusRow: some View {
+        let aiText = FeatureStrings.clipboardAI(l10n.language)
         HStack(spacing: 6) {
             switch clipboardAI.installedModels {
             case .none:
-                Label("No model runner is answering", systemImage: "exclamationmark.triangle.fill")
-                    .font(.caption)
+                Label(aiText.statusNoRunner, systemImage: "exclamationmark.triangle.fill")
+                    .font(.subheadline)
                     .foregroundStyle(.orange)
             case let .some(models) where models.contains(clipboardAI.model):
-                Label("Ready — \(clipboardAI.model)", systemImage: "checkmark.circle.fill")
-                    .font(.caption)
+                Label(String(format: aiText.statusReady, clipboardAI.model),
+                      systemImage: "checkmark.circle.fill")
+                    .font(.subheadline)
                     .foregroundStyle(.green)
-            case let .some(models):
-                Label(models.isEmpty
-                        ? "Runner is up, but has no models. Run “ollama pull \(clipboardAI.model)”."
-                        : "Runner is up, but “\(clipboardAI.model)” is not installed. Available: \(models.joined(separator: ", "))",
+            case .some:
+                Label(String(format: aiText.statusModelNotInstalled, clipboardAI.model),
                       systemImage: "exclamationmark.triangle.fill")
-                    .font(.caption)
+                    .font(.subheadline)
                     .foregroundStyle(.orange)
             }
             Spacer()
-            Button("Check") {
+            Button(aiText.check) {
                 Task { await clipboardAI.refreshInstalledModels() }
             }
             .controlSize(.small)
@@ -292,9 +287,10 @@ struct ClipboardSettings: View {
                 .onChange(of: autoClearOnScreenLock) { _, _ in
                     ClipboardAutoClearService.shared.syncWithPreferences()
                 }
-            Text(text.autoClearCaption)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+        } header: {
+            Text(layoutText.privacy)
+        } footer: {
+            SettingsCaptionText(text.autoClearCaption)
         }
     }
 
@@ -307,27 +303,25 @@ struct ClipboardSettings: View {
         return formatter
     }()
 
-    private var clipboardStatsSection: some View {
-            Section {
-                HStack {
-                    Text("\(history.pinnedEntries.count)")
-                    Text(text.pinned)
-                        .foregroundStyle(.secondary)
-                    Text("·")
-                        .foregroundStyle(.tertiary)
-                    Text("\(history.recentEntries.count)")
-                    Text(text.recent)
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    Button(text.clearRecent) {
-                        history.clearRecent()
-                    }
-                    .disabled(history.recentEntries.isEmpty)
-                    Button(text.clearAll) {
-                        history.clearAll()
-                    }
-                    .disabled(history.recentEntries.isEmpty)
-                }
+    private var clipboardStatsRow: some View {
+        HStack {
+            Text("\(history.pinnedEntries.count)")
+            Text(text.pinned)
+                .foregroundStyle(.secondary)
+            Text("·")
+                .foregroundStyle(.tertiary)
+            Text("\(history.recentEntries.count)")
+            Text(text.recent)
+                .foregroundStyle(.secondary)
+            Spacer()
+            Button(text.clearRecent) {
+                history.clearRecent()
             }
+            .disabled(history.recentEntries.isEmpty)
+            Button(text.clearAll) {
+                history.clearAll()
+            }
+            .disabled(history.recentEntries.isEmpty)
+        }
     }
 }

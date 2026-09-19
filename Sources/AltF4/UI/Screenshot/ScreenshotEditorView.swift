@@ -750,7 +750,7 @@ struct ScreenshotEditorView: View {
 
             Divider().frame(height: 16).padding(.horizontal, 3)
 
-            if sharingEnabled {
+            if sharingEnabled, ScreenshotSharingSupport.isAvailable {
                 shareMenu
                 Divider().frame(height: 16).padding(.horizontal, 3)
             }

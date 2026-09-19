@@ -35,9 +35,6 @@ struct QuickLauncherView: View {
             // only add an empty band. It stays for the floating panel and for
             // a hosted utility, which needs its back control.
             if notchSize == nil || launcher.activeUtility != nil { header }
-            if notchSize != nil, launcher.activeUtility == nil, launcher.isEditing {
-                editHint
-            }
             if let utility = launcher.activeUtility, utility.feature.isAvailable {
                 hostedUtility(utility)
             } else if launcher.visibleItems.isEmpty && !launcher.isEditing {
@@ -52,7 +49,6 @@ struct QuickLauncherView: View {
             if launcher.activeUtility == nil, launcher.isEditing, !launcher.hiddenItems.isEmpty {
                 hiddenTray
             }
-            if notchSize == nil { footer }
         }
         .padding(notchSize == nil ? 16 : 0)
         .frame(width: notchSize?.width ?? 420)
@@ -106,6 +102,8 @@ struct QuickLauncherView: View {
                     PanelWindowLayoutView { launcher.closeUtility() }
                 case .toggles:
                     PanelQuickTogglesView { launcher.closeUtility() }
+                case .appUpdates:
+                    PanelAppUpdatesView { launcher.closeUtility() }
                 default:
                     EmptyView()
                 }
@@ -143,24 +141,12 @@ struct QuickLauncherView: View {
                                 .frame(width: 26, height: 26)
                         }
                         .buttonStyle(.plain)
-                        .help(l10n.s.launcherEditHint)
+                        .help(l10n.s.menuSettings)
                         .accessibilityLabel(l10n.s.menuSettings)
                     }
                 }
             }
-            if launcher.isEditing, launcher.activeUtility == nil {
-                editHint
-            }
         }
-    }
-
-    private var editHint: some View {
-        Text(l10n.s.launcherEditHint)
-            .font(.system(size: 9.5))
-            .foregroundStyle(.secondary)
-            .frame(maxWidth: .infinity, alignment: .center)
-            .multilineTextAlignment(.center)
-            .fixedSize(horizontal: false, vertical: true)
     }
 
     private var closeButton: some View {
@@ -347,21 +333,6 @@ struct QuickLauncherView: View {
             .padding(.vertical, 26)
     }
 
-    private var footer: some View {
-        HStack(spacing: 5) {
-            Image(systemName: "keyboard")
-                .font(.system(size: 8.5))
-                .foregroundStyle(.tertiary)
-            Text(GlobalShortcutRole.quickLauncher.savedShortcut.displayString)
-                .font(.system(size: 9, weight: .semibold, design: .rounded))
-                .foregroundStyle(.tertiary)
-            Spacer()
-            Text("Esc")
-                .font(.system(size: 9, weight: .semibold, design: .rounded))
-                .foregroundStyle(.tertiary)
-        }
-    }
-
     // MARK: - Inline options (edit mode)
 
     /// Tools whose closest settings are worth flipping right here, without a
@@ -479,6 +450,7 @@ struct QuickLauncherView: View {
             return recorder.isRecording ? strings.stopButton : strings.pageTitle
         case .cameraPreview: return FeatureStrings.cameraPreview(l10n.language).pageTitle
         case .scratchpad: return FeatureStrings.scratchpad(l10n.language).pageTitle
+        case .appUpdates: return FeatureStrings.appUpdates(l10n.language).pageTitle
         }
     }
 
@@ -501,6 +473,7 @@ struct QuickLauncherView: View {
         case .screenRecorder: return recorder.isRecording ? "stop.circle" : "record.circle"
         case .cameraPreview: return "web.camera"
         case .scratchpad: return "note.text"
+        case .appUpdates: return "arrow.down.app"
         }
     }
 
@@ -520,7 +493,7 @@ struct QuickLauncherView: View {
     }
 
     private func iconBackground(_ item: QuickLauncherItem, isSelected: Bool, isHovered: Bool) -> Color {
-        if notchSize != nil { return .white.opacity(isSelected || isHovered ? 0.14 : 0.065) }
+        if notchSize != nil { return .white.opacity(isSelected || isHovered ? NotchFill.selected : NotchFill.card) }
         if isActive(item) { return Color.accentColor.opacity(0.18) }
         if isSelected || isHovered { return Color.primary.opacity(0.1) }
         return Color.primary.opacity(0.07)

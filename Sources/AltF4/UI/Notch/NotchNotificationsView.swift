@@ -77,7 +77,7 @@ private struct NotchNotificationRow: View {
             }
         }
         .padding(14)
-        .background(.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 14))
+        .background(.white.opacity(NotchFill.card), in: RoundedRectangle(cornerRadius: 14))
     }
 }
 
@@ -95,7 +95,7 @@ struct NotchNotificationAppIcon: View {
                     .font(.system(size: size * 0.48, weight: .medium))
                     .foregroundStyle(.white.opacity(0.85))
                     .frame(width: size, height: size)
-                    .background(.white.opacity(0.09), in: RoundedRectangle(cornerRadius: size * 0.24))
+                    .background(.white.opacity(NotchFill.raised), in: RoundedRectangle(cornerRadius: size * 0.24))
             }
         }
         .frame(width: size, height: size)

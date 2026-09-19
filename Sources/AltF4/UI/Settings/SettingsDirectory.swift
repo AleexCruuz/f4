@@ -65,7 +65,7 @@ enum SettingsDirectory {
         return [
             (categories.essentials, [
                 SettingsDirectoryItem(page: .general, title: s.tabGeneral, icon: "gearshape",
-                                       keywords: [s.launchAtLogin, s.languageLabel, s.showMenuBarIcon,
+                                       keywords: [s.launchAtLogin, s.languageLabel,
                                                   FeatureStrings.appearance(language).label,
                                                   FeatureStrings.appearance(language).dark],
                                        featureKeywords: [
@@ -226,6 +226,14 @@ enum SettingsDirectory {
                                                  FeatureStrings.commandBar(language).searchPlaceholder,
                                                  FeatureStrings.commandBar(language).appCenterTitle,
                                                  FeatureStrings.commandBar(language).appAliasLabel]),
+                SettingsDirectoryItem(page: .dictation,
+                                      title: FeatureStrings.dictation(language).pageTitle,
+                                      icon: "waveform.and.mic",
+                                      keywords: [FeatureStrings.dictation(language).enableToggle,
+                                                 FeatureStrings.dictation(language).polishLabel,
+                                                 FeatureStrings.dictation(language).vocabularyLabel,
+                                                 FeatureStrings.dictation(language).languageLabel,
+                                                 "whisper", "voice", "speech"]),
                 SettingsDirectoryItem(page: .quickTools, title: s.quickToolsTab, icon: "wand.and.rays",
                                        featureKeywords: [
                                         (.quickLauncher, [s.launcherName]),
@@ -270,18 +278,7 @@ enum SettingsDirectory {
                                                  FeatureStrings.radialMenu(language).kindMedia,
                                                  FeatureStrings.radialMenu(language).kindSubmenu,
                                                  FeatureStrings.radialMenu(language).mouseTriggerRequirement]),
-            ]),
-            (categories.app, [
-                SettingsDirectoryItem(page: .shortcuts, title: s.shortcutsPageTitle, icon: "command",
-                                      keywords: [s.hotkeyToggle]),
                 SettingsDirectoryItem(page: .advanced, title: s.tabAdvanced, icon: "wrench.and.screwdriver"),
-                SettingsDirectoryItem(page: .about, title: s.tabAbout, icon: "info.circle",
-                                      keywords: [s.reviewIntro, s.reviewHighlights]),
-                SettingsDirectoryItem(page: .releaseNotes, title: s.tabReleaseNotes, icon: "sparkles"),
-                SettingsDirectoryItem(page: .support, title: s.tabSupport, icon: "heart.fill",
-                                      keywords: [s.donateButton, s.supportIntroStarButton,
-                                                 s.discordIntroJoinButton,
-                                                 s.communityIntroFollowButton]),
             ]),
         ]
     }

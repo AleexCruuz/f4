@@ -88,9 +88,9 @@ enum NotchCaptureKeyboardTests {
         notch.showingSections = true
         check("section search keeps typing, deletion and clipboard shortcuts", accepts: false)
         notch.showingSections = false
-        notch.showingAppPanel = true
-        check("the app panel never inherits hidden capture commands", accepts: false)
-        notch.showingAppPanel = false
+        notch.showingSettings = true
+        check("Settings never inherits hidden capture commands", accepts: false)
+        notch.showingSettings = false
         notch.expanded = false
         check("a collapsed capture cannot consume keyboard input", accepts: false)
         notch.expanded = true

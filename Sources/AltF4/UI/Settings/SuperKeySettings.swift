@@ -31,44 +31,47 @@ struct SuperKeySettings: View {
 
     var body: some View {
         Form {
-            Section(text.pageTitle) {
-                Toggle(text.enableToggle, isOn: $enabled)
+            Section {
+                SettingsToggleWithCaption(title: text.enableToggle,
+                                          caption: text.enableCaption,
+                                          isOn: $enabled)
                     .onChange(of: enabled) { _, value in
                         SuperKeyService.shared.syncWithPreferences()
                         guard value, !permissions.accessibility else { return }
                         permissions.requestAccessibility()
                         permissions.openAccessibilitySettings()
                     }
+                if enabled, let failure = superKey.mappingFailure {
+                    Label(text.mappingFailure(failure),
+                          systemImage: "exclamationmark.triangle.fill")
+                        .font(.subheadline)
+                        .foregroundStyle(.orange)
+                } else if enabled, superKey.isPausedForApplication {
+                    Label(FeatureStrings.mouseExceptions(l10n.language).pausedSuperKey,
+                          systemImage: "pause.circle")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                } else if enabled, superKey.isRunning {
+                    Label(text.activeNow, systemImage: "checkmark.circle.fill")
+                        .font(.subheadline)
+                        .foregroundStyle(.green)
+                }
                 Picker(text.sourceKey, selection: sourceBinding) {
                     ForEach(SuperKeySource.allCases) { source in
                         Text(text.sourceLabel(source)).tag(source)
                     }
                 }
-                Text(text.enableCaption)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Label(text.modifierKeysNote, systemImage: "info.circle")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
                 diagram
-                if enabled, let failure = superKey.mappingFailure {
-                    Label(text.mappingFailure(failure),
-                          systemImage: "exclamationmark.triangle.fill")
-                        .font(.caption)
-                        .foregroundStyle(.orange)
-                } else if enabled, superKey.isPausedForApplication {
-                    Label(FeatureStrings.mouseExceptions(l10n.language).pausedSuperKey,
-                          systemImage: "pause.circle")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                } else if enabled, superKey.isRunning {
-                    Label(text.activeNow, systemImage: "checkmark.circle.fill")
-                        .font(.caption)
-                        .foregroundStyle(.green)
+                if enabled {
+                    MouseExceptionsList(scope: .superKey)
                 }
+            } header: {
+                Text(text.pageTitle)
+            } footer: {
+                SettingsCaptionText(text.modifierKeysNote)
             }
 
-            Section(text.soloSection) {
+            Section {
                 Picker(text.soloSection, selection: soloBinding) {
                     Text(text.soloNothing).tag(SuperKeySoloAction.none)
                     Text(text.soloCapsLock).tag(SuperKeySoloAction.capsLock)
@@ -77,15 +80,12 @@ struct SuperKeySettings: View {
                 }
                 .labelsHidden()
                 .pickerStyle(.radioGroup)
-                Text(text.soloCaption)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+            } header: {
+                Text(text.soloSection)
+            } footer: {
+                SettingsCaptionText(text.soloCaption)
             }
             .disabled(!enabled)
-
-            if enabled {
-                MouseExceptionsList(scope: .superKey)
-            }
 
             if enabled, !permissions.accessibility {
                 Section(l10n.s.permissionRequired) {

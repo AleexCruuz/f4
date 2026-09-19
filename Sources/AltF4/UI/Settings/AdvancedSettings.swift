@@ -5,7 +5,8 @@ import SwiftUI
 
 /// Advanced page: a clean way to reset every permission the app holds, and a
 /// full self-uninstall. Both actions are confirmation-gated and scoped entirely
-/// to this app (see `SelfUninstall`).
+/// to this app (see `SelfUninstall`). Its footer is the one place the interface
+/// shows the copyright, license and source link the GPL requires.
 struct AdvancedSettings: View {
     @ObservedObject private var l10n = L10n.shared
     @State private var showClearConfirm = false
@@ -22,13 +23,11 @@ struct AdvancedSettings: View {
         FeatureStrings.backup(l10n.language)
     }
 
+    private static let licenseURL = URL(string: "https://www.gnu.org/licenses/gpl-3.0.html")!
+
     var body: some View {
         Form {
-            Section(backup.title) {
-                Text(backup.description)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+            Section {
                 HStack(spacing: 10) {
                     Button {
                         importFailed = false
@@ -53,21 +52,21 @@ struct AdvancedSettings: View {
                 if exported {
                     HStack(spacing: 6) {
                         Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
-                        Text(backup.exported).font(.caption).foregroundStyle(.green)
+                        Text(backup.exported).font(.subheadline).foregroundStyle(.green)
                     }
                 }
                 if importFailed {
                     Text(backup.invalidFile)
-                        .font(.caption)
+                        .font(.subheadline)
                         .foregroundStyle(.orange)
                 }
+            } header: {
+                Text(backup.title)
+            } footer: {
+                SettingsCaptionText(backup.description)
             }
 
-            Section(l10n.s.advancedResetSection) {
-                Text(l10n.s.advancedResetDescription)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+            Section {
                 Button(role: .destructive) {
                     showClearConfirm = true
                 } label: {
@@ -77,22 +76,44 @@ struct AdvancedSettings: View {
                 if cleared {
                     HStack(spacing: 6) {
                         Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
-                        Text(l10n.s.advancedCleared).font(.caption).foregroundStyle(.green)
+                        Text(l10n.s.advancedCleared).font(.subheadline).foregroundStyle(.green)
                     }
                 }
+            } header: {
+                Text(l10n.s.advancedResetSection)
+            } footer: {
+                SettingsCaptionText(l10n.s.advancedResetDescription)
             }
 
-            Section(l10n.s.advancedUninstallSection) {
-                Text(l10n.s.advancedUninstallDescription)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+            Section {
                 Button(role: .destructive) {
                     showUninstallConfirm = true
                 } label: {
                     Label(l10n.s.advancedUninstallButton, systemImage: "trash")
                 }
                 .disabled(working)
+            } header: {
+                Text(l10n.s.advancedUninstallSection)
+            } footer: {
+                SettingsCaptionText(l10n.s.advancedUninstallDescription)
+            }
+
+            Section {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("\(AppInfo.name) \(l10n.s.versionPrefix) \(AppInfo.version)")
+                        .fontWeight(.medium)
+                    Text(AppInfo.copyright)
+                    Text(backup.legalNotice)
+                    HStack(spacing: 12) {
+                        Link("GPL-3.0", destination: Self.licenseURL)
+                        Link(l10n.s.viewOnGitHub, destination: AppInfo.repositoryURL)
+                    }
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .textSelection(.enabled)
+                .padding(.vertical, 4)
             }
         }
         .formStyle(.grouped)

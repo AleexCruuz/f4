@@ -13,7 +13,7 @@ enum QuickLauncherItem: String, PanelOrderItem, Identifiable {
     // (a case added later joins a saved order at the end).
     case keepAwake, cleaner, toggles, micMute, screenOCR, colorPicker, clipboard, windowLayout,
          cleaning, homebrew, media, urlCleaner, uninstaller, screenshot, screenRecorder,
-         cameraPreview, scratchpad
+         cameraPreview, scratchpad, appUpdates
 
     var id: String { rawValue }
 
@@ -38,6 +38,7 @@ enum QuickLauncherItem: String, PanelOrderItem, Identifiable {
         case .screenRecorder: return .screenRecorder
         case .cameraPreview: return .cameraPreview
         case .scratchpad: return .scratchpad
+        case .appUpdates: return .appUpdates
         }
     }
 }
@@ -307,7 +308,7 @@ final class QuickLauncherService: ObservableObject {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 CleaningModeManager.shared.activate()
             }
-        case .windowLayout, .homebrew, .media, .urlCleaner, .uninstaller, .cleaner, .toggles:
+        case .windowLayout, .homebrew, .media, .urlCleaner, .uninstaller, .cleaner, .toggles, .appUpdates:
             activeUtility = item
         }
     }

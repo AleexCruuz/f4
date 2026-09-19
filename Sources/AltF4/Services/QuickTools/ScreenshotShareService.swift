@@ -75,7 +75,8 @@ final class ScreenshotShareService: ObservableObject {
 
     func createLink(pngData: Data,
                     duration: ScreenshotShareDuration) async throws -> ScreenshotShareRecord {
-        guard UserDefaults.standard.bool(forKey: DefaultsKey.screenshotSharingEnabled) else {
+        guard ScreenshotSharingSupport.isAvailable,
+              UserDefaults.standard.bool(forKey: DefaultsKey.screenshotSharingEnabled) else {
             throw ScreenshotShareError.unavailable
         }
         guard !pngData.isEmpty,

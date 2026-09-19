@@ -102,6 +102,7 @@ enum SelfUninstall {
         CameraPreviewService.shared.suspend()
         RadialMenuService.shared.suspend()
         ScratchpadService.shared.suspend()
+        NotesService.shared.suspend()
         CommandBarService.shared.suspend()
         PreciseVolumeRollerService.shared.suspend()
         // Leaving the mic cut after the app is gone would strand the user

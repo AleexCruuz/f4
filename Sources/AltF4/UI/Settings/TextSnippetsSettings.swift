@@ -28,24 +28,22 @@ struct TextSnippetsSettings: View {
     var body: some View {
         Form {
             Section {
-                Toggle(text.enable, isOn: $enabled)
+                SettingsToggleWithCaption(title: text.enable,
+                                          caption: text.enableCaption,
+                                          isOn: $enabled)
                     .onChange(of: enabled) { _, _ in
                         TextSnippetService.shared.syncWithPreferences()
                     }
-                Text(text.enableCaption)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
                 if enabled, !permissions.accessibility {
                     PermissionRow(kind: .accessibility)
                 }
                 if enabled {
-                    Toggle(text.soundToggle, isOn: $soundEnabled)
+                    SettingsToggleWithCaption(title: text.soundToggle,
+                                              caption: text.soundCaption,
+                                              isOn: $soundEnabled)
                         .onChange(of: soundEnabled) { _, _ in
                             TextSnippetService.shared.syncExpansionSound()
                         }
-                    Text(text.soundCaption)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
                     if soundEnabled {
                         Picker(text.soundPickerLabel, selection: $soundName) {
                             ForEach(AlertSoundStrings.sortedNames(TextSnippetSupport.alertSoundNames,
@@ -71,13 +69,12 @@ struct TextSnippetsSettings: View {
             }
 
             Section {
-                Toggle(text.libraryToggle, isOn: $libraryEnabled)
+                SettingsToggleWithCaption(title: text.libraryToggle,
+                                          caption: text.libraryCaption,
+                                          isOn: $libraryEnabled)
                     .onChange(of: libraryEnabled) { _, _ in
                         SnippetLibraryService.shared.syncWithPreferences()
                     }
-                Text(text.libraryCaption)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
                 if libraryEnabled {
                     ShortcutPreferenceRow(role: .snippetLibrary,
                                           isEnabled: libraryEnabled) {
@@ -85,7 +82,7 @@ struct TextSnippetsSettings: View {
                     }
                     if library.shortcutRegistrationFailed {
                         Text(l10n.s.shortcutUnavailable)
-                            .font(.caption)
+                            .font(.subheadline)
                             .foregroundStyle(.orange)
                     }
                 }
@@ -103,9 +100,7 @@ struct TextSnippetsSettings: View {
 
             Section {
                 if snippets.isEmpty {
-                    Text(text.emptyList)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    SettingsCaptionText(text.emptyList)
                 }
                 ForEach(snippets) { snippet in
                     SnippetRow(snippet: snippet,
@@ -120,14 +115,13 @@ struct TextSnippetsSettings: View {
                 } label: {
                     Label(text.addButton, systemImage: "plus")
                 }
+            } header: {
+                Text(text.pageTitle)
             } footer: {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(text.variablesHint)
-                    Text(text.variablesCaption)
-                    Text(text.variablesFormatCaption)
+                VStack(alignment: .leading, spacing: 6) {
+                    SettingsCaptionText(text.variablesHint)
+                    SettingsCaptionText(text.variablesCaption + " " + text.variablesFormatCaption)
                 }
-                .font(.caption)
-                .foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)
@@ -368,23 +362,19 @@ private struct SnippetEditor: View {
                             RoundedRectangle(cornerRadius: 6, style: .continuous)
                                 .strokeBorder(Color.primary.opacity(0.12))
                         )
-                    Text(text.variablesHint)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Text(text.editorFormatCaption)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    SettingsCaptionText(text.variablesHint)
+                    SettingsCaptionText(text.editorFormatCaption)
                 }
             }
             .formStyle(.columns)
             if triggerTooShort, !snippet.trigger.isEmpty {
                 Text(text.triggerTooShort)
-                    .font(.caption)
+                    .font(.subheadline)
                     .foregroundStyle(.orange)
             }
             if duplicateTrigger {
                 Text(text.duplicateTrigger)
-                    .font(.caption)
+                    .font(.subheadline)
                     .foregroundStyle(.orange)
             }
             HStack {

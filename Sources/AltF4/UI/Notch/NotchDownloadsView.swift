@@ -111,7 +111,7 @@ struct NotchDownloadsView: View {
             }
         }
         .padding(12)
-        .background(.white.opacity(0.07), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .background(.white.opacity(NotchFill.card), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
         .accessibilityElement(children: .contain)
     }
 }

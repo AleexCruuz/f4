@@ -8,15 +8,14 @@ import Foundation
 /// below and the unit tests can reason about pages without pulling UI in.
 enum SettingsPage: Hashable {
     case general, features, energy, monitor
-    case mouse, switcher, keyDebounce, superKey, cutPaste, autoQuit, quitProtection, cleaner, uninstaller, urlCleaner, homebrew, appUpdates, media, clipboard, windowLayout, shelf, quickTools, textSnippets, screenshot, radialMenu, commandBar, killProcess, notch
-    case shortcuts, advanced, about, releaseNotes, support
+    case mouse, switcher, keyDebounce, superKey, cutPaste, autoQuit, quitProtection, cleaner, uninstaller, urlCleaner, homebrew, appUpdates, media, clipboard, windowLayout, shelf, quickTools, textSnippets, screenshot, radialMenu, commandBar, killProcess, notch, dictation
+    case advanced
 }
 
 /// Stable, non-localized identities for destinations inside shared Settings
 /// pages. Raw values may be persisted or used by UI identifiers, so cases can
 /// be added but should not be renamed.
 enum SettingsSectionAnchor: String, CaseIterable, Hashable {
-    case panelConfiguration
     case musicBlocking
     case keepAwake
     case brightness
@@ -47,12 +46,11 @@ enum SettingsSectionAnchor: String, CaseIterable, Hashable {
     case cameraPreview
     case scratchpad
     case cleaningMode
-    case soundOutputSwitcher
     case fanControl
 
     var page: SettingsPage {
         switch self {
-        case .panelConfiguration, .musicBlocking: return .general
+        case .musicBlocking: return .general
         case .keepAwake, .brightness, .extraBrightness, .bluetoothSleep: return .energy
         case .scrollDirection, .focusFollowsMouse, .smoothScroll, .mouseAcceleration, .mouseNavigation, .mouseButtonShortcuts,
              .middleClick, .mouseClickDebounce:
@@ -64,7 +62,6 @@ enum SettingsSectionAnchor: String, CaseIterable, Hashable {
             return .quickTools
         case .screenshot, .screenRecorder, .colorPicker, .screenOCR:
             return .screenshot
-        case .soundOutputSwitcher: return .shortcuts
         case .fanControl: return .monitor
         }
     }
@@ -162,8 +159,7 @@ extension AppFeature {
         case .switcher: return FeatureSettingsDestination(.switcher, sectionAnchor: .switcher)
         case .dockPreview: return FeatureSettingsDestination(.switcher, sectionAnchor: .dock)
         case .dockClick: return FeatureSettingsDestination(.switcher, sectionAnchor: .dockClick)
-        case .windowMaximizer:
-            return FeatureSettingsDestination(.general, sectionAnchor: .panelConfiguration)
+        case .windowMaximizer: return FeatureSettingsDestination(.windowLayout)
         case .windowLayout: return FeatureSettingsDestination(.windowLayout)
         case .autoQuit: return FeatureSettingsDestination(.autoQuit)
         case .quitWindowProtection: return FeatureSettingsDestination(.quitProtection)
@@ -200,10 +196,8 @@ extension AppFeature {
         case .urlCleaner: return FeatureSettingsDestination(.urlCleaner)
         case .diskImageInstaller: return FeatureSettingsDestination(.features)
 
-        case .mixer:
-            return FeatureSettingsDestination(.general, sectionAnchor: .panelConfiguration)
-        case .soundOutputSwitcher:
-            return FeatureSettingsDestination(.shortcuts, sectionAnchor: .soundOutputSwitcher)
+        case .mixer: return FeatureSettingsDestination(.features)
+        case .soundOutputSwitcher: return FeatureSettingsDestination(.features)
         case .micMute:
             return FeatureSettingsDestination(.quickTools, sectionAnchor: .micMute)
         case .musicBlock:
@@ -243,6 +237,7 @@ extension AppFeature {
         case .scratchpad:
             return FeatureSettingsDestination(.quickTools, sectionAnchor: .scratchpad)
         case .commandBar: return FeatureSettingsDestination(.commandBar)
+        case .dictation: return FeatureSettingsDestination(.dictation)
         case .screenRecorder:
             return FeatureSettingsDestination(.screenshot, sectionAnchor: .screenRecorder)
 
@@ -271,7 +266,7 @@ enum FeatureVisibilitySupport {
         case .mouse: return [.scrollInverter, .scrollHorizontal, .focusFollowsMouse, .smoothScroll, .mouseAcceleration, .mouseNavigation, .mouseButtonShortcuts,
                              .middleClick, .mouseClickDebounce]
         case .switcher: return [.switcher, .dockPreview, .dockClick]
-        case .windowLayout: return [.windowLayout]
+        case .windowLayout: return [.windowLayout, .windowMaximizer]
         case .autoQuit: return [.autoQuit]
         case .quitProtection: return [.quitWindowProtection]
         case .clipboard: return [.clipboardHistory, .pastePlain, .finderCutPaste]
@@ -293,7 +288,8 @@ enum FeatureVisibilitySupport {
         case .notch: return [.notch, .notchCalendar, .notchNotifications, .notchGestures, .notchTimer, .notchAccessories, .notchLyrics, .notchQueue, .notchLiveEqualizer, .notchDownloads]
         case .radialMenu: return [.radialMenu]
         case .commandBar: return [.commandBar]
-        case .general, .features, .shortcuts, .advanced, .about, .releaseNotes, .support:
+        case .dictation: return [.dictation]
+        case .general, .features, .advanced:
             return []
         }
     }

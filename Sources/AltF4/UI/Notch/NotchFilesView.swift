@@ -51,7 +51,6 @@ struct NotchFilesView: View {
                                revealSerial: shelf.addSerial)
                     .frame(maxHeight: .infinity)
                 HStack {
-                    Text(l10n.s.shelfHint).font(.system(size: 10)).foregroundStyle(.secondary).lineLimit(2)
                     Spacer()
                     if AppFeature.mediaTools.isAvailable {
                         NotchIconButton(symbol: "wand.and.stars", title: l10n.s.mediaName) {
@@ -116,7 +115,7 @@ struct NotchFilesView: View {
         }
         .padding(12)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(.white.opacity(selected ? 0.14 : 0.04), in: RoundedRectangle(cornerRadius: 20))
+        .background(.white.opacity(selected ? NotchFill.selected : NotchFill.quiet), in: RoundedRectangle(cornerRadius: 20))
         .overlay {
             RoundedRectangle(cornerRadius: 20)
                 .strokeBorder(.white.opacity(selected ? 0.7 : 0.2), lineWidth: selected ? 1.5 : 0.75)

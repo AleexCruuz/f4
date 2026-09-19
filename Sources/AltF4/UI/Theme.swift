@@ -255,18 +255,3 @@ struct DiscordMark: View {
         }
     }
 }
-
-/// Squircle badge with the mark on the space gradient — the app's face in the
-/// About tab and onboarding.
-struct BrandBadge: View {
-    var size: CGFloat
-
-    var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: size * 0.26, style: .continuous)
-                .fill(Theme.spaceGradient)
-            BrandMark(width: size * 0.8)
-        }
-        .frame(width: size, height: size)
-    }
-}

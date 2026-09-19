@@ -13,18 +13,18 @@ struct AppUpdatesSettings: View {
     @AppStorage(DefaultsKey.appUpdatesIncludeAppStore) private var includeAppStore = true
     @AppStorage(DefaultsKey.appUpdatesIncludeOnlineCatalog)
     private var includeOnlineCatalog = true
-    @AppStorage(DefaultsKey.panelUtilityAppUpdates) private var showInPanel = true
 
     private var text: AppUpdateStrings { FeatureStrings.appUpdates(l10n.language) }
 
     var body: some View {
         Form {
-            Section(text.pageTitle) {
-                Text(text.caption)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+            Section {
                 AppUpdatesListView()
                     .padding(.vertical, 2)
+            } header: {
+                Text(text.pageTitle)
+            } footer: {
+                SettingsCaptionText(text.caption)
             }
 
             Section(text.frequencyLabel) {
@@ -37,7 +37,7 @@ struct AppUpdatesSettings: View {
                 .pickerStyle(.segmented)
                 if let next = updates.nextCheck {
                     Text(String(format: text.nextCheckFormat, nextCheckText(next)))
-                        .font(.caption)
+                        .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
                 Toggle(text.notifyToggle, isOn: $notify)
@@ -54,26 +54,20 @@ struct AppUpdatesSettings: View {
                     .onChange(of: includeHomebrewApps) { _, _ in
                         updates.sourceSelectionDidChange()
                     }
-                Toggle(text.includeStoreToggle, isOn: $includeAppStore)
+                SettingsToggleWithCaption(title: text.includeStoreToggle,
+                                          caption: text.includeStoreCaption,
+                                          isOn: $includeAppStore)
                     .disabled(includeAppStore && enabledSourceCount == 1)
                     .onChange(of: includeAppStore) { _, _ in
                         updates.sourceSelectionDidChange()
                     }
-                Text(text.includeStoreCaption)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Toggle(text.includeOnlineToggle, isOn: $includeOnlineCatalog)
+                SettingsToggleWithCaption(title: text.includeOnlineToggle,
+                                          caption: text.includeOnlineCaption,
+                                          isOn: $includeOnlineCatalog)
                     .disabled(includeOnlineCatalog && enabledSourceCount == 1)
                     .onChange(of: includeOnlineCatalog) { _, _ in
                         updates.sourceSelectionDidChange()
                     }
-                Text(text.includeOnlineCaption)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
-            Section {
-                Toggle(text.showInPanel, isOn: $showInPanel)
             }
         }
         .formStyle(.grouped)

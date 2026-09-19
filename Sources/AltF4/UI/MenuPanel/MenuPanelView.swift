@@ -1067,7 +1067,7 @@ struct UtilitiesSection: View {
 private enum ControlPanelItem: String, PanelOrderItem, Identifiable {
     case mouseScroll, focusFollowsMouse, mouseAcceleration, mouseNavigation, switcher, cutPaste, autoQuit, shelf, windowMaximize, dockPreview, keyDebounce,
          dockClick, dockClickHide, dockClickCycle, middleClick, textSnippets, radialMenu, mouseButtonShortcuts, superKey,
-         mouseClickDebounce, notch
+         mouseClickDebounce
 
     var id: String { rawValue }
 
@@ -1089,7 +1089,6 @@ private enum ControlPanelItem: String, PanelOrderItem, Identifiable {
         case .dockClick, .dockClickHide, .dockClickCycle: return .dockClick
         case .middleClick: return .middleClick
         case .textSnippets: return .textSnippets
-        case .notch: return .notch
         case .radialMenu: return .radialMenu
         case .mouseButtonShortcuts: return .mouseButtonShortcuts
         case .superKey: return .superKey
@@ -1107,7 +1106,7 @@ private enum ControlCategory: String, CaseIterable, Identifiable {
 
     static func category(for item: ControlPanelItem) -> ControlCategory {
         switch item {
-        case .switcher, .dockPreview, .dockClick, .dockClickHide, .dockClickCycle, .windowMaximize, .autoQuit, .notch:
+        case .switcher, .dockPreview, .dockClick, .dockClickHide, .dockClickCycle, .windowMaximize, .autoQuit:
             return .windows
         case .mouseScroll, .focusFollowsMouse, .mouseAcceleration, .mouseNavigation, .mouseButtonShortcuts, .middleClick, .keyDebounce,
              .textSnippets, .radialMenu, .superKey, .mouseClickDebounce:
@@ -1151,8 +1150,6 @@ struct QuickControlsSection: View {
     @AppStorage(DefaultsKey.dockClickCycleWindows) private var dockClickCycleEnabled = false
     @AppStorage(DefaultsKey.middleClickEnabled) private var middleClickEnabled = false
     @AppStorage(DefaultsKey.textSnippetsEnabled) private var textSnippetsEnabled = false
-    @AppStorage(DefaultsKey.notchEnabled) private var notchEnabled = false
-    @AppStorage(DefaultsKey.panelControlNotch) private var showNotch = true
     @AppStorage(DefaultsKey.radialMenuEnabled) private var radialMenuEnabled = false
     @AppStorage(DefaultsKey.mouseButtonShortcutsEnabled) private var mouseButtonShortcutsEnabled = false
     @AppStorage(DefaultsKey.mouseSpacesGestureEnabled) private var spacesEnabled = false
@@ -1298,7 +1295,6 @@ struct QuickControlsSection: View {
         case .dockClickCycle: return dockClickCycleEnabled
         case .middleClick: return middleClickEnabled
         case .textSnippets: return textSnippetsEnabled
-        case .notch: return notchEnabled
         case .radialMenu: return radialMenuEnabled
         case .mouseButtonShortcuts: return mouseButtonShortcutsEnabled || spacesEnabled
         case .superKey: return superKeyEnabled
@@ -1376,7 +1372,6 @@ struct QuickControlsSection: View {
         case .dockClickCycle: return showDockClickCycle
         case .middleClick: return showMiddleClick
         case .textSnippets: return showTextSnippets
-        case .notch: return showNotch
         case .radialMenu: return showRadialMenu
         case .mouseButtonShortcuts: return showMouseButtonShortcuts
         case .superKey: return showSuperKey
@@ -1646,23 +1641,6 @@ struct QuickControlsSection: View {
                 .onChange(of: textSnippetsEnabled) { _, enabled in
                     TextSnippetService.shared.syncWithPreferences()
                     requestAccessibilityIfNeeded(enabled)
-                }
-        case .notch:
-            let text = FeatureStrings.notch(l10n.language)
-            PanelToggleRow(title: text.title,
-                           caption: text.description,
-                           systemImage: "macbook",
-                           isOn: $notchEnabled,
-                           isEditing: editing,
-                           showsDragHandle: true,
-                           visibility: $showNotch,
-                           accessoryTitle: l10n.s.menuSettings,
-                           accessoryAction: {
-                               SettingsRouter.shared.page = .notch
-                               appDelegate()?.openSettingsWindow()
-                           })
-                .onChange(of: notchEnabled) { _, _ in
-                    NotchService.shared.syncWithPreferences()
                 }
         case .radialMenu:
             let radialStrings = FeatureStrings.radialMenu(l10n.language)

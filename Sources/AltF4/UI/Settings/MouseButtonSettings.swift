@@ -37,7 +37,9 @@ struct MouseButtonShortcutsSection: View {
 
     var body: some View {
         Section(text.pageTitle) {
-            Toggle(text.enableLabel, isOn: $enabled)
+            SettingsToggleWithCaption(title: text.enableLabel,
+                                      caption: text.enableCaption,
+                                      isOn: $enabled)
                 .onChange(of: enabled) { _, on in
                     if !on { stopCapture() }
                     MouseButtonShortcutService.shared.syncWithPreferences()
@@ -45,14 +47,9 @@ struct MouseButtonShortcutsSection: View {
                         permissions.requestAccessibility()
                     }
                 }
-            Text(text.enableCaption)
-                .font(.caption)
-                .foregroundStyle(.secondary)
             if enabled {
                 if mappings.isEmpty, pendingButton == nil {
-                    Text(text.emptyCaption)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    SettingsCaptionText(text.emptyCaption)
                 }
                 ForEach(MouseButtonShortcutSupport.sortedButtons(mappings), id: \.self) { button in
                     mappingRow(button, shortcut: mappings[button])
@@ -62,7 +59,9 @@ struct MouseButtonShortcutsSection: View {
                 }
                 captureRow
             }
-            Toggle(text.spacesEnableLabel, isOn: $spacesEnabled)
+            SettingsToggleWithCaption(title: text.spacesEnableLabel,
+                                      caption: text.spacesEnableCaption,
+                                      isOn: $spacesEnabled)
                 .onChange(of: spacesEnabled) { _, on in
                     if !on {
                         stopSpacesCapture()
@@ -77,18 +76,14 @@ struct MouseButtonShortcutsSection: View {
                         permissions.requestAccessibility()
                     }
                 }
-            Text(text.spacesEnableCaption)
-                .font(.caption)
-                .foregroundStyle(.secondary)
             if spacesEnabled {
                 spacesRow
-                Toggle(text.spacesFollowsDragLabel, isOn: $spacesFollowsDrag)
-                Text(text.spacesFollowsDragCaption)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                SettingsToggleWithCaption(title: text.spacesFollowsDragLabel,
+                                          caption: text.spacesFollowsDragCaption,
+                                          isOn: $spacesFollowsDrag)
                 if !spacesCommandsAreReachable {
                     Text(text.spacesShortcutsOffNote)
-                        .font(.caption)
+                        .font(.subheadline)
                         .foregroundStyle(.orange)
                 }
             }
@@ -138,16 +133,14 @@ struct MouseButtonShortcutsSection: View {
             }
             if let recordError, recordErrorButton == button {
                 Text(recordError)
-                    .font(.caption)
+                    .font(.subheadline)
                     .foregroundStyle(.orange)
             } else if recordingButton == button {
-                Text(ShortcutRecordingCaption.text(l10n.s, canClear: false))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                SettingsCaptionText(ShortcutRecordingCaption.text(l10n.s, canClear: false))
             }
             if shortcut != nil, RadialMenuSupport.claimsMouseButton(button) {
                 Text(text.rowWheelNote)
-                    .font(.caption)
+                    .font(.subheadline)
                     .foregroundStyle(.orange)
             }
         }
@@ -172,12 +165,10 @@ struct MouseButtonShortcutsSection: View {
                 }
                 if let captureFeedback {
                     Text(captureFeedback)
-                        .font(.caption)
+                        .font(.subheadline)
                         .foregroundStyle(.orange)
                 }
-                Text(text.captureHint)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                SettingsCaptionText(text.captureHint)
             }
             .onReceive(service.$lastInputSeen) { seen in
                 handleCapture(seen)
@@ -213,7 +204,7 @@ struct MouseButtonShortcutsSection: View {
                 }
                 if let spacesFeedback {
                     Text(spacesFeedback)
-                        .font(.caption)
+                        .font(.subheadline)
                         .foregroundStyle(.orange)
                 }
             }

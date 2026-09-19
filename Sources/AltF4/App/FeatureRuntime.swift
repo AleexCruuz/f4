@@ -309,6 +309,7 @@ final class FeatureRuntime: ObservableObject {
         },
         .scratchpad: { ScratchpadService.shared.syncWithPreferences() },
         .commandBar: { CommandBarService.shared.syncWithPreferences() },
+        .dictation: { DictationService.shared.syncWithPreferences() },
         .cleaner: {
             CleanerScheduler.shared.syncWithPreferences()
             WhatsAppDownloadScheduler.shared.syncWithPreferences()
@@ -353,8 +354,11 @@ extension AppFeature {
     var hardwareUnsupportedReason: String? {
         switch self {
         case .fanControl:
-            return FanControlHardware.hasControllableFan
-                ? nil : FeatureStrings.fanControl(L10n.shared.language).noFans
+            // The privileged helper only accepts apps signed by upstream's
+            // Apple team (`FanControlIdentifiers.teamID`), which no build of
+            // this fork can be, so a fresh install could never reach it.
+            let text = FeatureStrings.fanControl(L10n.shared.language)
+            return FanControlHardware.hasControllableFan ? text.officialBuildOnly : text.noFans
         default:
             return nil
         }

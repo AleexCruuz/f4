@@ -91,3 +91,54 @@ struct NotchGestureSupport {
         }
     }
 }
+
+/// A trackpad swipe between Spaces carries the outgoing Space's windows with
+/// it, the island included, away from the camera housing. The Dock receives
+/// the swipe as undocumented window-server events; these are their fields.
+struct NotchSpaceSwipe {
+    enum Phase: Equatable { case moving, lifted }
+
+    static let eventType: UInt32 = 30
+    static let gestureTypeField: UInt32 = 110
+    static let motionField: UInt32 = 123
+    static let phaseField: UInt32 = 132
+    /// The Space keeps sliding after the fingers lift. The window server
+    /// reports a committed switch as animating, but not a bounce off the last
+    /// Space, which comes to rest within this delay.
+    static let settleDelay: TimeInterval = 0.5
+    /// A lost end event must not keep the island hidden.
+    static let staleAfter: TimeInterval = 4
+
+    static func phase(gestureType: Int64, motion: Int64, phase: Int64) -> Phase? {
+        // 23 is a Dock swipe and motion 1 its horizontal axis; the vertical
+        // one opens Mission Control, which moves no Space.
+        guard gestureType == 23, motion == 1 else { return nil }
+        switch phase {
+        case 1, 2: return .moving
+        case 4, 8: return .lifted
+        default: return nil
+        }
+    }
+
+    private(set) var inProgress = false
+    private var moving = false
+    private var lastEvent: TimeInterval = 0
+
+    /// True when the event starts a transition. A lift observed without its
+    /// start began before observation and is ignored.
+    mutating func record(_ phase: Phase, at time: TimeInterval) -> Bool {
+        let starts = !inProgress && phase == .moving
+        guard inProgress || starts else { return false }
+        inProgress = true
+        moving = phase == .moving
+        lastEvent = time
+        return starts
+    }
+
+    func isSettled(at time: TimeInterval, displayAnimating: Bool) -> Bool {
+        guard inProgress else { return true }
+        let quiet = time - lastEvent
+        if quiet < 0 || quiet >= Self.staleAfter { return true }
+        return !moving && !displayAnimating && quiet >= Self.settleDelay
+    }
+}

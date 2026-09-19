@@ -98,25 +98,27 @@ enum NotchHoverTests {
             NSEvent.mouseLocation = CGPoint(x: service.geometry.screen.minX, y: service.geometry.screen.minY)
             service.hover(false)
         }
+        let opening = NotchSupport.defaultHoverDelay
+        let closing = NotchQuickAccessLayout.hoverExitDelay
         for physical in [false, true] {
             let service = fixture(physical: physical)
             service.hover(true)
             let initial = service.hoverWork
-            DispatchQueue.main.advance(0.20)
+            DispatchQueue.main.advance(opening - 0.02)
             expect(service.openings == 0, "passing briefly over either display's island does not open it")
             service.hover(false) // A tracking exit while the pointer is still inside.
             expect(service.hoverWork === initial, "duplicate tracking events preserve the original opening deadline")
-            DispatchQueue.main.advance(0.06)
+            DispatchQueue.main.advance(0.03)
             expect(service.openings == 1 && service.openedByHover && service.hoverWork == nil,
-                   "a deliberate hover opens after the default 250 ms on both physical and simulated cutouts")
+                   "a deliberate hover opens after the default delay on both physical and simulated cutouts")
             leave(service)
-            let closing = service.hoverWork
-            DispatchQueue.main.advance(0.10)
+            let pendingClose = service.hoverWork
+            DispatchQueue.main.advance(closing / 2)
             service.hover(false)
-            expect(service.hoverWork === closing, "overlapping exit events do not postpone closing")
-            DispatchQueue.main.advance(0.09)
+            expect(service.hoverWork === pendingClose, "overlapping exit events do not postpone closing")
+            DispatchQueue.main.advance(closing / 2 + 0.01)
             expect(service.closures == 1 && service.hoverWork == nil,
-                   "leaving either display's expanded island closes it within 190 ms")
+                   "leaving either display's expanded island closes it after the exit delay")
         }
         for physical in [false, true] {
             for local in [false, true] {
@@ -139,13 +141,13 @@ enum NotchHoverTests {
                 }
                 let top = CGPoint(x: hidden.geometry.screen.midX, y: hidden.geometry.screen.maxY)
                 move(to: top)
-                DispatchQueue.main.advance(0.20)
+                DispatchQueue.main.advance(opening - 0.02)
                 expect(hidden.openings == 0, "a hidden island honors the saved activation delay")
                 move(to: CGPoint(x: hidden.geometry.screen.minX, y: hidden.geometry.screen.minY))
-                DispatchQueue.main.advance(0.20)
+                DispatchQueue.main.advance(opening)
                 expect(hidden.openings == 0, "leaving the invisible region cancels pending activation")
                 move(to: top)
-                DispatchQueue.main.advance(0.26)
+                DispatchQueue.main.advance(opening + 0.01)
                 expect(hidden.openings == 1 && hidden.openedByHover,
                        "local and global movement reveal either display without a visible window or menu measurement")
                 hidden.windowHost?.visible = true
@@ -177,21 +179,21 @@ enum NotchHoverTests {
         }
         let passing = fixture()
         passing.hover(true)
-        DispatchQueue.main.advance(0.20)
+        DispatchQueue.main.advance(opening - 0.02)
         leave(passing)
         DispatchQueue.main.advance(1)
         expect(passing.openings == 0, "leaving before the opening deadline cancels expansion")
 
         let reentering = fixture()
         reentering.hover(true)
-        DispatchQueue.main.advance(0.20)
+        DispatchQueue.main.advance(opening - 0.02)
         leave(reentering)
         DispatchQueue.main.advance(0.02)
         NSEvent.mouseLocation = CGPoint(x: reentering.geometry.screen.midX, y: reentering.geometry.screen.maxY)
         reentering.hover(true)
-        DispatchQueue.main.advance(0.20)
+        DispatchQueue.main.advance(opening - 0.02)
         expect(reentering.openings == 0, "separate short passes cannot accumulate time toward opening")
-        DispatchQueue.main.advance(0.06)
+        DispatchQueue.main.advance(0.03)
         expect(reentering.openings == 1, "reentering requires a fresh uninterrupted activation delay")
 
         for delay in [0.10, 0.25, 0.65, 1.0] {
@@ -228,9 +230,9 @@ enum NotchHoverTests {
 
         let returning = fixture()
         returning.hover(true)
-        DispatchQueue.main.advance(0.26)
+        DispatchQueue.main.advance(opening + 0.01)
         leave(returning)
-        DispatchQueue.main.advance(0.10)
+        DispatchQueue.main.advance(closing / 2)
         NSEvent.mouseLocation = CGPoint(x: returning.geometry.screen.midX, y: returning.geometry.screen.maxY)
         returning.hover(true)
         DispatchQueue.main.advance(1)

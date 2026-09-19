@@ -48,6 +48,10 @@ struct MetricsTests {
             ("switcher", { SwitcherScrollContract.run(suite); SwitcherActivationTests.run(suite) }),
             ("keep-awake", { KeepAwakeCatalogContract.run(suite) }),
             ("emoji", { CommandBarEmojiContract.run(suite) }),
+            ("clipboard-ai", { ClipboardAITests.run(suite) }),
+            ("dictation", { DictationTests.run(suite) }),
+            ("notes", { NotesTests.run(suite) }),
+            ("onboarding", { OnboardingTests.run(suite) }),
         ]
         var selected = Set<String>()
         var listOnly = false
@@ -3930,10 +3934,10 @@ struct MetricsTests {
         // decision above is made consciously, never by omission.
         let releasePlist = NSDictionary(contentsOfFile: "Resources/Info.plist")
         let plistVersion = (releasePlist?["CFBundleShortVersionString"] as? String) ?? ""
-        expect(plistVersion == "3.4.0-beta.2.1",
+        expect(plistVersion == "0.9.0",
                "bumping the app version requires re-deciding the support prompt pin above")
         let plistBuild = (releasePlist?["CFBundleVersion"] as? String) ?? ""
-        expect(plistBuild == "89",
+        expect(plistBuild == "90",
                "every app version needs its own incremented bundle build")
         expect(SupportUpdateIntroInfo.releaseVersion == "3.3.2",
                "the support prompt remains deliberately pinned to 3.3.2")
@@ -4219,9 +4223,6 @@ struct MetricsTests {
         // Sliced at the closing brace of the closure/function itself, so the
         // slice can never run past it into an unrelated body that happens to
         // carry the same words.
-        let shelfProviderCode = stripCommentLines((statusAnchorAppDelegateSource
-            .components(separatedBy: "ShelfService.shared.statusItemFrameProvider =").last ?? "")
-            .components(separatedBy: "\n        }").first ?? "")
         let statusControllerSource = (try? String(
             contentsOfFile: "Sources/AltF4/App/StatusItemController.swift",
             encoding: .utf8)) ?? ""
@@ -4229,8 +4230,6 @@ struct MetricsTests {
             .components(separatedBy: "func containsStatusItem(at screenPoint: NSPoint) -> Bool {").last ?? "")
             .components(separatedBy: "\n    }").first ?? "")
         let statusFrameCall = "StatusItemAnchorSupport.isTrustworthyStatusFrame("
-        expect(shelfProviderCode.contains("guard \(statusFrameCall)") && shelfProviderCode.contains("return nil"),
-               "the Shelf provider rejects an untrustworthy status-item frame")
         expect(statusHitTestCode.contains(statusFrameCall) && statusHitTestCode.contains("return false"),
                "status-item hit testing rejects an untrustworthy frame")
 
@@ -15268,7 +15267,7 @@ struct MetricsTests {
 
         // MARK: Features hub catalog
 
-        expect(AppFeature.allCases.count == 68, "feature catalog has 68 features")
+        expect(AppFeature.allCases.count == 69, "feature catalog has 69 features")
         expect(Set(AppFeature.allCases.map(\.rawValue)).count == AppFeature.allCases.count,
                "feature ids are unique")
         expect(AppFeature.allCases.map(\.rawValue) == [
@@ -15281,7 +15280,7 @@ struct MetricsTests {
             "keepAwake", "brightness", "extraBrightness", "bluetoothSleep",
             "quickLauncher", "quickToggles", "colorPicker", "screenOCR", "cleaningMode", "mediaTools",
             "cleaner", "uninstaller", "homebrew", "appUpdates", "screenshot", "cameraPreview",
-            "radialMenu", "scratchpad", "commandBar", "screenRecorder", "killProcess", "notch", "notchCalendar", "notchNotifications", "notchGestures", "notchTimer", "notchAccessories", "notchLyrics", "notchQueue", "notchLiveEqualizer", "notchDownloads",
+            "radialMenu", "scratchpad", "commandBar", "screenRecorder", "killProcess", "dictation", "notch", "notchCalendar", "notchNotifications", "notchGestures", "notchTimer", "notchAccessories", "notchLyrics", "notchQueue", "notchLiveEqualizer", "notchDownloads",
             "monitorCPU", "monitorGPU", "monitorMemory", "monitorNetwork", "monitorDisk", "monitorPower",
             "fanControl",
         ], "feature ids are stable (they persist inside availability keys)")
@@ -15429,16 +15428,6 @@ struct MetricsTests {
             "automationFinder", "automationTerminal", "automationPlayback", "audioCapture", "microphone", "camera",
             "appManagement", "calendar",
         ], "permission portal contains every supported permission")
-        let onboardingViewSource = (try? String(
-            contentsOfFile: "Sources/AltF4/UI/Onboarding/OnboardingView.swift",
-            encoding: .utf8)) ?? ""
-        let additionalPermissionsAlignment =
-            #"DisclosureGroup\(isExpanded: \$showingOtherPermissions\) \{\s+"#
-            + #"VStack\(alignment: \.leading, spacing: 14\)"#
-        expect(onboardingViewSource.range(
-            of: additionalPermissionsAlignment,
-            options: .regularExpression) != nil,
-               "the additional onboarding permission rows share one leading edge")
         expect(FeaturePreset.essential.features.flatMap(\.onboardingPermissions).isEmpty,
                "the essential first-run choice asks for no broad permission")
         expect(Set(FeaturePreset.windows.features.flatMap(\.onboardingPermissions))
@@ -15493,7 +15482,7 @@ struct MetricsTests {
             contentsOfFile: "Sources/AltF4/UI/Settings/FeatureHubSettings.swift",
             encoding: .utf8)) ?? ""
         let onboardingFeatureSource = (try? String(
-            contentsOfFile: "Sources/AltF4/UI/Onboarding/OnboardingView.swift",
+            contentsOfFile: "Sources/AltF4/UI/Onboarding/NotchOnboardingView.swift",
             encoding: .utf8)) ?? ""
         expect(featureHubSource.contains("installBlockedReason")
                 && onboardingFeatureSource.contains("installBlockedReason"),
@@ -16338,9 +16327,10 @@ struct MetricsTests {
                 case .zhHK: return .zhHK
                 }
             }()
-            expect(!strings.obPurposeTitle.isEmpty && !strings.obPurposeBody.isEmpty
-                    && !strings.obPurposeSkip.isEmpty,
-                   "the purpose step speaks \(language.rawValue)")
+            let onboarding = FeatureStrings.onboarding(language)
+            expect(!onboarding.toolsTitle.isEmpty && !onboarding.toolsBody.isEmpty
+                    && !onboarding.alwaysIncluded.isEmpty,
+                   "the tool picker speaks \(language.rawValue)")
             expect(!strings.urlCleanerRulesTitle.isEmpty
                     && !strings.urlCleanerRulesAllSites.isEmpty
                     && !strings.urlCleanerRulesCaption.isEmpty
@@ -16382,8 +16372,8 @@ struct MetricsTests {
             FeaturePreset.prepareFirstRunAvailability(in: firstRunDefaults)
             expect(Set(AppFeature.allCases.filter {
                 firstRunDefaults.bool(forKey: $0.availabilityKey)
-            }) == FeaturePreset.essential.features,
-            "a clean install loads only the essential feature set before onboarding")
+            }) == OnboardingSupport.firstRunFeatures,
+            "a clean install loads only the onboarding's starting set before it runs")
 
             for feature in AppFeature.allCases {
                 firstRunDefaults.set(true, forKey: feature.availabilityKey)
@@ -16489,8 +16479,7 @@ struct MetricsTests {
         expect(!pageVisible(.monitor, available: allFeatures.subtracting(Set(FeatureVisibilitySupport.monitorFeatures))),
                "monitor page hides with every metric off")
         expect(pageVisible(.monitor, available: [.monitorNetwork]), "one metric keeps the monitor page")
-        expect(pageVisible(.general, available: []) && pageVisible(.about, available: [])
-                && pageVisible(.shortcuts, available: []),
+        expect(pageVisible(.general, available: []) && pageVisible(.advanced, available: []),
                "app pages never hide")
         expect(!pageVisible(.shelf, available: allFeatures.subtracting([.shelf])),
                "single-feature pages follow their feature")
@@ -16515,23 +16504,23 @@ struct MetricsTests {
         expect(Set(AppFeature.allCases.compactMap(\.settingsDestination.sectionAnchor))
                 == Set(SettingsSectionAnchor.allCases),
                "every declared Settings section anchor is used by a feature destination")
-        expect(AppFeature.windowMaximizer.settingsDestination
-                == FeatureSettingsDestination(.general, sectionAnchor: .panelConfiguration)
-                && AppFeature.mixer.settingsDestination
-                == FeatureSettingsDestination(.general, sectionAnchor: .panelConfiguration),
-               "panel-oriented features land on General panel configuration")
+        expect(AppFeature.windowMaximizer.settingsDestination == FeatureSettingsDestination(.windowLayout)
+                && FeatureVisibilitySupport.features(for: .windowLayout).contains(.windowMaximizer)
+                && AppFeature.mixer.settingsDestination == FeatureSettingsDestination(.features),
+               "Window Maximizer lands beside window layout, and the mixer, whose options live in its own module, on the hub")
         expect(AppFeature.cleaningMode.settingsDestination
                 == FeatureSettingsDestination(.quickTools, sectionAnchor: .cleaningMode),
                "cleaning mode lands on Quick Tools cleaning mode section")
         expect(AppFeature.musicBlock.settingsDestination
                 == FeatureSettingsDestination(.general, sectionAnchor: .musicBlocking)
                 && AppFeature.soundOutputSwitcher.settingsDestination
-                == FeatureSettingsDestination(.shortcuts, sectionAnchor: .soundOutputSwitcher)
+                == FeatureSettingsDestination(.features)
                 && AppFeature.diskImageInstaller.settingsDestination
                 == FeatureSettingsDestination(.features),
                "features without dedicated pages use explicit nearest Settings destinations")
-        expect(!AppFeature.diskImageInstaller.hasNavigableSettingsDestination
-                && AppFeature.allCases.filter { $0 != .diskImageInstaller }
+        let withoutSurface: Set<AppFeature> = [.diskImageInstaller, .soundOutputSwitcher, .mixer]
+        expect(withoutSurface.allSatisfy { !$0.hasNavigableSettingsDestination }
+                && AppFeature.allCases.filter { !withoutSurface.contains($0) }
                     .allSatisfy(\.hasNavigableSettingsDestination),
                "a feature without a separate configuration surface does not show a dead-end link")
         expect(AppFeature.monitorCPU.settingsDestination == FeatureSettingsDestination(.monitor)
@@ -25470,7 +25459,7 @@ struct MetricsTests {
                 == ["Área", "Ímã", "Zebra"],
                "the localized compare is what puts them where a reader expects")
         let onboardingSource = (try? String(
-            contentsOfFile: "Sources/AltF4/UI/Onboarding/OnboardingView.swift",
+            contentsOfFile: "Sources/AltF4/UI/Onboarding/NotchOnboardingView.swift",
             encoding: .utf8)) ?? ""
         expect(!onboardingSource.isEmpty, "the onboarding source reads back for its sorting check")
         let onboardingCode = onboardingSource.components(separatedBy: "\n")

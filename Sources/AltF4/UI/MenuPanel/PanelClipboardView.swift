@@ -235,16 +235,27 @@ struct PanelClipboardView: View {
                 .controlSize(.mini)
                 .help(entry.isPinned ? text.unpin : text.pin)
                 if ai.canRun(on: entry) {
+                    let aiText = FeatureStrings.clipboardAI(l10n.language)
                     Menu {
-                        ForEach(ClipboardAIAction.allCases) { action in
+                        ForEach(ClipboardAIAction.primary) { action in
                             Button {
-                                ai.perform(action, on: entry)
+                                ai.start(action, on: entry)
                             } label: {
-                                Label(action.title, systemImage: action.symbolName)
+                                Label(action.title(l10n.language), systemImage: action.symbolName)
+                            }
+                        }
+                        Divider()
+                        Menu(aiText.toneMenu) {
+                            ForEach(ClipboardAIAction.tones) { action in
+                                Button {
+                                    ai.start(action, on: entry)
+                                } label: {
+                                    Label(action.title(l10n.language), systemImage: action.symbolName)
+                                }
                             }
                         }
                     } label: {
-                        Image(systemName: ai.isWorking ? "hourglass" : "sparkles")
+                        Image(systemName: "sparkles")
                             .font(.system(size: 10, weight: .bold))
                     }
                     .menuStyle(.button)
@@ -252,8 +263,7 @@ struct PanelClipboardView: View {
                     .controlSize(.mini)
                     .menuIndicator(.hidden)
                     .fixedSize()
-                    .disabled(ai.isWorking)
-                    .help("AI")
+                    .help(aiText.title)
                 }
                 Button {
                     // The tick means "it is on the clipboard", so it waits for

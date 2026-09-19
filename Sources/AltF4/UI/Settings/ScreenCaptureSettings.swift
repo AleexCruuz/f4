@@ -31,9 +31,14 @@ struct ScreenCaptureSettings: View {
                 Section {
                     if availableTools.count > 1 {
                         Picker(strings.screenCaptureTitle, selection: toolSelection) {
+                            // Icons only: four tool names side by side are wider than
+                            // the page, which pushed the whole form past its edges. The
+                            // selected tool's name heads the row right below.
                             ForEach(availableTools, id: \.self) { tool in
                                 Label(tool.settingsTitle(l10n.s, language: l10n.language),
                                       systemImage: tool.systemImageName)
+                                    .labelStyle(.iconOnly)
+                                    .help(tool.settingsTitle(l10n.s, language: l10n.language))
                                     .tag(tool)
                             }
                         }
@@ -117,7 +122,7 @@ private struct RecentCapturesShortcutRows: View {
         }
         if enabled, service.shortcutRegistrationFailed {
             Text(l10n.s.shortcutUnavailable)
-                .font(.caption)
+                .font(.subheadline)
                 .foregroundStyle(.orange)
         }
     }
@@ -166,7 +171,7 @@ private struct ToolShortcutRows: View {
             .disabled(!enabled)
         if enabled, service.toolShortcutRegistrationFailures.contains(tool) {
             Text(l10n.s.shortcutUnavailable)
-                .font(.caption)
+                .font(.subheadline)
                 .foregroundStyle(.orange)
         }
     }
@@ -185,22 +190,19 @@ private struct ScreenTextCaptureSettings: View {
             } label: {
                 Label(l10n.s.ocrName, systemImage: "text.viewfinder")
             }
-            Text(l10n.s.ocrCaption)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            Toggle(l10n.s.ocrRemoveLineBreaksToggle, isOn: $removesLineBreaks)
-            Text(l10n.s.ocrRemoveLineBreaksCaption)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            Toggle(l10n.s.ocrQRToggle, isOn: $detectsQRCodes)
-            Text(l10n.s.ocrQRCaption)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            SettingsToggleWithCaption(title: l10n.s.ocrRemoveLineBreaksToggle,
+                                      caption: l10n.s.ocrRemoveLineBreaksCaption,
+                                      isOn: $removesLineBreaks)
+            SettingsToggleWithCaption(title: l10n.s.ocrQRToggle,
+                                      caption: l10n.s.ocrQRCaption,
+                                      isOn: $detectsQRCodes)
             if !permissions.screenRecording {
                 PermissionRow(kind: .screenRecording)
             }
         } header: {
             Text(l10n.s.ocrName)
+        } footer: {
+            SettingsCaptionText(l10n.s.ocrCaption)
         }
         .settingsSectionAnchor(.screenOCR)
     }
@@ -218,9 +220,6 @@ private struct ColorCaptureSettings: View {
             } label: {
                 Label(l10n.s.colorPickerPickNow, systemImage: "eyedropper")
             }
-            Text(l10n.s.colorPickerCaption)
-                .font(.caption)
-                .foregroundStyle(.secondary)
             Picker(l10n.s.colorPickerFormatLabel, selection: $format) {
                 ForEach(ColorCopyFormat.allCases) { format in
                     Text(format.label).tag(format.rawValue)
@@ -232,6 +231,8 @@ private struct ColorCaptureSettings: View {
             }
         } header: {
             Text(l10n.s.colorPickerName)
+        } footer: {
+            SettingsCaptionText(l10n.s.colorPickerCaption)
         }
         .settingsSectionAnchor(.colorPicker)
     }

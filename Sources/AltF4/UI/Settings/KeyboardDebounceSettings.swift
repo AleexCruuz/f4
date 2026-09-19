@@ -22,19 +22,18 @@ struct KeyboardDebounceSettings: View {
     var body: some View {
         Form {
             Section(l10n.s.keyDebounceName) {
-                Toggle(l10n.s.keyDebounceEnable, isOn: $enabled)
+                SettingsToggleWithCaption(title: l10n.s.keyDebounceEnable,
+                                          caption: l10n.s.keyDebounceCaption,
+                                          isOn: $enabled)
                     .onChange(of: enabled) { _, value in
                         KeyboardDebounceService.shared.syncWithPreferences()
                         guard value, !permissions.accessibility else { return }
                         permissions.requestAccessibility()
                         permissions.openAccessibilitySettings()
                     }
-                Text(l10n.s.keyDebounceCaption)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
                 if enabled, debounce.isRunning {
                     Label(l10n.s.keyDebounceActiveNow, systemImage: "checkmark.circle.fill")
-                        .font(.caption)
+                        .font(.subheadline)
                         .foregroundStyle(.green)
                 }
                 Stepper(value: globalWindowBinding, in: Defaults.allowedKeyboardDebounceWindowRange, step: 5) {
@@ -49,10 +48,7 @@ struct KeyboardDebounceSettings: View {
                 .disabled(!enabled)
             }
 
-            Section(l10n.s.keyDebouncePerKeySection) {
-                Text(l10n.s.keyDebouncePerKeyCaption)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+            Section {
                 HStack(spacing: 8) {
                     Picker(l10n.s.keyDebounceKeyLabel, selection: $selectedKeyCode) {
                         Text(l10n.s.keyDebounceKeyLabel).tag(Int64?.none)
@@ -74,9 +70,7 @@ struct KeyboardDebounceSettings: View {
                 }
 
                 if keyWindows.isEmpty {
-                    Text(l10n.s.keyDebounceNoOverrides)
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
+                    SettingsCaptionText(l10n.s.keyDebounceNoOverrides)
                 } else {
                     ForEach(keyWindows) { row in
                         HStack(spacing: 8) {
@@ -100,6 +94,10 @@ struct KeyboardDebounceSettings: View {
                         }
                     }
                 }
+            } header: {
+                Text(l10n.s.keyDebouncePerKeySection)
+            } footer: {
+                SettingsCaptionText(l10n.s.keyDebouncePerKeyCaption)
             }
             .disabled(!enabled)
 

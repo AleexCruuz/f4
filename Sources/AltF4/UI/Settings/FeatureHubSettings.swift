@@ -48,15 +48,12 @@ struct FeatureHubSettings: View {
                 }
                 .pickerStyle(.segmented)
                 .labelsHidden()
-                Text(tab == .features ? hub.intro : hub.permissionsIntro)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
                 if tab == .features {
                     HStack(spacing: 8) {
                         Text(String(format: hub.activeCountFormat,
                                     features.availableCount, features.installableCount))
-                            .font(.caption)
-                            .foregroundStyle(.tertiary)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
                         Spacer(minLength: 8)
                         Button(hub.installAllButton) {
                             FeatureRuntime.shared.setAllAvailable(true)
@@ -69,6 +66,8 @@ struct FeatureHubSettings: View {
                     }
                     .controlSize(.small)
                 }
+            } footer: {
+                SettingsCaptionText(tab == .features ? hub.intro : hub.permissionsIntro)
             }
             // The restart notice lives at the very top, never behind a
             // scroll: uninstalling anything makes it impossible to miss.
@@ -167,7 +166,7 @@ struct FeatureHubSettings: View {
     /// click away in the list below.
     private var presetsSection: some View {
         Section {
-            HStack(alignment: .top, spacing: 8) {
+            HStack(alignment: .top, spacing: 10) {
                 ForEach(FeaturePreset.allCases) { preset in
                     PresetCard(preset: preset,
                                name: presetName(preset),
@@ -181,9 +180,7 @@ struct FeatureHubSettings: View {
         } header: {
             Text(hub.presetsTitle)
         } footer: {
-            Text(hub.presetsCaption)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            SettingsCaptionText(hub.presetsCaption)
         }
     }
 
@@ -220,18 +217,15 @@ struct FeatureHubSettings: View {
                 }
                 if group == .monitor,
                    !FeatureVisibilitySupport.monitorFeatures.contains(where: \.isAvailable) {
-                    Text(hub.monitorAllOffNote)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    SettingsCaptionText(hub.monitorAllOffNote)
                 }
             } header: {
                 Text(groupTitle(group))
+            } footer: {
+                if group == FeatureGroup.allCases.last {
+                    SettingsCaptionText(hub.footerNote)
+                }
             }
-        }
-        Section {
-            Text(hub.footerNote)
-                .font(.caption)
-                .foregroundStyle(.secondary)
         }
     }
 
@@ -259,7 +253,7 @@ private struct PresetCard: View {
     let onApply: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
                 Image(systemName: preset.symbolName)
                     .font(.system(size: 12, weight: .semibold))
@@ -269,7 +263,7 @@ private struct PresetCard: View {
                     .lineLimit(1)
             }
             Text(caption)
-                .font(.caption2)
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -278,8 +272,8 @@ private struct PresetCard: View {
                 .buttonStyle(.bordered)
                 .controlSize(.small)
         }
-        .padding(9)
-        .frame(maxWidth: .infinity, minHeight: 96, alignment: .topLeading)
+        .padding(12)
+        .frame(maxWidth: .infinity, minHeight: 112, alignment: .topLeading)
         .background(
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .fill(Color.secondary.opacity(0.08))
@@ -354,42 +348,47 @@ private struct FeatureHubRow: View {
             if working {
                 ProgressView()
                     .controlSize(.small)
+                    .frame(width: 38)
             } else if feature.isEssential {
-                // No uninstall control at all rather than a disabled one: the
-                // runtime refuses the flip anyway, and a greyed-out button
-                // invites clicking at something that will never respond.
-                Label("Always on", systemImage: "lock.fill")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .labelStyle(.titleAndIcon)
+                // No switch at all rather than a disabled one: the runtime
+                // refuses the flip anyway, and a greyed-out control invites
+                // clicking at something that will never respond.
+                Image(systemName: "lock.fill")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.tertiary)
+                    .frame(width: 38)
                     .accessibilityLabel("\(accessibilityTitle) is always installed")
-            } else if installed {
-                Button(hub.uninstallButton) {
-                    if installedExtensions.isEmpty { flip(to: false) } else { confirmingExtensions = true }
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-                .accessibilityLabel("\(hub.uninstallButton) \(accessibilityTitle)")
-            } else if let reason = unsupportedReason {
+            } else if let reason = unsupportedReason, !installed {
                 // .help() never fires on a disabled control, so the tooltip
                 // has to sit on this wrapper. Flattening it loses the only
                 // place the reason is shown.
                 HStack(spacing: 0) {
-                    Button(hub.installButton) { flip(to: true) }
-                        .buttonStyle(.bordered)
+                    Toggle("", isOn: .constant(false))
+                        .toggleStyle(.switch)
                         .controlSize(.small)
+                        .labelsHidden()
                         .disabled(true)
                         .accessibilityLabel("\(hub.installButton) \(accessibilityTitle). \(reason)")
                 }
                 .help(reason)
             } else {
-                Button(hub.installButton) { flip(to: true) }
-                    .buttonStyle(.borderedProminent)
+                Toggle("", isOn: Binding(
+                    get: { installed },
+                    set: { install in
+                        if !install, !installedExtensions.isEmpty {
+                            confirmingExtensions = true
+                        } else {
+                            flip(to: install)
+                        }
+                    }))
+                    .toggleStyle(.switch)
                     .controlSize(.small)
-                    .accessibilityLabel("\(hub.installButton) \(accessibilityTitle)")
+                    .labelsHidden()
+                    .accessibilityLabel(accessibilityTitle)
+                    .help(installed ? hub.uninstallButton : hub.installButton)
             }
         }
-        .padding(.vertical, 1)
+        .padding(.vertical, 4)
         .overlay {
             RoundedRectangle(cornerRadius: 7, style: .continuous)
                 .fill(Color.accentColor.opacity(isHighlighted ? 0.10 : 0))
@@ -407,7 +406,7 @@ private struct FeatureHubRow: View {
     }
 
     private func rowContent(showsChevron: Bool) -> some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 12) {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .fill(installed
                         ? AnyShapeStyle(Theme.spaceGradient)
@@ -418,7 +417,7 @@ private struct FeatureHubRow: View {
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(installed ? AnyShapeStyle(.white) : AnyShapeStyle(.secondary))
                 )
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 6) {
                     Text(feature.hubTitle(l10n.s, hub: hub))
                         .foregroundStyle(installed ? AnyShapeStyle(.primary) : AnyShapeStyle(.secondary))
@@ -431,25 +430,22 @@ private struct FeatureHubRow: View {
                             .background(Capsule().fill(Color.accentColor))
                             .accessibilityHidden(true)
                     }
-                    ForEach(feature.permissions, id: \.self) { permission in
-                        Image(systemName: permission.symbolName)
-                            .font(.system(size: 9))
-                            .foregroundStyle(.tertiary)
-                            .help(permission.name(hub))
-                            .accessibilityHidden(true)
-                    }
-                    Text(energyLabel)
-                        .font(.system(size: 9))
-                        .foregroundStyle(.tertiary)
-                        .padding(.horizontal, 5)
-                        .padding(.vertical, 1)
-                        .background(Capsule().fill(Color.secondary.opacity(0.12)))
-                        .help(hub.energyHelp)
-                        .accessibilityHidden(true)
                 }
                 Text(feature.hubDescription(hub))
-                    .font(.caption)
+                    .font(.subheadline)
                     .foregroundStyle(installed ? Color.secondary : Color.secondary.opacity(0.6))
+                    .fixedSize(horizontal: false, vertical: true)
+                HStack(spacing: 5) {
+                    ForEach(feature.permissions, id: \.self) { permission in
+                        Image(systemName: permission.symbolName)
+                            .help(permission.name(hub))
+                    }
+                    Text(energyLabel)
+                        .help(hub.energyHelp)
+                }
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+                .accessibilityHidden(true)
             }
             Spacer(minLength: 8)
             if showsChevron {
@@ -603,12 +599,11 @@ private struct PermissionPortalRow: View {
                         .fontWeight(.medium)
                     statusChip
                 }
-                Text(permission.explainer(hub))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                SettingsCaptionText(permission.explainer(hub))
                 Text(usedByLine)
-                    .font(.caption)
+                    .font(.subheadline)
                     .foregroundStyle(.tertiary)
+                    .fixedSize(horizontal: false, vertical: true)
                 if status == .granted, activeFeatures.isEmpty {
                     unusedCard
                 }
@@ -622,7 +617,7 @@ private struct PermissionPortalRow: View {
                 .padding(.top, 2)
             }
         }
-        .padding(.vertical, 3)
+        .padding(.vertical, 6)
         .accessibilityElement(children: .combine)
     }
 
@@ -667,7 +662,7 @@ private struct PermissionPortalRow: View {
 
     private var unusedCard: some View {
         Text(hub.unusedBanner)
-            .font(.caption)
+            .font(.subheadline)
             .foregroundStyle(.secondary)
             .padding(8)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -789,6 +784,7 @@ extension AppFeature {
         case .radialMenu: return FeatureStrings.radialMenu(L10n.shared.language).pageTitle
         case .scratchpad: return FeatureStrings.scratchpad(L10n.shared.language).pageTitle
         case .commandBar: return FeatureStrings.commandBar(L10n.shared.language).pageTitle
+        case .dictation: return FeatureStrings.dictation(L10n.shared.language).pageTitle
         case .cleaningMode: return s.cleaningMenuItem
         case .mediaTools: return s.mediaName
         case .cleaner: return s.cleanerName
@@ -864,6 +860,7 @@ extension AppFeature {
         case .radialMenu: return FeatureStrings.radialMenu(L10n.shared.language).hubDescription
         case .scratchpad: return FeatureStrings.scratchpad(L10n.shared.language).hubDescription
         case .commandBar: return FeatureStrings.commandBar(L10n.shared.language).hubDescription
+        case .dictation: return FeatureStrings.dictation(L10n.shared.language).hubDescription
         case .cleaningMode: return hub.descCleaningMode
         case .mediaTools: return hub.descMediaTools
         case .cleaner:

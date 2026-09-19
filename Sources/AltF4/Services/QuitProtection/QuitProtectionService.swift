@@ -514,7 +514,7 @@ final class QuitProtectionService: ObservableObject {
         } else {
             title = String(format: strings.doubleHUDFormat, shortcut.symbol)
         }
-        hud.show(title: title, detail: strings.cancelHint)
+        hud.show(title: title)
     }
 
     private func hideHUD() { hud.hide() }
@@ -551,7 +551,6 @@ final class QuitProtectionService: ObservableObject {
     func showSelectionHUD(for shortcut: QuitProtectionShortcut, on screen: NSScreen?) {
         let strings = FeatureStrings.quitProtection(L10n.shared.language)
         hud.show(title: String(format: strings.doubleHUDFormat, shortcut.character.uppercased()),
-                 detail: strings.cancelHint,
                  on: screen)
     }
 

@@ -85,7 +85,7 @@ final class NotchWindowHost: NSObject, CAAnimationDelegate {
         let revealing = revealFromHidden && !panel.isVisible
         let canAnimate = animated && (panel.isVisible || revealing) && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
         let previousGutter = quickAccessConfiguration == nil ? 0 : NotchQuickAccessLayout.gutter
-        let previousBottom: CGFloat = quickAccessConfiguration?.hasBottom == true ? NotchQuickAccessLayout.gutter : 0
+        let previousBottom = reservedBottom(quickAccessConfiguration, height: targetSize.height, geometry: currentGeometry)
         let previousFrame = currentGeometry.frame(for: CGSize(width: targetSize.width + previousGutter * 2, height: targetSize.height + previousBottom))
         let withdrawing = !revealing && quickAccessConfiguration != nil && quickAccess == nil
         if revealing { quickAccessContainer?.motion.setVisible(false, animated: false) }
@@ -94,7 +94,7 @@ final class NotchWindowHost: NSObject, CAAnimationDelegate {
         if quickAccessConfiguration != nil { quickAccessNotchSize = size }
         if withdrawing { quickAccessContainer?.motion.setVisible(false, animated: canAnimate) }
         let gutter = quickAccessConfiguration == nil ? 0 : NotchQuickAccessLayout.gutter
-        let bottom: CGFloat = quickAccessConfiguration?.hasBottom == true ? NotchQuickAccessLayout.gutter : 0
+        let bottom = reservedBottom(quickAccessConfiguration, height: size.height, geometry: geometry)
         let frame = geometry.frame(for: CGSize(width: size.width + gutter * 2, height: size.height + bottom))
         let changesFrame = revealing || (hideWhenSettled && !canAnimate) || size != targetSize
             || frame != previousFrame || (!isAnimating && panel.frame != appliedFrame)
@@ -178,7 +178,7 @@ final class NotchWindowHost: NSObject, CAAnimationDelegate {
         CATransaction.setDisableActions(true)
         canvas.setContentSize(targetSize)
         setFrame(mainSize: targetSize, gutter: quickAccessConfiguration == nil ? 0 : NotchQuickAccessLayout.gutter,
-                 bottom: quickAccessConfiguration?.hasBottom == true ? NotchQuickAccessLayout.gutter : 0)
+                 bottom: reservedBottom(quickAccessConfiguration, height: targetSize.height, geometry: currentGeometry))
         guard generation == animationGeneration else { CATransaction.commit(); return }
         configureQuickAccess()
         canvas.layoutSubtreeIfNeeded()
@@ -211,14 +211,21 @@ final class NotchWindowHost: NSObject, CAAnimationDelegate {
             container.setHoverRects([])
             return
         }
-        // The silhouette's shoulders sit outside its vertical body.
-        let shoulder = min(NotchLayout.shoulder, targetSize.height * 0.28)
-        let body = CGRect(x: (panel.frame.width - quickAccessNotchSize.width) / 2 + shoulder, y: 0,
-                          width: quickAccessNotchSize.width - shoulder * 2, height: quickAccessNotchSize.height)
+        let body = CGRect(x: (panel.frame.width - quickAccessNotchSize.width) / 2, y: 0,
+                          width: quickAccessNotchSize.width, height: quickAccessNotchSize.height)
         container.motion.configure(configuration, body: body,
-                                   headerTop: currentGeometry.safeContentTop + NotchLayout.headerHeight / 2,
+                                   headerTop: quickAccessHeaderTop(currentGeometry),
                                    animated: quickAccessAnimate)
         container.setHoverRects(container.motion.hoverRects.map { $0.intersection(container.bounds) })
+    }
+
+    private func quickAccessHeaderTop(_ geometry: NotchGeometry) -> CGFloat {
+        geometry.safeContentTop + NotchLayout.headerHeight / 2
+    }
+
+    private func reservedBottom(_ configuration: NotchQuickAccessConfiguration?, height: CGFloat,
+                                geometry: NotchGeometry) -> CGFloat {
+        NotchQuickAccessLayout.reservedBottom(configuration, height: height, headerTop: quickAccessHeaderTop(geometry))
     }
 
     func setHoverHandler(_ handler: @escaping (Bool) -> Void) {

@@ -10,6 +10,9 @@ struct DiskSection: View {
     @ObservedObject private var protection = DiskProtectionService.shared
     @Environment(\.colorScheme) private var colorScheme
     var collapsible = true
+    /// Shown as the notch's disk page, which supplies its own title, so the
+    /// section header and its editing controls stay out.
+    var embedded = false
     @AppStorage(DefaultsKey.monitorGraphDisk) private var showGraph = true
     @AppStorage(DefaultsKey.monitorDiskUsage) private var diskUsage = true
     @AppStorage(DefaultsKey.monitorDiskActivity) private var diskActivity = true
@@ -24,9 +27,18 @@ struct DiskSection: View {
     private enum Block: String, PanelOrderItem { case usage, activity, smart, protection, tools }
 
     var body: some View {
-        PanelSection(.disk, title: l10n.s.diskSection, collapsible: collapsible,
-                     supportsEditing: true,
-                     resetAction: resetPanelDefaults) { editing in
+        if embedded {
+            content(editing: false)
+        } else {
+            PanelSection(.disk, title: l10n.s.diskSection, collapsible: collapsible,
+                         supportsEditing: true,
+                         resetAction: resetPanelDefaults) { editing in
+                content(editing: editing)
+            }
+        }
+    }
+
+    private func content(editing: Bool) -> some View {
             VStack(alignment: .leading, spacing: 10) {
                 if disks.isEmpty {
                     Text(l10n.s.diskNoDisks)
@@ -56,7 +68,6 @@ struct DiskSection: View {
             .panelCard()
             .onAppear(perform: ensureSelectedDisk)
             .onChange(of: disks.map(\.id)) { _, _ in ensureSelectedDisk() }
-        }
     }
 
     private var disks: [DiskDeviceReading] {

@@ -58,7 +58,7 @@ struct NotchLyricsView: View {
             }.font(.caption)
         }
         .padding(12)
-        .background(.white.opacity(0.045), in: RoundedRectangle(cornerRadius: 14))
+        .background(.white.opacity(NotchFill.quiet), in: RoundedRectangle(cornerRadius: 14))
         .onChange(of: online) { update() }
     }
 

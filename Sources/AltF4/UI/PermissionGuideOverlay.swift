@@ -16,10 +16,6 @@ import SwiftUI
 final class PermissionGuideOverlay {
     static let shared = PermissionGuideOverlay()
 
-    /// Onboarding walks the person through permissions with its own UI, so
-    /// the floating card stays out of its way.
-    static var suppressed = false
-
     private var panel: NSPanel?
     private var grantWatcher: AnyCancellable?
     private var dismissWork: DispatchWorkItem?
@@ -32,7 +28,6 @@ final class PermissionGuideOverlay {
     private init() {}
 
     func show(for kind: PermissionKind) {
-        guard !Self.suppressed else { return }
         Permissions.shared.setActivePermissionSurface(pollingDemandID, visible: false)
         dismissWork?.cancel()
         dismissWork = nil

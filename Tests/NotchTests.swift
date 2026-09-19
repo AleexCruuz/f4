@@ -219,7 +219,7 @@ enum NotchTests {
                 let geometry = NotchGeometry(screen: screen, safeAreaTop: 0, cameraWidth: 0,
                                              menuBarHeight: height, compactSideRoom: room).compactMusicGeometry
                 let contentLeft = geometry.compactActivityWingWidth + geometry.compactMusicLabelInset
-                let bottomCurveEnd = min(NotchLayout.shoulder, height * 0.28) + min(28, height / 2)
+                let bottomCurveEnd = NotchLayout.surfaceRadius(height: height)
                 expect(contentLeft >= bottomCurveEnd + 4,
                        "center text clears the entire curved silhouette even after the music wings disappear")
                 expect(geometry.compactActivityCameraGap - geometry.compactMusicLabelInset * 2 >= 50,
@@ -274,9 +274,9 @@ enum NotchTests {
             defaults.set(value, forKey: key)
         }
         for (key, value) in AppFeature.availabilityDefaults { defaults.set(value, forKey: key) }
-        expect(!NotchSupport.isEnabled(in: defaults), "notch is opt-in")
-        expect(NotchSupport.controls(in: defaults) == [.volume, .brightness, .music, .mixer, .keepAwake, .timer, .calendar],
-               "home defaults prioritize playback and everyday system controls")
+        expect(NotchSupport.isEnabled(in: defaults), "the island ships enabled")
+        expect(NotchSupport.controls(in: defaults) == NotchControlItem.allCases.filter { $0.isAvailable(in: defaults) },
+               "a fresh home shows every available control")
         defaults.set(false, forKey: DefaultsKey.notchTimerEnabled)
         defaults.set(false, forKey: DefaultsKey.notchCalendarEnabled)
         expect(!NotchSupport.controls(in: defaults).contains(.timer)
@@ -294,11 +294,33 @@ enum NotchTests {
         expect(homeGeometry.expandedSize(module: .controls, controlsHaveMusic: true).height
                - homeGeometry.expandedSize(module: .controls).height == NotchLayout.musicControlHeight + 18,
                "home playback reserves its actual height and spacing")
+        let smallModules = NotchGeometry(screen: CGRect(x: 0, y: 0, width: 1470, height: 956), safeAreaTop: 32,
+                                         cameraWidth: 180, layout: .custom, customWidth: 360, customHeight: 400)
+        let settingsContent = smallModules.contentSize(for: smallModules.settingsSize)
+        expect(Double(settingsContent.width) == SettingsWindowSupport.minContentWidth
+               && Double(settingsContent.height) == SettingsWindowSupport.minContentHeight,
+               "Settings in the notch gets its window's design size whatever size the modules use")
+        let smallScreen = NotchGeometry(screen: CGRect(x: 0, y: 0, width: 1024, height: 600), safeAreaTop: 0, cameraWidth: 0)
+        expect(smallScreen.settingsSize.width <= 1024 - 24 - NotchQuickAccessLayout.gutter * 2
+               && smallScreen.settingsSize.height <= 600 - 48,
+               "a small screen shrinks Settings rather than pushing it off the display")
+        let delegateSource = (try? String(contentsOfFile: "Sources/AltF4/App/AppDelegate.swift", encoding: .utf8)) ?? ""
+        let openSettingsBody = delegateSource.components(separatedBy: "func openSettingsWindow() {").dropFirst().first?
+            .components(separatedBy: "\n    }\n").first ?? ""
+        let asksNotch = openSettingsBody.range(of: "NotchService.shared.showSettings()")
+        let buildsWindow = openSettingsBody.range(of: "SettingsView(")
+        expect(asksNotch != nil && buildsWindow != nil && asksNotch!.lowerBound < buildsWindow!.lowerBound,
+               "every way into Settings asks the notch first and keeps the window as the fallback")
+        let notchViewSource = (try? String(contentsOfFile: "Sources/AltF4/UI/Notch/NotchView.swift", encoding: .utf8)) ?? ""
+        expect(notchViewSource.contains("SettingsView(notchSize:"), "the notch hosts the Settings pages themselves")
 
-        expect(!NotchSupport.routesAppPanel(in: defaults) && !NotchSupport.routesQuickPanel(in: defaults)
+        expect(AppFeature.notch.enabledKeys.isEmpty && Defaults.registeredDefaults["notchEnabled"] == nil,
+               "the island has no switch of its own for the panel, hub or command bar to offer")
+        defaults.set(false, forKey: AppFeature.notch.availabilityKey)
+        expect(!NotchSupport.routesQuickPanel(in: defaults)
                && !NotchSupport.routesShelf(in: defaults) && !NotchSupport.routesCaptureControls(in: defaults)
                && !NotchSupport.routesClipboardWindow(in: defaults),
-               "separate panels remain the default until the notch is explicitly enabled")
+               "separate panels return only when the island is removed from the hub")
         expect(NotchSupport.showsInCaptures(in: defaults), "notch appears in screenshots and recordings by default")
         defaults.set(true, forKey: DefaultsKey.notchHideInCaptures)
         expect(NotchSupport.showsInCaptures(in: defaults), "the old inverse default cannot silently hide the notch")
@@ -306,49 +328,55 @@ enum NotchTests {
         expect(!NotchSupport.showsInCaptures(in: defaults), "capture visibility remains an explicit opt-out")
         defaults.set(true, forKey: DefaultsKey.notchShowInCaptures)
         expect(NotchEvent.allCases.allSatisfy { !NotchSupport.routes($0, in: defaults) },
-               "disabled notch cannot consume any existing presentation")
-        defaults.set(true, forKey: DefaultsKey.notchEnabled)
-        expect(NotchSupport.isEnabled(in: defaults), "master switch enables notch")
-        expect(NotchSupport.usesHapticFeedback(in: defaults), "the enabled island starts with tactile feedback")
-        defaults.set(false, forKey: DefaultsKey.notchHapticFeedback)
-        expect(!NotchSupport.usesHapticFeedback(in: defaults), "tactile feedback can still be turned off independently")
+               "a removed island cannot consume any existing presentation")
+        defaults.set(true, forKey: AppFeature.notch.availabilityKey)
+        expect(NotchSupport.isEnabled(in: defaults), "reinstalling the island turns it straight back on")
+        expect(!NotchSupport.usesHapticFeedback(in: defaults), "the enabled island starts without tactile feedback")
         defaults.set(true, forKey: DefaultsKey.notchHapticFeedback)
-        defaults.set(false, forKey: DefaultsKey.notchEnabled)
-        expect(!NotchSupport.usesHapticFeedback(in: defaults) && !NotchSupport.routesAppPanel(in: defaults)
+        expect(NotchSupport.usesHapticFeedback(in: defaults), "tactile feedback can be turned on independently")
+        defaults.set(false, forKey: AppFeature.notch.availabilityKey)
+        expect(!NotchSupport.usesHapticFeedback(in: defaults)
                && !NotchSupport.routesQuickPanel(in: defaults) && !NotchSupport.routesShelf(in: defaults),
-               "turning the notch off restores separate panels and suppresses tactile feedback")
-        defaults.set(true, forKey: DefaultsKey.notchEnabled)
-        expect(NotchSupport.usesHapticFeedback(in: defaults), "disabling the notch preserves the user's tactile preference")
+               "removing the island restores separate panels and suppresses tactile feedback")
+        defaults.set(true, forKey: AppFeature.notch.availabilityKey)
+        expect(NotchSupport.usesHapticFeedback(in: defaults), "removing the island preserves the user's tactile preference")
         expect(NotchSupport.idleContent(in: defaults) == .music, "a new island shows playing music at rest")
         expect(defaults.string(forKey: DefaultsKey.notchSize) == NotchSize.spacious.rawValue
                && defaults.bool(forKey: DefaultsKey.notchOpenOnHover)
                && defaults.bool(forKey: DefaultsKey.notchHoverExpands),
                "a new island starts spacious and expands on hover")
         expect(!defaults.bool(forKey: DefaultsKey.notchHideUntilHover), "hidden hover is opt-in")
-        expect(defaults.double(forKey: DefaultsKey.notchHoverDelay) == 0.25,
-               "hover activation defaults to a deliberate quarter-second pause")
+        expect(defaults.double(forKey: DefaultsKey.notchHoverDelay) == 0.10,
+               "hover activation defaults to a short 100 ms pause")
         for value in [0.10, 0.25, 0.65, 1.0] {
             expect(NotchSupport.sanitizedHoverDelay(value) == value, "valid hover activation times are preserved")
         }
         expect(NotchSupport.sanitizedHoverDelay(-1) == 0.10
                && NotchSupport.sanitizedHoverDelay(9) == 1.0,
                "hover activation times stay within usable bounds")
-        expect([Double.nan, .infinity, -.infinity].allSatisfy { NotchSupport.sanitizedHoverDelay($0) == 0.25 },
+        expect([Double.nan, .infinity, -.infinity].allSatisfy { NotchSupport.sanitizedHoverDelay($0) == NotchSupport.defaultHoverDelay },
                "non-finite hover activation times fall back to the default")
-        expect(NotchSupport.routesAppPanel(in: defaults) && NotchSupport.routesQuickPanel(in: defaults)
+        expect(NotchSupport.routesQuickPanel(in: defaults)
                && NotchSupport.routesClipboardWindow(in: defaults) && NotchSupport.routesShelf(in: defaults)
                && NotchSupport.routesCaptureControls(in: defaults),
                "enabling a fresh island routes available panels into it")
+        defaults.set(false, forKey: AppFeature.dictation.availabilityKey)
+        expect(!NotchQuickAccessConfiguration.current(in: defaults).actions.contains(.module(.dictation)),
+               "the dictation history button waits for dictation to be installed")
+        defaults.set(true, forKey: AppFeature.dictation.availabilityKey)
         let initialLayout = NotchQuickAccessConfiguration.current(in: defaults)
-        expect(initialLayout.buttons.filter { $0.side == .left }.compactMap(\.action) == [.explore, .module(.timer)]
-               && initialLayout.buttons.filter { $0.side == .right }.compactMap(\.action) == [.settings, .module(.mixer)]
-               && initialLayout.buttons.filter { $0.side == .bottom }.compactMap(\.action) == [.module(.music)],
-               "a fresh layout places Explore and Timer left, Settings and Mixer right, and music below")
+        expect(initialLayout.buttons.allSatisfy { $0.side == .left }
+               && initialLayout.actions == [.explore, .module(.timer), .settings, .module(.mixer), .module(.dictation)],
+               "a fresh layout keeps every button in one column on the left, dictation history last")
+        expect(NotchModule.dictation.symbol == "mic" && NotchSupport.modules(in: defaults).contains(.dictation),
+               "installed dictation adds its history page to the notch, behind a microphone")
+        expect(initialLayout.buttons.count <= NotchQuickAccessConfiguration.maximumPerSide,
+               "the fresh column fits within the per-side limit")
         expect(initialLayout == NotchQuickAccessConfiguration.current(in: defaults),
                "default buttons keep stable identities across preference refreshes")
         defaults.set(false, forKey: AppFeature.mixer.availabilityKey)
         defaults.set(false, forKey: AppFeature.notchTimer.availabilityKey)
-        expect(NotchQuickAccessConfiguration.current(in: defaults).actions == [.explore, .settings, .module(.music)]
+        expect(NotchQuickAccessConfiguration.current(in: defaults).actions == [.explore, .settings, .module(.dictation)]
                && !NotchQuickAction.module(.mixer).isAvailable(in: defaults)
                && !NotchQuickAction.control(.mixer).isAvailable(in: defaults),
                "uninstalled utilities leave no default buttons or available mixer actions")
@@ -358,6 +386,7 @@ enum NotchTests {
         defaults.set(true, forKey: AppFeature.notchTimer.availabilityKey)
         expect(NotchQuickAccessConfiguration.current(in: defaults) == initialLayout,
                "reinstalled utilities return to their original positions")
+        defaults.removeObject(forKey: AppFeature.dictation.availabilityKey)
         defaults.set("right", forKey: DefaultsKey.notchQuickAccessSide)
         expect(NotchQuickAccessConfiguration.stored(in: defaults) == .init(side: .right, actions: [.explore, .settings]),
                "a saved legacy side retains the former Settings companion")
@@ -429,10 +458,11 @@ enum NotchTests {
         expect(!NotchSupport.modules(in: defaults).contains(.mixer)
                && !NotchSupport.controls(in: defaults).contains(.volume), "mixer availability gates its module and volume control")
         defaults.set(true, forKey: AppFeature.mixer.availabilityKey)
-        defaults.set("panel,panel,unknown,speedTest", forKey: DefaultsKey.notchControlOrder)
+        // `panel` is the retired app-panel tile: a saved order may still name it.
+        defaults.set("speedTest,speedTest,unknown,panel", forKey: DefaultsKey.notchControlOrder)
         defaults.set("volume,screenshot", forKey: DefaultsKey.notchHiddenControls)
         let controls = NotchSupport.controls(in: defaults)
-        expect(controls.first == .panel && Set(controls).count == controls.count,
+        expect(controls.first == .speedTest && Set(controls).count == controls.count,
                "shortcut ordering tolerates duplicate and obsolete identifiers")
         expect(!controls.contains(.volume) && !controls.contains(.screenshot), "individual controls can be hidden")
         defaults.set("mixer,commandBar", forKey: DefaultsKey.notchHiddenControls)
@@ -523,6 +553,7 @@ enum NotchTests {
         expect(!NotchSupport.routes(.clipboard, in: defaults) && !NotchSupport.routes(.capture, in: defaults),
                "notch opt-in does not reveal copied content or move captures")
         defaults.set(true, forKey: DefaultsKey.notchClipboard)
+        defaults.set(false, forKey: DefaultsKey.clipboardHistoryEnabled)
         expect(!NotchSupport.routes(.clipboard, in: defaults), "clipboard event respects the history capture switch")
         defaults.set(true, forKey: DefaultsKey.clipboardHistoryEnabled)
         expect(NotchSupport.routes(.clipboard, in: defaults), "explicit clipboard activity opt-in is honored")
@@ -534,7 +565,9 @@ enum NotchTests {
         expect(!NotchSupport.routesClipboardWindow(in: defaults), "hidden clipboard keeps the ordinary history available")
         expect(!NotchSupport.routes(.clipboard, in: defaults), "hidden module cannot leak an activity")
         defaults.set("system,music,music,unknown", forKey: DefaultsKey.notchModuleOrder)
-        expect(NotchSupport.modules(in: defaults) == [.system, .music, .controls, .mixer, .captures, .files, .tools, .calendar, .timer, .downloads],
+        defaults.set(true, forKey: AppFeature.dictation.availabilityKey)
+        expect(NotchSupport.modules(in: defaults) == [.system, .music, .controls, .mixer, .captures, .files, .tools, .calendar, .timer,
+                                                      .camera, .downloads, .notes, .dictation],
                "module order ignores unknown ids and duplicates, preserving newly added modules")
         expect(NotchSupport.routesShelf(in: defaults) && NotchSupport.revealsShelfDrag(in: defaults),
                "the enabled notch replaces the file destination and reveals active drags")
@@ -551,25 +584,25 @@ enum NotchTests {
         defaults.set(false, forKey: AppFeature.shelf.availabilityKey)
         expect(!NotchSupport.modules(in: defaults).contains(.files), "unavailable shelf leaves no notch surface")
         defaults.set(false, forKey: AppFeature.notch.availabilityKey)
-        expect(!NotchSupport.isEnabled(in: defaults), "hub is stronger than the notch master switch")
+        expect(!NotchSupport.isEnabled(in: defaults), "removing the island from the hub turns it off")
         expect(!NotchSupport.usesHapticFeedback(in: defaults), "removing the feature also gates tactile feedback")
         expect(NotchEvent.allCases.allSatisfy { !NotchSupport.routes($0, in: defaults) },
                "hub removal gates every notch event")
 
         let keys: Set<String> = [DefaultsKey.notchShowPlayingMusic, DefaultsKey.notchShowInCaptures, DefaultsKey.notchIdleContent, DefaultsKey.notchHiddenControls, DefaultsKey.notchControlOrder, DefaultsKey.notchSize, DefaultsKey.notchShelf, DefaultsKey.notchDragReveal,
                                 DefaultsKey.notchCustomWidth, DefaultsKey.notchCustomHeight, DefaultsKey.notchHapticFeedback,
-                                DefaultsKey.notchCaptureControls, DefaultsKey.notchQuickPanel, DefaultsKey.notchAppPanel,
-                                DefaultsKey.notchHoverExpands, DefaultsKey.notchEnabled, DefaultsKey.notchDisplay,
+                                DefaultsKey.notchCaptureControls, DefaultsKey.notchQuickPanel,
+                                DefaultsKey.notchHoverExpands, DefaultsKey.notchDisplay,
                                 DefaultsKey.notchOpenOnHover, DefaultsKey.notchHoverDelay, DefaultsKey.notchHideUntilHover, DefaultsKey.notchHiddenModules,
                                 DefaultsKey.notchModuleOrder, DefaultsKey.notchQuickAccessLayout, DefaultsKey.notchQuickAccessSide, DefaultsKey.notchQuickAccessSecond, DefaultsKey.notchQuickAccessThird, DefaultsKey.notchVolume,
                                 DefaultsKey.notchBrightness, DefaultsKey.notchBattery,
                                 DefaultsKey.notchClipboard, DefaultsKey.notchClipboardWindow, DefaultsKey.notchCapture,
-                                DefaultsKey.notchMusicActivity, DefaultsKey.notchHideInCaptures, DefaultsKey.panelControlNotch,
+                                DefaultsKey.notchMusicActivity, DefaultsKey.notchHideInCaptures,
                                 AppFeature.notch.availabilityKey]
         expect(SettingsBackupSupport.exportKeys().isSuperset(of: keys), "every notch preference travels in backup")
         let restored = SettingsBackupSupport.sanitizedSettings(from: [
             SettingsBackupSupport.formatVersionKey: SettingsBackupSupport.formatVersion,
-            SettingsBackupSupport.settingsKey: [DefaultsKey.notchEnabled: true,
+            SettingsBackupSupport.settingsKey: ["notchEnabled": false,
                                                 DefaultsKey.notchDisplay: "builtIn",
                                                 DefaultsKey.notchSize: "custom",
                                                 DefaultsKey.notchCustomWidth: 390.0,
@@ -581,8 +614,8 @@ enum NotchTests {
                                                 DefaultsKey.notchQuickAccessSecond: "timer",
                                                 DefaultsKey.notchQuickAccessThird: "settings"],
         ])
-        expect(restored?[DefaultsKey.notchEnabled] as? Bool == true
-               && restored?[DefaultsKey.notchDisplay] as? String == "builtIn"
+        expect(restored?["notchEnabled"] == nil, "a backup from before the switch was removed cannot turn the island off")
+        expect(restored?[DefaultsKey.notchDisplay] as? String == "builtIn"
                && restored?[DefaultsKey.notchVolume] as? Bool == false,
                "backup restores notch placement and event choices")
         expect(restored?[DefaultsKey.notchSize] as? String == "custom"
@@ -611,19 +644,20 @@ enum NotchTests {
         defaults.set("", forKey: DefaultsKey.notchHiddenModules)
         for side in [NotchQuickAccessSide.left, .right] {
             let edge: CGFloat = side == .left ? 72 : 632
-            for index in 0..<3 {
+            let column = NotchQuickAccessConfiguration.maximumPerSide
+            for index in 0..<column {
                 let point = NotchQuickAccessLayout.center(index: index, progress: 1, edge: edge, top: 60, side: side)
-                expect(NotchQuickAccessLayout.hitTest(point, count: 3, edge: edge, top: 60, side: side),
+                expect(NotchQuickAccessLayout.hitTest(point, count: column, edge: edge, top: 60, side: side),
                        "every visible bubble accepts its own center on either side")
                 let gap = CGPoint(x: edge + (side == .left ? -6 : 6), y: point.y)
-                expect(!NotchQuickAccessLayout.hitTest(gap, count: 3, edge: edge, top: 60, side: side),
+                expect(!NotchQuickAccessLayout.hitTest(gap, count: column, edge: edge, top: 60, side: side),
                        "the transparent gap between a bubble and the notch does not claim clicks")
             }
         }
         expect(NotchQuickAccessLayout.hoverRect(count: 0, edge: 72, top: 60, side: .left).isNull,
                "no floating actions means no extra hover surface")
         for side in [NotchQuickAccessSide.left, .right] {
-            for count in 1...3 {
+            for count in 1...NotchQuickAccessConfiguration.maximumPerSide {
                 let edge: CGFloat = side == .left ? 86 : 618
                 let region = NotchQuickAccessLayout.hoverRect(count: count, edge: edge, top: 60, side: side)
                 let first = NotchQuickAccessLayout.center(index: 0, progress: 1, edge: edge, top: 60, side: side)
@@ -655,7 +689,24 @@ enum NotchTests {
                && layout.buttons.filter { $0.side == .bottom }.map(\.id) == [placements[0].id, placements[2].id],
                "moving a button preserves its identity and inserts it in the chosen order")
         let crowded = NotchQuickAccessConfiguration(buttons: (0..<12).map { _ in NotchQuickButton(action: .settings, side: .bottom) }).sanitized()
-        expect(crowded.buttons.count == 3, "restored layouts cannot overfill an edge")
+        expect(crowded.buttons.count == NotchQuickAccessConfiguration.maximumPerSide,
+               "restored layouts cannot overfill an edge")
+        let fullColumn = NotchQuickAccessConfiguration(buttons: (0..<NotchQuickAccessConfiguration.maximumPerSide).map { _ in
+            NotchQuickButton(action: .settings, side: .left)
+        })
+        let lastCenter = NotchQuickAccessLayout.center(index: fullColumn.buttons.count - 1, progress: 1, edge: 72, top: 60, side: .left)
+        let lastRim = NotchQuickAccessLayout.hoverRect(count: fullColumn.buttons.count, edge: 72, top: 60, side: .left).maxY
+        for height: CGFloat in [120, 214, 250, lastRim, 480] {
+            let windowBottom = height + NotchQuickAccessLayout.reservedBottom(fullColumn, height: height, headerTop: 60)
+            expect(windowBottom >= lastRim && windowBottom >= lastCenter.y + NotchQuickAccessLayout.diameter / 2,
+                   "a page shorter than the side column still keeps every button and its hover rim inside the window")
+        }
+        expect(NotchQuickAccessLayout.reservedBottom(fullColumn, height: 480, headerTop: 60) == 0
+               && NotchQuickAccessLayout.reservedBottom(nil, height: 120, headerTop: 60) == 0,
+               "a page taller than the column, or no buttons at all, reserves nothing below the notch")
+        let bottomOnly = NotchQuickAccessConfiguration(buttons: [NotchQuickButton(action: .settings, side: .bottom)])
+        expect(NotchQuickAccessLayout.reservedBottom(bottomOnly, height: 480, headerTop: 60) == NotchQuickAccessLayout.gutter,
+               "a bottom row keeps its gutter below the notch")
         var invalidButton = NotchQuickButton(action: .settings, side: .left, label: "  Name\nwith line  ")
         invalidButton.actionID = "unrecognized-action"
         expect(NotchQuickAccessConfiguration(buttons: [invalidButton]).sanitized().buttons.isEmpty,
@@ -695,6 +746,25 @@ enum NotchTests {
                "a short search result shrinks the gallery instead of reserving empty rows")
         expect(compact.contentSize(for: compact.sectionPickerSize(count: 0, searching: true)).height >= 160,
                "an unmatched search still reserves room for recovery guidance")
+        expect(NotchHomeCard.rows(for: NotchModule.allCases, panoramic: false) == [[.music, .system], [.calendar, .timer]],
+               "Home leads with playback and system, then the next event and the timer")
+        expect(NotchHomeCard.rows(for: NotchModule.allCases, panoramic: true) == [[.music, .system, .calendar, .timer]],
+               "a panoramic Home keeps the same card order on a single row")
+        expect(NotchHomeCard.rows(for: [.controls, .timer], panoramic: false) == [[.timer]]
+               && NotchHomeCard.rows(for: [.controls, .timer], panoramic: true) == [[.timer]]
+               && NotchHomeCard.rows(for: [.controls, .files], panoramic: false).isEmpty
+               && NotchHomeCard.rows(for: [.controls, .files], panoramic: true).isEmpty,
+               "a Home card appears only while its module is installed, and empty rows vanish")
+        let homeRows = NotchHomeCard.rows(for: NotchModule.allCases, panoramic: compact.isPanoramic)
+        let withCards = compact.sectionPickerSize(count: 4, cardRows: homeRows).height
+        let withoutCards = compact.sectionPickerSize(count: 4).height
+        expect(withCards == min(withoutCards + homeRows.map { NotchHomeCard.rowHeight($0, panoramic: compact.isPanoramic) }.reduce(0, +)
+                                    + CGFloat(homeRows.count) * NotchLayout.sectionSpacing,
+                                compact.sectionPickerSize(count: 400, cardRows: homeRows).height),
+               "Home grows by exactly its card rows until the height limit")
+        expect(compact.sectionPickerSize(count: 4, searching: true, cardRows: homeRows)
+                == compact.sectionPickerSize(count: 4, searching: true),
+               "a search lists modules without the Home cards")
         let musicBase = compact.expandedSize(module: .music)
         let musicDetails = compact.expandedSize(module: .music, musicExtraHeight: 260)
         expect(musicDetails.width == musicBase.width && musicDetails.height == musicBase.height + 260
@@ -702,6 +772,32 @@ enum NotchTests {
                "opening lyrics or the queue adds room while preserving width and screen bounds")
         expect(compact.expanded.width >= 440 && spacious.expanded.width > compact.expanded.width,
                "the standard notch has room for side-by-side controls while spacious remains available")
+        let panoramicHome = spacious.sectionPickerSize(
+            count: allModules.count, cardRows: NotchHomeCard.rows(for: NotchModule.allCases, panoramic: spacious.isPanoramic))
+        let stackedHome = compact.sectionPickerSize(
+            count: allModules.count, cardRows: NotchHomeCard.rows(for: NotchModule.allCases, panoramic: compact.isPanoramic))
+        expect(spacious.isPanoramic && !compact.isPanoramic
+               && panoramicHome.width > stackedHome.width && panoramicHome.height < stackedHome.height,
+               "the default spacious notch opens wider and shorter than compact, with Home spread sideways")
+        expect(panoramicHome.width >= panoramicHome.height * 2.2,
+               "a panoramic Home is a wide, short dashboard: one row of cards and one row of modules")
+        expect(spacious.sectionPickerSize(count: allModules.count).height
+                == spacious.sectionPickerSize(count: 1).height,
+               "every installed module fits on the panoramic Home's single row")
+        expect(spacious.sectionColumns > compact.sectionColumns && spacious.systemColumns > compact.systemColumns
+               && spacious.controlColumns > compact.controlColumns,
+               "a panoramic panel gives every grid another column rather than more rows")
+        let mirror = spacious.expandedSize(module: .camera)
+        expect(mirror.width < spacious.expandedWidth && mirror.height < mirror.width
+               && frames[0].contains(spacious.frame(for: mirror)),
+               "the 4:3 mirror keeps a narrower page instead of growing past the screen on a panoramic panel")
+        let compactMirror = compact.expandedSize(module: .camera)
+        expect(abs(mirror.height - (spacious.cameraHeight + mirror.width * 0.75)) < 0.5
+               && abs(compactMirror.height - (compact.cameraHeight + compactMirror.width * 0.75)) < 0.5
+               && compactMirror.width == compact.expandedWidth,
+               "the mirror page is the 4:3 picture alone under the cutout, edge to edge")
+        expect(mirror.width * 0.75 > 400,
+               "a panoramic mirror shows a picture larger than the old framed preview")
         let idleMusic = compact.expandedSize(module: .music, musicHasContent: false)
         expect(idleMusic.height < compact.expandedSize(module: .music).height
                && compact.contentSize(for: idleMusic).height >= 130,
@@ -738,7 +834,11 @@ enum NotchTests {
                                                layout: .custom, customWidth: width, customHeight: height)
                     for module in NotchModule.allCases {
                         let size = custom.expandedSize(module: module)
-                        expect(size.width == min(width, frame.width - 24 - NotchQuickAccessLayout.gutter * 2) && size.height <= height
+                        // Notes lays out two columns, so it keeps its own width
+                        // floor; the custom height still binds it.
+                        let expectedWidth = module == .notes ? custom.notesWidth
+                            : min(width, frame.width - 24 - NotchQuickAccessLayout.gutter * 2)
+                        expect(size.width == expectedWidth && size.height <= height
                                && frame.contains(custom.frame(for: size)),
                                "custom dimensions fit every module and respect the display and height limit")
                     }
@@ -790,9 +890,6 @@ enum NotchTests {
                        == geometry.expanded.height - geometry.safeContentTop - 36 - 18 - 22,
                        "content reserves one top navigation row, its spacing and the bottom inset")
                 expect(geometry.safeContentTop > geometry.cameraHeight, "controls always clear the physical camera")
-                expect(geometry.appPanelSize.width > 0 && geometry.appPanelSize.height >= 176
-                       && geometry.appPanelSize.height < geometry.expandedSize(module: .tools).height,
-                       "embedded panel reserves room for its navigation, content and footer")
             }
         }
         for frame in frames {
@@ -1097,8 +1194,10 @@ enum NotchTests {
         defer { defaults.removePersistentDomain(forName: "com.altf4.tests.notch-calendar") }
         for (key, value) in Defaults.registeredDefaults where key.hasPrefix("notch") { defaults.set(value, forKey: key) }
         for (key, value) in AppFeature.availabilityDefaults { defaults.set(value, forKey: key) }
-        expect(!NotchCalendarSupport.isEnabled(in: defaults), "calendar starts off")
-        defaults.set(true, forKey: DefaultsKey.notchEnabled)
+        expect(NotchCalendarSupport.isEnabled(in: defaults), "calendar starts on with the island")
+        defaults.set(false, forKey: AppFeature.notch.availabilityKey)
+        expect(!NotchCalendarSupport.isEnabled(in: defaults), "calendar leaves with the island")
+        defaults.set(true, forKey: AppFeature.notch.availabilityKey)
         expect(NotchSupport.modules(in: defaults).contains(.calendar), "calendar is available in the default home")
         defaults.set(false, forKey: DefaultsKey.notchCalendarEnabled)
         expect(!NotchCalendarSupport.isEnabled(in: defaults), "calendar can still be explicitly disabled")
@@ -1110,8 +1209,8 @@ enum NotchTests {
         defaults.set(false, forKey: AppFeature.notchCalendar.availabilityKey)
         expect(!NotchCalendarSupport.isEnabled(in: defaults), "removing the calendar from the hub stops its reader")
         defaults.set(true, forKey: AppFeature.notchCalendar.availabilityKey)
-        defaults.set(false, forKey: DefaultsKey.notchEnabled)
-        expect(!NotchCalendarSupport.isEnabled(in: defaults), "the master switch also stops calendar reads")
+        defaults.set(false, forKey: AppFeature.notch.availabilityKey)
+        expect(!NotchCalendarSupport.isEnabled(in: defaults), "removing the island also stops calendar reads")
         expect(SettingsBackupSupport.exportKeys().isSuperset(of: [DefaultsKey.notchCalendarEnabled,
                                                                  AppFeature.notchCalendar.availabilityKey]),
                "calendar preferences travel in backup")

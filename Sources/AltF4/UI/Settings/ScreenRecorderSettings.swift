@@ -24,7 +24,6 @@ struct ScreenRecordingCaptureSettings: View {
         RecorderSupport.GIFSize.medium.rawValue
     @AppStorage(DefaultsKey.recorderGIFFrameRate) private var gifFrameRate = 12
     @AppStorage(DefaultsKey.recorderSharingEnabled) private var sharingEnabled = true
-    @State private var showsMoreOptions = false
     @State private var showingSharedLinks = false
     @State private var showingSharePrivacy = false
 
@@ -40,6 +39,10 @@ struct ScreenRecordingCaptureSettings: View {
         FeatureStrings.screenshot(l10n.language)
     }
 
+    private var layoutText: SettingsLayoutStrings {
+        FeatureStrings.settingsLayout(l10n.language)
+    }
+
     var body: some View {
         Group {
             Section {
@@ -49,12 +52,12 @@ struct ScreenRecordingCaptureSettings: View {
                     Label(service.isRecording ? strings.stopButton : strings.startButton,
                           systemImage: service.isRecording ? "stop.circle" : "record.circle")
                 }
-                Text(service.isRecording
-                     ? RecorderSupport.elapsedLabel(seconds: service.elapsedSeconds)
-                     : strings.panelCaption)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .monospacedDigit()
+                if service.isRecording {
+                    Text(RecorderSupport.elapsedLabel(seconds: service.elapsedSeconds))
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
+                }
                 if !permissions.screenRecording {
                     PermissionRow(kind: .screenRecording)
                 }
@@ -63,10 +66,12 @@ struct ScreenRecordingCaptureSettings: View {
                 }
             } header: {
                 Text(strings.pageTitle)
+            } footer: {
+                SettingsCaptionText(strings.panelCaption)
             }
             .settingsSectionAnchor(.screenRecorder)
 
-            Section {
+            Section(layoutText.behavior) {
                 Picker(strings.countdownLabel, selection: $countdown) {
                     ForEach(ScreenshotSupport.allowedDelays, id: \.self) { seconds in
                         if seconds == 0 {
@@ -77,111 +82,88 @@ struct ScreenRecordingCaptureSettings: View {
                     }
                 }
                 .pickerStyle(.segmented)
-                VStack(alignment: .leading, spacing: 4) {
-                    Toggle(strings.systemAudioToggle, isOn: $systemAudio)
-                    Text(strings.systemAudioCaption)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                VStack(alignment: .leading, spacing: 4) {
-                    Toggle(strings.microphoneToggle, isOn: $microphone)
-                        .onChange(of: microphone) { _, enabled in
-                            if enabled, permissions.microphone == .undetermined {
-                                permissions.requestMicrophone()
-                            }
+                SettingsToggleWithCaption(title: strings.systemAudioToggle,
+                                          caption: strings.systemAudioCaption,
+                                          isOn: $systemAudio)
+                SettingsToggleWithCaption(title: strings.microphoneToggle,
+                                          caption: strings.microphoneCaption,
+                                          isOn: $microphone)
+                    .onChange(of: microphone) { _, enabled in
+                        if enabled, permissions.microphone == .undetermined {
+                            permissions.requestMicrophone()
                         }
-                    Text(strings.microphoneCaption)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    if microphone, permissions.microphone != .granted {
-                        PermissionRow(kind: .microphone)
                     }
+                if microphone, permissions.microphone != .granted {
+                    PermissionRow(kind: .microphone)
                 }
-                VStack(alignment: .leading, spacing: 4) {
-                    Toggle(strings.openEditorToggle, isOn: $opensEditor)
-                    Text(strings.openEditorCaption)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                VStack(alignment: .leading, spacing: 4) {
-                    Toggle(strings.automaticZoomToggle, isOn: $automaticZoom)
-                    Text(strings.automaticZoomCaption)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+                SettingsToggleWithCaption(title: strings.openEditorToggle,
+                                          caption: strings.openEditorCaption,
+                                          isOn: $opensEditor)
+                SettingsToggleWithCaption(title: strings.automaticZoomToggle,
+                                          caption: strings.automaticZoomCaption,
+                                          isOn: $automaticZoom)
             }
 
-            Section {
+            Section(l10n.s.mediaOutput) {
                 folderRow
-                DisclosureHeaderRow(isExpanded: $showsMoreOptions) {
-                    Text(strings.moreOptions)
-                    Spacer()
-                }
-                if showsMoreOptions {
-                    Group {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Picker(strings.qualityLabel, selection: $qualityRaw) {
-                                Text(strings.qualitySmall).tag(RecorderSupport.Quality.small.rawValue)
-                                Text(strings.qualityBalanced).tag(RecorderSupport.Quality.balanced.rawValue)
-                                Text(strings.qualityHigh).tag(RecorderSupport.Quality.high.rawValue)
-                            }
-                            Text(strings.qualityCaption)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        Picker(strings.frameRateLabel, selection: $frameRate) {
-                            ForEach(RecorderSupport.frameRates, id: \.self) { rate in
-                                Text(String(format: strings.frameRateFormat, rate)).tag(rate)
-                            }
-                        }
-                        .pickerStyle(.segmented)
-                        Picker(strings.gifSizeLabel, selection: $gifSizeRaw) {
-                            Text(strings.gifSizeSmall).tag(RecorderSupport.GIFSize.small.rawValue)
-                            Text(strings.gifSizeMedium).tag(RecorderSupport.GIFSize.medium.rawValue)
-                            Text(strings.gifSizeLarge).tag(RecorderSupport.GIFSize.large.rawValue)
-                        }
-                        .pickerStyle(.segmented)
-                        Picker(strings.gifFrameRateLabel, selection: $gifFrameRate) {
-                            ForEach(RecorderSupport.gifFrameRates, id: \.self) { rate in
-                                Text(String(format: strings.frameRateFormat, rate)).tag(rate)
-                            }
-                        }
-                        .pickerStyle(.segmented)
+                SettingsMoreOptions {
+                    Picker(selection: $qualityRaw) {
+                        Text(strings.qualitySmall).tag(RecorderSupport.Quality.small.rawValue)
+                        Text(strings.qualityBalanced).tag(RecorderSupport.Quality.balanced.rawValue)
+                        Text(strings.qualityHigh).tag(RecorderSupport.Quality.high.rawValue)
+                    } label: {
+                        SettingsLabel(strings.qualityLabel, caption: strings.qualityCaption)
                     }
-                    .disclosureIndent()
+                    Picker(strings.frameRateLabel, selection: $frameRate) {
+                        ForEach(RecorderSupport.frameRates, id: \.self) { rate in
+                            Text(String(format: strings.frameRateFormat, rate)).tag(rate)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    Picker(strings.gifSizeLabel, selection: $gifSizeRaw) {
+                        Text(strings.gifSizeSmall).tag(RecorderSupport.GIFSize.small.rawValue)
+                        Text(strings.gifSizeMedium).tag(RecorderSupport.GIFSize.medium.rawValue)
+                        Text(strings.gifSizeLarge).tag(RecorderSupport.GIFSize.large.rawValue)
+                    }
+                    .pickerStyle(.segmented)
+                    Picker(strings.gifFrameRateLabel, selection: $gifFrameRate) {
+                        ForEach(RecorderSupport.gifFrameRates, id: \.self) { rate in
+                            Text(String(format: strings.frameRateFormat, rate)).tag(rate)
+                        }
+                    }
+                    .pickerStyle(.segmented)
                 }
             }
 
-            Section {
-                Toggle(screenshotStrings.shareEnabledToggle, isOn: $sharingEnabled)
-                if sharingEnabled {
-                    Text(shareStrings.caption)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                Button {
-                    showingSharePrivacy = true
-                } label: {
-                    Label(screenshotStrings.sharePrivacyButton, systemImage: "hand.raised")
-                }
-                if !sharing.records.isEmpty {
+            if ScreenshotSharingSupport.isAvailable {
+                Section {
+                    SettingsToggleWithCaption(title: screenshotStrings.shareEnabledToggle,
+                                              caption: sharingEnabled ? shareStrings.caption : "",
+                                              isOn: $sharingEnabled)
                     Button {
-                        showingSharedLinks = true
+                        showingSharePrivacy = true
                     } label: {
-                        HStack {
-                            Label(screenshotStrings.sharedLinksTitle, systemImage: "link")
-                            Spacer()
-                            Text("\(sharing.records.count)")
-                                .foregroundStyle(.secondary)
-                            Image(systemName: "chevron.right")
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(.tertiary)
-                        }
+                        Label(screenshotStrings.sharePrivacyButton, systemImage: "hand.raised")
                     }
-                    .buttonStyle(.plain)
+                    if !sharing.records.isEmpty {
+                        Button {
+                            showingSharedLinks = true
+                        } label: {
+                            HStack {
+                                Label(screenshotStrings.sharedLinksTitle, systemImage: "link")
+                                Spacer()
+                                Text("\(sharing.records.count)")
+                                    .foregroundStyle(.secondary)
+                                Image(systemName: "chevron.right")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(.tertiary)
+                            }
+                        }
+                        .buttonStyle(.plain)
+                    }
+                } header: {
+                    Text(screenshotStrings.shareSectionTitle)
                 }
-            } header: {
-                Text(screenshotStrings.shareSectionTitle)
             }
         }
         .onAppear { sharing.refresh() }

@@ -27,7 +27,7 @@ struct NotchCaptureControlsView: View {
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 8)
                         .frame(height: 26)
-                        .background(.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 7))
+                        .background(.white.opacity(NotchFill.card), in: RoundedRectangle(cornerRadius: 7))
                 }
                 NotchIconButton(symbol: "chevron.up", title: FeatureStrings.notch(l10n.language).collapse,
                                 action: service.collapseCaptureControls)

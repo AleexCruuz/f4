@@ -23,6 +23,8 @@ struct QuickToolsSettings: View {
     @AppStorage(DefaultsKey.micMuteMenuBarIndicator) private var micMenuBarIndicator = false
     @AppStorage(DefaultsKey.cleaningModeKeepScreenVisible) private var cleaningModeKeepScreenVisible = false
 
+    private var layoutText: SettingsLayoutStrings { FeatureStrings.settingsLayout(l10n.language) }
+
     var body: some View {
         Form {
             if AppFeature.quickLauncher.isAvailable {
@@ -32,12 +34,6 @@ struct QuickToolsSettings: View {
                     } label: {
                         Label(l10n.s.launcherOpenNow, systemImage: "square.grid.2x2")
                     }
-                    Text(l10n.s.launcherCaption)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Text(l10n.s.launcherEditHint)
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
                     Toggle(l10n.s.quickToolShortcutToggle, isOn: $launcherShortcutEnabled)
                         .onChange(of: launcherShortcutEnabled) { _, _ in
                             QuickLauncherService.shared.syncWithPreferences()
@@ -48,11 +44,13 @@ struct QuickToolsSettings: View {
                     }
                     if launcherShortcutEnabled, launcher.shortcutRegistrationFailed {
                         Text(l10n.s.shortcutUnavailable)
-                            .font(.caption)
+                            .font(.subheadline)
                             .foregroundStyle(.orange)
                     }
                 } header: {
                     Text(l10n.s.launcherName)
+                } footer: {
+                    SettingsCaptionText(l10n.s.launcherCaption + " " + l10n.s.launcherEditHint)
                 }
                 .settingsSectionAnchor(.quickLauncher)
             }
@@ -77,11 +75,10 @@ struct QuickToolsSettings: View {
                         }
                     }
                     DiskExclusionsList()
-                    Text(FeatureStrings.quickToggles(l10n.language).panelCaption)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
                 } header: {
                     Text(FeatureStrings.quickToggles(l10n.language).pageTitle)
+                } footer: {
+                    SettingsCaptionText(FeatureStrings.quickToggles(l10n.language).panelCaption)
                 }
                 .settingsSectionAnchor(.quickToggles)
                 .onAppear { brightness.refreshKeyboardLight() }
@@ -97,16 +94,12 @@ struct QuickToolsSettings: View {
                     }
                     if micMute.isMuted {
                         Label(l10n.s.micMutedHUD, systemImage: "mic.slash.fill")
-                            .font(.caption)
+                            .font(.subheadline)
                             .foregroundStyle(.orange)
                     }
-                    Text(l10n.s.micMuteCaption)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Toggle(l10n.s.micMuteMenuBarToggle, isOn: $micMenuBarIndicator)
-                    Text(l10n.s.micMuteMenuBarCaption)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    SettingsToggleWithCaption(title: l10n.s.micMuteMenuBarToggle,
+                                              caption: l10n.s.micMuteMenuBarCaption,
+                                              isOn: $micMenuBarIndicator)
                     Toggle(l10n.s.quickToolShortcutToggle, isOn: $micShortcutEnabled)
                         .onChange(of: micShortcutEnabled) { _, _ in
                             MicMuteService.shared.syncWithPreferences()
@@ -117,11 +110,13 @@ struct QuickToolsSettings: View {
                     }
                     if micShortcutEnabled, micMute.shortcutRegistrationFailed {
                         Text(l10n.s.shortcutUnavailable)
-                            .font(.caption)
+                            .font(.subheadline)
                             .foregroundStyle(.orange)
                     }
                 } header: {
                     Text(l10n.s.micMuteName)
+                } footer: {
+                    SettingsCaptionText(l10n.s.micMuteCaption)
                 }
                 .settingsSectionAnchor(.micMute)
             }
@@ -134,9 +129,6 @@ struct QuickToolsSettings: View {
                         Label(FeatureStrings.cameraPreview(l10n.language).openButton,
                               systemImage: "web.camera")
                     }
-                    Text(FeatureStrings.cameraPreview(l10n.language).panelCaption)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
                     Toggle(l10n.s.quickToolShortcutToggle, isOn: $cameraShortcutEnabled)
                         .onChange(of: cameraShortcutEnabled) { _, _ in
                             CameraPreviewService.shared.syncWithPreferences()
@@ -147,7 +139,7 @@ struct QuickToolsSettings: View {
                     }
                     if cameraShortcutEnabled, cameraPreview.shortcutRegistrationFailed {
                         Text(l10n.s.shortcutUnavailable)
-                            .font(.caption)
+                            .font(.subheadline)
                             .foregroundStyle(.orange)
                     }
                     if permissions.camera == .denied {
@@ -155,6 +147,8 @@ struct QuickToolsSettings: View {
                     }
                 } header: {
                     Text(FeatureStrings.cameraPreview(l10n.language).pageTitle)
+                } footer: {
+                    SettingsCaptionText(FeatureStrings.cameraPreview(l10n.language).panelCaption)
                 }
                 .settingsSectionAnchor(.cameraPreview)
             }
@@ -167,41 +161,6 @@ struct QuickToolsSettings: View {
                         Label(FeatureStrings.scratchpad(l10n.language).openButton,
                               systemImage: "note.text")
                     }
-                    Text(FeatureStrings.scratchpad(l10n.language).panelCaption)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Picker(FeatureStrings.scratchpad(l10n.language).retentionTitle,
-                           selection: $scratchpadRetention) {
-                        Text(FeatureStrings.scratchpad(l10n.language).retentionNever)
-                            .tag(ScratchpadRetention.never.rawValue)
-                        Text(FeatureStrings.scratchpad(l10n.language).retentionDay)
-                            .tag(ScratchpadRetention.day.rawValue)
-                        Text(FeatureStrings.scratchpad(l10n.language).retentionWeek)
-                            .tag(ScratchpadRetention.week.rawValue)
-                        Text(FeatureStrings.scratchpad(l10n.language).retentionMonth)
-                            .tag(ScratchpadRetention.month.rawValue)
-                    }
-                    Text(FeatureStrings.scratchpad(l10n.language).retentionCaption)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Toggle(FeatureStrings.scratchpad(l10n.language).closeOnClickOutside,
-                           isOn: $scratchpadCloseOnClickOutside)
-                        .onChange(of: scratchpadCloseOnClickOutside) { _, _ in
-                            ScratchpadService.shared.outsideClickPreferenceDidChange()
-                        }
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text(FeatureStrings.scratchpad(l10n.language).backgroundOpacity)
-                        Slider(value: scratchpadBackgroundOpacityBinding,
-                               in: ScratchpadSupport.backgroundOpacityRange,
-                               step: 0.05)
-                        HStack {
-                            Text(FeatureStrings.scratchpad(l10n.language).backgroundTranslucent)
-                            Spacer()
-                            Text(FeatureStrings.scratchpad(l10n.language).backgroundOpaque)
-                        }
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    }
                     Toggle(l10n.s.quickToolShortcutToggle, isOn: $scratchpadShortcutEnabled)
                         .onChange(of: scratchpadShortcutEnabled) { _, _ in
                             ScratchpadService.shared.syncWithPreferences()
@@ -212,13 +171,55 @@ struct QuickToolsSettings: View {
                     }
                     if scratchpadShortcutEnabled, scratchpad.shortcutRegistrationFailed {
                         Text(l10n.s.shortcutUnavailable)
-                            .font(.caption)
+                            .font(.subheadline)
                             .foregroundStyle(.orange)
                     }
                 } header: {
                     Text(FeatureStrings.scratchpad(l10n.language).pageTitle)
+                } footer: {
+                    SettingsCaptionText(FeatureStrings.scratchpad(l10n.language).panelCaption)
                 }
                 .settingsSectionAnchor(.scratchpad)
+
+                Section(layoutText.behavior) {
+                    Picker(selection: $scratchpadRetention) {
+                        Text(FeatureStrings.scratchpad(l10n.language).retentionNever)
+                            .tag(ScratchpadRetention.never.rawValue)
+                        Text(FeatureStrings.scratchpad(l10n.language).retentionDay)
+                            .tag(ScratchpadRetention.day.rawValue)
+                        Text(FeatureStrings.scratchpad(l10n.language).retentionWeek)
+                            .tag(ScratchpadRetention.week.rawValue)
+                        Text(FeatureStrings.scratchpad(l10n.language).retentionMonth)
+                            .tag(ScratchpadRetention.month.rawValue)
+                    } label: {
+                        SettingsLabel(FeatureStrings.scratchpad(l10n.language).retentionTitle,
+                                      caption: FeatureStrings.scratchpad(l10n.language).retentionCaption)
+                    }
+                    Toggle(FeatureStrings.scratchpad(l10n.language).closeOnClickOutside,
+                           isOn: $scratchpadCloseOnClickOutside)
+                        .onChange(of: scratchpadCloseOnClickOutside) { _, _ in
+                            ScratchpadService.shared.outsideClickPreferenceDidChange()
+                        }
+                    SettingsMoreOptions {
+                        LabeledContent {
+                            VStack(spacing: 2) {
+                                Slider(value: scratchpadBackgroundOpacityBinding,
+                                       in: ScratchpadSupport.backgroundOpacityRange,
+                                       step: 0.05)
+                                HStack {
+                                    Text(FeatureStrings.scratchpad(l10n.language).backgroundTranslucent)
+                                    Spacer()
+                                    Text(FeatureStrings.scratchpad(l10n.language).backgroundOpaque)
+                                }
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            }
+                            .frame(maxWidth: 200)
+                        } label: {
+                            SettingsLabel(FeatureStrings.scratchpad(l10n.language).backgroundOpacity)
+                        }
+                    }
+                }
             }
 
             if AppFeature.cleaningMode.isAvailable {
@@ -228,15 +229,13 @@ struct QuickToolsSettings: View {
                     } label: {
                         Label(l10n.s.cleaningStartNow, systemImage: "bubbles.and.sparkles")
                     }
-                    Text(l10n.s.cleaningPanelCaption)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Toggle(l10n.s.cleaningKeepScreenVisibleToggle, isOn: $cleaningModeKeepScreenVisible)
-                    Text(l10n.s.cleaningKeepScreenVisibleCaption)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    SettingsToggleWithCaption(title: l10n.s.cleaningKeepScreenVisibleToggle,
+                                              caption: l10n.s.cleaningKeepScreenVisibleCaption,
+                                              isOn: $cleaningModeKeepScreenVisible)
                 } header: {
                     Text(l10n.s.cleaningMenuItem)
+                } footer: {
+                    SettingsCaptionText(l10n.s.cleaningPanelCaption)
                 }
                 .settingsSectionAnchor(.cleaningMode)
             }

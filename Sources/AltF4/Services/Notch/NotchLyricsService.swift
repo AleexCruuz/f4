@@ -160,7 +160,7 @@ final class NotchLyricsService: ObservableObject {
         let notch = NotchService.shared
         return visible && track == expected && NotchLyricsSupport.isEnabled()
             && notch.acceptsSystemFeedback && notch.presentationWindow === window && window.isVisible
-            && notch.expanded && notch.selected == .music && !notch.showingAppPanel
+            && notch.expanded && notch.selected == .music && !notch.showingSettings
             && notch.selectedMetric == nil && notch.captureControls == nil
     }
 }

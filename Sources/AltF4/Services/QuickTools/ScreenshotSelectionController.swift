@@ -1636,24 +1636,9 @@ private struct CaptureGuideView: View {
                     .lineLimit(1)
             }
             Spacer(minLength: 8)
-            HStack(spacing: 7) {
-                if !requiresDraggedRegion && !scrollingCaptureEnabled {
-                    CaptureKeyHint(key: "↩", icon: "rectangle.inset.filled")
-                }
-                if offersScrollingCapture {
-                    CaptureKeyHint(key: scrollingCaptureEnabled ? "S on" : "S",
-                                   icon: "rectangle.stack")
-                }
-                CaptureKeyHint(key: loupeEnabled ? "Z on" : "Z",
-                               icon: "plus.magnifyingglass")
-                if loupeEnabled {
-                    CaptureKeyHint(key: "C", icon: "doc.on.doc")
-                }
-                if offersRepeatLastRegion {
-                    CaptureKeyHint(key: "R", icon: "rectangle.dashed")
-                }
-                CaptureKeyHint(key: "esc", icon: "xmark")
-            }
+            // Esc is the one key named: the overlay covers every screen and
+            // has no close button of its own.
+            CaptureKeyHint(key: "esc", icon: "xmark")
         }
         .padding(.horizontal, 14)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -1679,11 +1664,8 @@ private struct CaptureGuideView: View {
             : purpose?.isEmpty == false
             ? strings.hintDrag + "  ·  " + strings.hintClick
             : strings.hintClick
-        guard offersScrollingCapture else { return base }
-        let scrolling = scrollingCaptureEnabled
-            ? strings.scrollingCaptureHintOn
-            : strings.scrollingCaptureHintOff
-        return base + "  ·  " + scrolling
+        guard offersScrollingCapture, scrollingCaptureEnabled else { return base }
+        return base + "  ·  " + strings.scrollingCaptureHintOn
     }
 
 }
@@ -1726,22 +1708,6 @@ private struct UnifiedCaptureGuideContent: View {
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
-            CaptureKeyHint(key: "1–4", icon: "keyboard")
-            if options.selectedTool != .color {
-                CaptureKeyHint(key: "↩", icon: "rectangle.inset.filled")
-                if offersScrollingCapture, options.selectedTool == .screenshot {
-                    CaptureKeyHint(key: scrollingCaptureEnabled ? "S on" : "S",
-                                   icon: "rectangle.stack")
-                }
-                CaptureKeyHint(key: loupeEnabled ? "Z on" : "Z",
-                               icon: "plus.magnifyingglass")
-                if loupeEnabled {
-                    CaptureKeyHint(key: "C", icon: "doc.on.doc")
-                }
-                if offersRepeatLastRegion {
-                    CaptureKeyHint(key: "R", icon: "rectangle.dashed")
-                }
-            }
         }
         .padding(.horizontal, 10)
         .frame(height: 30)
@@ -1801,17 +1767,9 @@ private struct UnifiedCaptureGuideContent: View {
             }
         } label: {
             VStack(spacing: 3) {
-                HStack(spacing: 6) {
-                    Text(tool.shortcutKey)
-                        .font(.system(size: 10, weight: .bold, design: .rounded))
-                        .foregroundStyle(selected ? Color.white : Color.primary)
-                        .frame(width: 19, height: 19)
-                        .background(selected ? Color.accentColor : Color.primary.opacity(0.11),
-                                    in: RoundedRectangle(cornerRadius: 5, style: .continuous))
-                    Image(systemName: tool.systemImageName)
-                        .font(.system(size: 13, weight: .semibold))
-                        .symbolRenderingMode(.hierarchical)
-                }
+                Image(systemName: tool.systemImageName)
+                    .font(.system(size: 13, weight: .semibold))
+                    .symbolRenderingMode(.hierarchical)
                 Text(title)
                     .font(.system(size: 10, weight: selected ? .semibold : .medium))
                     .lineLimit(1)
@@ -1844,11 +1802,8 @@ private struct UnifiedCaptureGuideContent: View {
         switch options.selectedTool {
         case .screenshot:
             let base = strings.hintDrag + "  ·  " + strings.hintClick
-            guard offersScrollingCapture else { return base }
-            return base + "  ·  "
-                + (scrollingCaptureEnabled
-                   ? strings.scrollingCaptureHintOn
-                   : strings.scrollingCaptureHintOff)
+            guard offersScrollingCapture, scrollingCaptureEnabled else { return base }
+            return base + "  ·  " + strings.scrollingCaptureHintOn
         case .recording:
             return FeatureStrings.recorder(l10n.language).selectionPurpose
                 + "  ·  " + strings.hintDrag + "  ·  " + strings.hintClick

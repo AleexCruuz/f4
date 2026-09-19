@@ -66,8 +66,6 @@ struct NotchControlsView: View {
         case .recording: NotchRecorderButton(service: service)
         case .speedTest:
             NotchActionTile(symbol: item.symbol, title: item.title(l10n)) { service.showMetric(.network) }
-        case .panel:
-            NotchActionTile(symbol: item.symbol, title: item.title(l10n)) { service.openAppPanel() }
         case .mixer:
             NotchActionTile(symbol: item.symbol, title: item.title(l10n)) { service.select(.mixer) }
         case .commandBar:
@@ -91,7 +89,6 @@ extension NotchControlItem {
         case .screenshot: return FeatureStrings.recentCaptures(l10n.language).screenshot
         case .recording: return FeatureStrings.recorder(l10n.language).pageTitle
         case .speedTest: return l10n.s.speedTestRun
-        case .panel: return FeatureStrings.notch(l10n.language).panel
         case .mixer: return l10n.s.mixerSection
         case .commandBar: return FeatureStrings.commandBar(l10n.language).pageTitle
         case .music: return NotchModule.music.title(l10n.language)
@@ -210,12 +207,18 @@ struct NotchAudioControls: View {
 private struct NotchBrightnessControls: View {
     @ObservedObject private var service = BrightnessService.shared
     @ObservedObject private var l10n = L10n.shared
+    @AppStorage(DefaultsKey.brightnessOSDEnabled) private var showsOSD = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var selectedID: CGDirectDisplayID?
-    private var displays: [BrightnessDisplay] { service.displays.filter { $0.isActive && $0.method != nil } }
+    /// Displays that are off stay in the list, so the one that was switched
+    /// off can be switched back on from here.
+    private var displays: [BrightnessDisplay] { service.displays }
     private var display: BrightnessDisplay? {
-        displays.first(where: { $0.id == selectedID }) ?? displays.first(where: \.isBuiltIn) ?? displays.first
+        displays.first(where: { $0.id == selectedID })
+            ?? displays.first(where: { $0.isBuiltIn && $0.isActive }) ?? displays.first(where: \.isActive)
+            ?? displays.first
     }
+    private var strings: BrightnessFeatureStrings { FeatureStrings.brightness(l10n.language) }
 
     var body: some View {
         VStack(spacing: 6) {
@@ -224,21 +227,35 @@ private struct NotchBrightnessControls: View {
                     .lineLimit(1)
                 Spacer(minLength: 0)
                 if let display {
-                    Text("\(BrightnessSupport.wholePercent(display.brightness))%")
-                        .monospacedDigit()
-                        .contentTransition(.numericText())
-                        .animation(reduceMotion ? nil : .smooth(duration: 0.2), value: display.brightness)
+                    if !display.isActive {
+                        Text(strings.displayOff).foregroundStyle(.secondary)
+                    } else if display.method != nil {
+                        Text("\(BrightnessSupport.wholePercent(display.brightness))%")
+                            .monospacedDigit()
+                            .contentTransition(.numericText())
+                            .animation(reduceMotion ? nil : .smooth(duration: 0.2), value: display.brightness)
+                    }
+                    DisplayPowerButton(display: display, compact: true)
                 }
             }
             .font(.system(size: 12, weight: .semibold))
             if let display {
-                NotchLevelSlider(value: Binding(get: { display.brightness }, set: {
-                    service.setBrightness($0, for: display.id, showOSD: true)
-                }), label: FeatureStrings.notch(l10n.language).brightness)
-                    .frame(height: 28)
+                if display.isActive, display.method != nil {
+                    NotchLevelSlider(value: Binding(get: { display.brightness }, set: {
+                        service.setBrightness($0, for: display.id, showOSD: showsOSD)
+                    }), label: FeatureStrings.notch(l10n.language).brightness)
+                        .frame(height: 28)
+                        .disabled(service.isDisplayPending(display.id))
+                } else if let failure = service.displayControlFailure {
+                    Text(displayControlFailureText(failure, strings: strings))
+                        .font(.system(size: 10)).foregroundStyle(.red)
+                        .frame(maxWidth: .infinity, minHeight: 28, alignment: .leading)
+                } else {
+                    Color.clear.frame(height: 28)
+                }
                 Menu {
                     ForEach(displays) { item in
-                        Button(item.name) { selectedID = item.id }
+                        Button(item.isActive ? item.name : "\(item.name) (\(strings.displayOff))") { selectedID = item.id }
                     }
                 } label: {
                     HStack(spacing: 5) {
@@ -303,7 +320,7 @@ struct NotchActionTile: View {
                     .foregroundStyle(active ? accent.glyph : .white.opacity(0.85))
                     .contentTransition(.symbolEffect(.replace))
                     .frame(width: stacked ? 40 : 24, height: stacked ? 40 : 24)
-                    .background(stacked ? (active ? accent.fill : Color.white.opacity(0.075)) : .clear, in: Circle())
+                    .background(stacked ? (active ? accent.fill : Color.white.opacity(NotchFill.card)) : .clear, in: Circle())
                     .animation(reduceMotion ? nil : .smooth(duration: 0.26), value: symbol)
                 Text(title).font(.system(size: stacked ? 11 : 12, weight: .medium))
                     .foregroundStyle(!stacked && active ? accent.glyph : .white)
@@ -315,7 +332,7 @@ struct NotchActionTile: View {
             .padding(.horizontal, stacked ? 4 : 12)
             .frame(maxWidth: .infinity)
             .frame(height: stacked ? NotchLayout.shortcutHeight : NotchLayout.actionHeight)
-            .background(stacked ? .clear : (active ? accent.fill : Color.white.opacity(0.075)),
+            .background(stacked ? .clear : (active ? accent.fill : Color.white.opacity(NotchFill.card)),
                         in: RoundedRectangle(cornerRadius: 14, style: .continuous))
             .animation(reduceMotion ? nil : .smooth(duration: 0.26), value: active)
             .contentShape(RoundedRectangle(cornerRadius: 14))
@@ -330,10 +347,88 @@ struct NotchActionTile: View {
 private struct NotchAwakeButton: View {
     @ObservedObject private var service = KeepAwakeManager.shared
     @ObservedObject private var l10n = L10n.shared
+    @AppStorage(DefaultsKey.defaultDuration) private var duration = 0
+
     var body: some View {
-        NotchActionTile(symbol: service.isActive ? "cup.and.saucer.fill" : "cup.and.saucer",
-                        title: l10n.s.keepAwakeTitle, active: service.isActive,
-                        accent: .awake, action: service.toggle)
+        // Re-read every half minute so a timed session counts down on the tile.
+        TimelineView(.periodic(from: .now, by: 30)) { _ in
+            NotchActionTile(symbol: service.isActive ? "cup.and.saucer.fill" : "cup.and.saucer",
+                            title: title, active: service.isActive,
+                            accent: .awake, action: service.toggle)
+        }
+        .overlay(alignment: .topTrailing) { options }
+        .onAppear {
+            duration = Defaults.sanitizedDefaultDuration(duration)
+            service.refreshPasswordlessStatus()
+        }
+    }
+
+    private var title: String {
+        guard service.isActive, service.sessionTrigger != .automation,
+              let end = service.endDate else { return l10n.s.keepAwakeTitle }
+        return "\(l10n.s.keepAwakeTitle) · \(Self.remaining(until: end))"
+    }
+
+    /// Everything the session can be told short of Settings: how it is going,
+    /// more time for a timed one, how long the next one lasts, and whether it
+    /// holds with the lid closed.
+    private var options: some View {
+        Menu {
+            Text(status)
+            if service.isActive, service.endDate != nil {
+                ForEach([15, 30, 60], id: \.self) { minutes in
+                    Button("+\(minutes) min") { service.extend(minutes: minutes) }
+                }
+            }
+            Divider()
+            Picker(l10n.s.durationLabel, selection: $duration) {
+                Text(l10n.s.minutes15).tag(15)
+                Text(l10n.s.minutes30).tag(30)
+                Text(l10n.s.hour1).tag(60)
+                Text(l10n.s.hours2).tag(120)
+                Text(l10n.s.hours4).tag(240)
+                Text(l10n.s.hours8).tag(480)
+                Text(l10n.s.indefinite).tag(0)
+            }
+            Divider()
+            Toggle(l10n.s.clamshellTitle, isOn: $service.clamshellPreferred)
+                .disabled(service.clamshellSetupInProgress)
+            Text(clamshellCaption)
+        } label: {
+            Image(systemName: "ellipsis")
+                .font(.system(size: 10, weight: .bold))
+                .foregroundStyle(service.isActive ? NotchTileAccent.awake.glyph : .white.opacity(0.6))
+                .frame(width: 22, height: 22)
+                .contentShape(Rectangle())
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .padding(4)
+        .help(l10n.s.keepAwakeOptions)
+        .accessibilityLabel(l10n.s.keepAwakeOptions)
+    }
+
+    private var status: String {
+        guard service.isActive else { return l10n.s.keepAwakeNormalRules }
+        if service.sessionTrigger == .automation {
+            return FeatureStrings.keepAwakeAutomation(l10n.language).activeStatus(for: service.activeAutomationConditions)
+        }
+        guard let end = service.endDate else { return l10n.s.keepAwakeUntilDisabled }
+        return "\(l10n.s.keepAwakeEndsIn) \(Self.remaining(until: end))"
+    }
+
+    private var clamshellCaption: String {
+        if service.clamshellSetupInProgress { return l10n.s.configuring }
+        if service.clamshellSetupFailed { return l10n.s.sudoersFailed }
+        if service.clamshellActive { return l10n.s.clamshellOnCaption }
+        if service.clamshellPreferred { return l10n.s.clamshellNeedsSession }
+        return service.passwordlessClamshell ? l10n.s.clamshellReady : l10n.s.clamshellNeedsPassword
+    }
+
+    static func remaining(until end: Date) -> String {
+        let minutes = max(0, Int(end.timeIntervalSinceNow.rounded(.up)) + 59) / 60
+        return minutes >= 60 ? String(format: "%d h %02d min", minutes / 60, minutes % 60) : "\(minutes) min"
     }
 }
 
@@ -353,7 +448,9 @@ private struct NotchRecorderButton: View {
     @ObservedObject private var l10n = L10n.shared
     var body: some View {
         NotchActionTile(symbol: recorder.isRecording ? "stop.circle.fill" : "record.circle",
-                        title: FeatureStrings.recorder(l10n.language).pageTitle,
+                        title: recorder.isRecording
+                            ? "\(FeatureStrings.recorder(l10n.language).pageTitle) · \(RecorderSupport.elapsedLabel(seconds: recorder.elapsedSeconds))"
+                            : FeatureStrings.recorder(l10n.language).pageTitle,
                         active: recorder.isRecording, accent: .alert) {
             service.perform { recorder.toggle() }
         }

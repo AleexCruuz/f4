@@ -32,15 +32,6 @@ struct QuitProtectionSettings: View {
 
     var body: some View {
         Form {
-            Section {
-                Text(strings.intro)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Label(strings.accessibilityCaption, systemImage: "hand.raised.fill")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
             shortcutSection(shortcut: .quit,
                             enabled: $quitEnabled,
                             mode: $quitMode,
@@ -56,10 +47,11 @@ struct QuitProtectionSettings: View {
                             doubleInterval: $closeDoubleInterval,
                             extraModifier: $closeExtraModifier,
                             scope: $closeScope,
-                            showFeedback: $closeShowFeedback)
+                            showFeedback: $closeShowFeedback,
+                            footer: strings.intro + " " + strings.accessibilityCaption)
 
             if (quitEnabled || closeEnabled) && !permissions.accessibility {
-                Section(strings.accessibilityCaption) {
+                Section(l10n.s.permissionRequired) {
                     PermissionRow(kind: .accessibility)
                 }
             }
@@ -86,17 +78,17 @@ struct QuitProtectionSettings: View {
                                  doubleInterval: Binding<Double>,
                                  extraModifier: Binding<String>,
                                  scope: Binding<String>,
-                                 showFeedback: Binding<Bool>) -> some View {
+                                 showFeedback: Binding<Bool>,
+                                 footer: String? = nil) -> some View {
         let currentMode = QuitProtectionSupport.modeFor(mode.wrappedValue)
         let currentScope = QuitProtectionSupport.scopeFor(scope.wrappedValue)
         let currentModifier = QuitProtectionSupport.extraModifierFor(extraModifier.wrappedValue)
 
-        Section(shortcut.symbol) {
-            Toggle(strings.enabled, isOn: enabled)
+        Section {
+            SettingsToggleWithCaption(title: strings.enabled,
+                                      caption: strings.enabledCaption,
+                                      isOn: enabled)
                 .onChange(of: enabled.wrappedValue) { _, _ in service.syncWithPreferences() }
-            Text(strings.enabledCaption)
-                .font(.caption)
-                .foregroundStyle(.secondary)
 
             Picker(strings.mode, selection: mode) {
                 Text(strings.hold).tag(QuitProtectionMode.hold.rawValue)
@@ -105,48 +97,16 @@ struct QuitProtectionSettings: View {
             }
             .onChange(of: mode.wrappedValue) { _, _ in service.syncWithPreferences() }
 
-            if currentMode == .hold {
-                Slider(value: holdDuration,
-                       in: QuitProtectionSupport.holdDurationRange,
-                       step: 50) {
-                    Text(strings.holdDuration)
-                } minimumValueLabel: {
-                    Text("250 ms").font(.caption2)
-                } maximumValueLabel: {
-                    Text("2 s").font(.caption2)
-                }
-                .onChange(of: holdDuration.wrappedValue) { _, _ in service.syncWithPreferences() }
-                Text("\(Int(holdDuration.wrappedValue.rounded())) ms")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
-            if currentMode == .doublePress {
-                Slider(value: doubleInterval,
-                       in: QuitProtectionSupport.doublePressIntervalRange,
-                       step: 50) {
-                    Text(strings.doublePressInterval)
-                } minimumValueLabel: {
-                    Text("200 ms").font(.caption2)
-                } maximumValueLabel: {
-                    Text("1.5 s").font(.caption2)
-                }
-                .onChange(of: doubleInterval.wrappedValue) { _, _ in service.syncWithPreferences() }
-                Text("\(Int(doubleInterval.wrappedValue.rounded())) ms")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
             if currentMode == .extraModifier {
-                Picker(strings.modifier, selection: extraModifier) {
+                Picker(selection: extraModifier) {
                     Text("\(strings.shiftKey) (⇧)").tag(QuitProtectionExtraModifier.shift.rawValue)
                     Text("\(strings.optionKey) (⌥)").tag(QuitProtectionExtraModifier.option.rawValue)
                     Text("\(strings.controlKey) (⌃)").tag(QuitProtectionExtraModifier.control.rawValue)
+                } label: {
+                    SettingsLabel(strings.modifier,
+                                  caption: "\(modifierSymbol(currentModifier))\(shortcut.symbol)")
                 }
                 .onChange(of: extraModifier.wrappedValue) { _, _ in service.syncWithPreferences() }
-                Text("\(modifierSymbol(currentModifier))\(shortcut.symbol)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
             }
 
             Picker(strings.appScope, selection: scope) {
@@ -158,8 +118,52 @@ struct QuitProtectionSettings: View {
 
             exceptionsSection(for: shortcut, scope: currentScope, enabled: enabled.wrappedValue)
 
-            Toggle(strings.feedback, isOn: showFeedback)
-                .onChange(of: showFeedback.wrappedValue) { _, _ in service.syncWithPreferences() }
+            SettingsMoreOptions {
+                if currentMode == .hold {
+                    LabeledContent {
+                        HStack(spacing: 10) {
+                            Slider(value: holdDuration,
+                                   in: QuitProtectionSupport.holdDurationRange,
+                                   step: 50)
+                                .frame(maxWidth: 180)
+                            Text("\(Int(holdDuration.wrappedValue.rounded())) ms")
+                                .monospacedDigit()
+                                .foregroundStyle(.secondary)
+                                .frame(width: 64, alignment: .trailing)
+                        }
+                    } label: {
+                        Text(strings.holdDuration)
+                    }
+                    .onChange(of: holdDuration.wrappedValue) { _, _ in service.syncWithPreferences() }
+                }
+
+                if currentMode == .doublePress {
+                    LabeledContent {
+                        HStack(spacing: 10) {
+                            Slider(value: doubleInterval,
+                                   in: QuitProtectionSupport.doublePressIntervalRange,
+                                   step: 50)
+                                .frame(maxWidth: 180)
+                            Text("\(Int(doubleInterval.wrappedValue.rounded())) ms")
+                                .monospacedDigit()
+                                .foregroundStyle(.secondary)
+                                .frame(width: 64, alignment: .trailing)
+                        }
+                    } label: {
+                        Text(strings.doublePressInterval)
+                    }
+                    .onChange(of: doubleInterval.wrappedValue) { _, _ in service.syncWithPreferences() }
+                }
+
+                Toggle(strings.feedback, isOn: showFeedback)
+                    .onChange(of: showFeedback.wrappedValue) { _, _ in service.syncWithPreferences() }
+            }
+        } header: {
+            Text(shortcut.symbol)
+        } footer: {
+            if let footer {
+                SettingsCaptionText(footer)
+            }
         }
     }
 
@@ -173,9 +177,7 @@ struct QuitProtectionSettings: View {
                     .font(.subheadline.weight(.semibold))
                 let values = service.exceptions(for: shortcut)
                 if values.isEmpty {
-                    Text(strings.noExceptions)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    SettingsCaptionText(strings.noExceptions)
                 } else {
                     ForEach(values, id: \.self) { bundleID in
                         HStack(spacing: 8) {

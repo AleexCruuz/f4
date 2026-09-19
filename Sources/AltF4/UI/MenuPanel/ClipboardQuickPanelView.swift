@@ -439,15 +439,9 @@ private struct QuickEntryRow: View, Equatable {
             HStack(spacing: 4) {
                 if ai.canRun(on: entry) {
                     Menu {
-                        ForEach(ClipboardAIAction.allCases) { action in
-                            Button {
-                                ai.perform(action, on: entry)
-                            } label: {
-                                Label(action.title, systemImage: action.symbolName)
-                            }
-                        }
+                        aiActionButtons(entry)
                     } label: {
-                        Image(systemName: ai.isWorking ? "hourglass" : "sparkles")
+                        Image(systemName: "sparkles")
                             .font(.system(size: 11, weight: .semibold))
                             .frame(width: 24, height: 24)
                             .background(Color.accentColor.opacity(0.16),
@@ -456,8 +450,7 @@ private struct QuickEntryRow: View, Equatable {
                     .menuStyle(.borderlessButton)
                     .menuIndicator(.hidden)
                     .fixedSize()
-                    .disabled(ai.isWorking)
-                    .help("AI")
+                    .help(FeatureStrings.clipboardAI(language).title)
                 }
                 Button {
                     history.copyOnlyQuickEntry(entry)
@@ -528,13 +521,31 @@ private struct QuickEntryRow: View, Equatable {
     private func aiActions(_ entry: ClipboardHistoryEntry) -> some View {
         if ai.canRun(on: entry) {
             Divider()
-            Menu("AI") {
-                ForEach(ClipboardAIAction.allCases) { action in
-                    Button {
-                        ai.perform(action, on: entry)
-                    } label: {
-                        Label(action.title, systemImage: action.symbolName)
-                    }
+            Menu(FeatureStrings.clipboardAI(language).menuLabel) {
+                aiActionButtons(entry)
+            }
+        }
+    }
+
+    /// Starting a run from here hands it to the Dynamic Island, which is the
+    /// only surface that can show an answer arriving over tens of seconds. This
+    /// panel dismisses on the next click outside it, so it could not.
+    @ViewBuilder
+    private func aiActionButtons(_ entry: ClipboardHistoryEntry) -> some View {
+        ForEach(ClipboardAIAction.primary) { action in
+            Button {
+                ai.start(action, on: entry)
+            } label: {
+                Label(action.title(language), systemImage: action.symbolName)
+            }
+        }
+        Divider()
+        Menu(FeatureStrings.clipboardAI(language).toneMenu) {
+            ForEach(ClipboardAIAction.tones) { action in
+                Button {
+                    ai.start(action, on: entry)
+                } label: {
+                    Label(action.title(language), systemImage: action.symbolName)
                 }
             }
         }

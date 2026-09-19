@@ -44,15 +44,17 @@ struct WhatsAppDownloadsSettings: View {
         WhatsAppOrganizerStrings.localized(l10n.language)
     }
 
+    private var layoutText: SettingsLayoutStrings { FeatureStrings.settingsLayout(l10n.language) }
+
     var body: some View {
         Form {
             introductionSection
             automationSection
             typesSection
             organizerSection
+            organizerOptionsSection
             manualSection
             activitySection
-            privacySection
         }
         .formStyle(.grouped)
         .onAppear {
@@ -98,19 +100,18 @@ struct WhatsAppDownloadsSettings: View {
 
     private var introductionSection: some View {
         Section {
-            Toggle(text.title, isOn: $enabled)
-            Text(organizerEnabled ? organizerText.privacyNote : text.intro)
-                .font(.callout)
+            SettingsToggleWithCaption(title: text.title,
+                                      caption: text.intro,
+                                      isOn: $enabled)
             HStack(spacing: 8) {
                 Image(systemName: "folder")
                     .foregroundStyle(.secondary)
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 3) {
                     Text(text.folder)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
                     Text(manager.downloadsURL?.path.replacingOccurrences(
                         of: NSHomeDirectory(), with: "~") ?? "~/Downloads")
-                        .font(.system(.caption, design: .monospaced))
+                        .font(.system(.subheadline, design: .monospaced))
+                        .foregroundStyle(.secondary)
                 }
                 Spacer()
                 Button(l10n.s.cleanerRevealInFinder) {
@@ -128,12 +129,12 @@ struct WhatsAppDownloadsSettings: View {
         switch manager.accessStatus {
         case .available:
             Label(text.accessReady, systemImage: "checkmark.circle.fill")
-                .font(.caption)
+                .font(.subheadline)
                 .foregroundStyle(.green)
         case .denied:
             HStack(alignment: .firstTextBaseline) {
                 Label(text.accessDenied, systemImage: "exclamationmark.triangle.fill")
-                    .font(.caption)
+                    .font(.subheadline)
                     .foregroundStyle(.orange)
                 Spacer()
                 Button(FeatureStrings.hub(l10n.language).openSystemSettings) {
@@ -148,22 +149,20 @@ struct WhatsAppDownloadsSettings: View {
 
     private var automationSection: some View {
         Section {
-            Toggle(text.automatic, isOn: automaticBinding)
-            Text(text.automaticCaption)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            Picker(text.retention, selection: $retentionDays) {
+            SettingsToggleWithCaption(title: text.automatic,
+                                      caption: text.automaticCaption,
+                                      isOn: automaticBinding)
+            Picker(selection: $retentionDays) {
                 ForEach(WhatsAppDownloadSupport.allowedRetentionDays, id: \.self) { days in
                     Text(String(format: text.daysFormat, days)).tag(days)
                 }
+            } label: {
+                SettingsLabel(text.retention, caption: text.retentionCaption)
             }
             .onChange(of: retentionDays) { _, value in
                 retentionDays = WhatsAppDownloadSupport.sanitizedRetentionDays(value)
                 refreshResultsIfVisible()
             }
-            Text(text.retentionCaption)
-                .font(.caption)
-                .foregroundStyle(.secondary)
             Toggle(l10n.s.cleanerScheduleNotifyToggle, isOn: $notify)
                 .onChange(of: notify) { _, enabled in
                     if enabled { Notifier.requestPermission() }
@@ -171,7 +170,7 @@ struct WhatsAppDownloadsSettings: View {
             if notify, permissions.notifications == .denied {
                 HStack {
                     Text(l10n.s.cleanerNotifDenied)
-                        .font(.caption)
+                        .font(.subheadline)
                         .foregroundStyle(.orange)
                     Spacer()
                     Button(l10n.s.cleanerNotifOpenSettings) {
@@ -180,6 +179,8 @@ struct WhatsAppDownloadsSettings: View {
                     .controlSize(.small)
                 }
             }
+        } header: {
+            Text(l10n.s.cleanerScheduleTitle)
         }
     }
 
@@ -210,20 +211,9 @@ struct WhatsAppDownloadsSettings: View {
 
     private var organizerSection: some View {
         Section {
-            HStack(spacing: 8) {
-                Text(organizerText.title)
-                    .font(.headline)
-                Text(organizerText.experimental.uppercased())
-                    .font(.system(size: 9, weight: .bold))
-                    .padding(.horizontal, 7)
-                    .padding(.vertical, 3)
-                    .foregroundStyle(.orange)
-                    .background(Capsule().fill(Color.orange.opacity(0.14)))
-            }
-            Text(organizerText.description)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            Toggle(organizerText.enabled, isOn: $organizerEnabled)
+            SettingsToggleWithCaption(title: organizerText.enabled,
+                                      caption: organizerText.description,
+                                      isOn: $organizerEnabled)
                 .onChange(of: organizerEnabled) { _, enabled in
                     if enabled {
                         manager.scan()
@@ -235,10 +225,38 @@ struct WhatsAppDownloadsSettings: View {
 
             if organizerEnabled {
                 Text(organizerText.enabledCaption)
-                    .font(.caption)
+                    .font(.subheadline)
                     .foregroundStyle(.orange)
                 organizerDestinationRow
 
+                HStack {
+                    Button(organizerText.organizeNow) { organizer.runNow() }
+                        .buttonStyle(.borderedProminent)
+                        .disabled(organizer.isBusy)
+                    if organizer.isBusy { ProgressView().controlSize(.small) }
+                    Spacer()
+                    Button(organizerText.undo) { organizer.undoLastRun() }
+                        .disabled(!organizer.canUndo || organizer.isBusy)
+                }
+                organizerStatus
+            }
+        } header: {
+            HStack(spacing: 8) {
+                Text(organizerText.title)
+                Text(organizerText.experimental.uppercased())
+                    .font(.system(size: 9, weight: .bold))
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 3)
+                    .foregroundStyle(.orange)
+                    .background(Capsule().fill(Color.orange.opacity(0.14)))
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var organizerOptionsSection: some View {
+        if organizerEnabled {
+            Section {
                 Picker(organizerText.organization, selection: $organizerLayout) {
                     Text(organizerText.flat).tag(WhatsAppOrganizerLayout.flat.rawValue)
                     Text(organizerText.byType).tag(WhatsAppOrganizerLayout.category.rawValue)
@@ -247,30 +265,18 @@ struct WhatsAppDownloadsSettings: View {
                 .onChange(of: organizerLayout) { _, _ in organizer.syncWithPreferences() }
                 .disabled(organizer.isBusy)
 
-                Picker(organizerText.delay, selection: $organizerDelay) {
-                    ForEach(WhatsAppDownloadSupport.allowedOrganizerDelayMinutes, id: \.self) {
-                        Text(String(format: organizerText.minutesFormat, $0)).tag($0)
-                    }
-                }
-                .onChange(of: organizerDelay) { _, value in
-                    organizerDelay = WhatsAppDownloadSupport.sanitizedOrganizerDelayMinutes(value)
-                    organizer.syncWithPreferences()
-                }
-                .disabled(organizer.isBusy)
-
-                Picker(organizerText.duplicateAction, selection: $duplicateAction) {
+                Picker(selection: $duplicateAction) {
                     Text(organizerText.trashDuplicate)
                         .tag(WhatsAppDuplicateAction.trashNew.rawValue)
                     Text(organizerText.keepBoth)
                         .tag(WhatsAppDuplicateAction.keepBoth.rawValue)
                     Text(organizerText.replaceExisting)
                         .tag(WhatsAppDuplicateAction.replaceExisting.rawValue)
+                } label: {
+                    SettingsLabel(organizerText.duplicateAction, caption: organizerText.duplicateCaption)
                 }
                 .onChange(of: duplicateAction) { _, _ in organizer.syncWithPreferences() }
                 .disabled(organizer.isBusy)
-                Text(organizerText.duplicateCaption)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
 
                 Group {
                     DisclosureHeaderRow(isExpanded: $showingOrganizerFileTypes) {
@@ -290,19 +296,22 @@ struct WhatsAppDownloadsSettings: View {
                 }
                 .disabled(organizer.isBusy)
 
-                HStack {
-                    Button(organizerText.organizeNow) { organizer.runNow() }
-                        .buttonStyle(.borderedProminent)
-                        .disabled(organizer.isBusy)
-                    if organizer.isBusy { ProgressView().controlSize(.small) }
-                    Spacer()
-                    Button(organizerText.undo) { organizer.undoLastRun() }
-                        .disabled(!organizer.canUndo || organizer.isBusy)
+                SettingsMoreOptions {
+                    Picker(organizerText.delay, selection: $organizerDelay) {
+                        ForEach(WhatsAppDownloadSupport.allowedOrganizerDelayMinutes, id: \.self) {
+                            Text(String(format: organizerText.minutesFormat, $0)).tag($0)
+                        }
+                    }
+                    .onChange(of: organizerDelay) { _, value in
+                        organizerDelay = WhatsAppDownloadSupport.sanitizedOrganizerDelayMinutes(value)
+                        organizer.syncWithPreferences()
+                    }
+                    .disabled(organizer.isBusy)
                 }
-                organizerStatus
-                Text(organizerText.privacyNote)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+            } header: {
+                Text(layoutText.behavior)
+            } footer: {
+                SettingsCaptionText(organizerText.privacyNote)
             }
         }
     }
@@ -310,13 +319,12 @@ struct WhatsAppDownloadsSettings: View {
     private var organizerDestinationRow: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(organizerText.destination)
-                .font(.caption)
-                .foregroundStyle(.secondary)
             HStack {
                 Image(systemName: "folder.fill")
                     .foregroundStyle(.secondary)
                 Text(organizerDestinationDisplayPath)
-                    .font(.system(.caption, design: .monospaced))
+                    .font(.system(.subheadline, design: .monospaced))
+                    .foregroundStyle(.secondary)
                     .lineLimit(1)
                     .truncationMode(.middle)
                 Spacer()
@@ -348,26 +356,26 @@ struct WhatsAppDownloadsSettings: View {
         switch organizer.phase {
         case .organizing, .undoing:
             Text(organizerText.working)
-                .font(.caption)
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
         case let .done(moved, duplicates, failed):
             Text(String(format: organizerText.resultFormat, moved, duplicates, failed))
-                .font(.caption)
+                .font(.subheadline)
                 .foregroundStyle(failed == 0 ? Color.green : Color.orange)
         case .failed:
             Text(String(format: organizerText.resultFormat, 0, 0, 1))
-                .font(.caption)
+                .font(.subheadline)
                 .foregroundStyle(.orange)
         case .idle, .waiting:
             if organizerLastRun > 0 {
                 Text(String(format: organizerText.lastRunFormat,
                             Self.activityDate.string(from: Date(timeIntervalSince1970: organizerLastRun)),
                             organizerLastMoved, organizerLastDuplicates, organizerLastFailed))
-                    .font(.caption)
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
             } else {
                 Text(organizerText.neverRun)
-                    .font(.caption)
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
         }
@@ -468,9 +476,6 @@ struct WhatsAppDownloadsSettings: View {
     @ViewBuilder
     private var manualSection: some View {
         Section {
-            Text(text.manualIntro)
-                .font(.caption)
-                .foregroundStyle(.secondary)
             HStack {
                 Button {
                     manager.scan()
@@ -483,7 +488,7 @@ struct WhatsAppDownloadsSettings: View {
                     ProgressView()
                         .controlSize(.small)
                     Text(l10n.s.cleanerScanning)
-                        .font(.caption)
+                        .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -505,11 +510,17 @@ struct WhatsAppDownloadsSettings: View {
                 cleanupResult(moved: moved, bytes: bytes, failed: failed)
             case .failed:
                 Text(text.scanFailed)
-                    .font(.caption)
+                    .font(.subheadline)
                     .foregroundStyle(.orange)
             }
         } header: {
             Text(l10n.s.urlCleanerManualTitle)
+        } footer: {
+            if manager.phase == .results, !manager.candidates.isEmpty {
+                SettingsCaptionText(text.manualIntro + " " + text.trashNote)
+            } else {
+                SettingsCaptionText(text.manualIntro)
+            }
         }
     }
 
@@ -522,7 +533,7 @@ struct WhatsAppDownloadsSettings: View {
             HStack {
                 Text(String(format: text.resultsFormat,
                             manager.candidates.count, byteString(manager.totalBytes)))
-                    .font(.caption)
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
                 Spacer()
                 Button(text.selectRules) { manager.selectRules() }
@@ -544,9 +555,6 @@ struct WhatsAppDownloadsSettings: View {
             )
 
             HStack {
-                Text(text.trashNote)
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
                 Spacer()
                 Button(String(format: text.cleanSelectedFormat,
                               manager.selectedCount, byteString(manager.selectedBytes))) {
@@ -615,39 +623,33 @@ struct WhatsAppDownloadsSettings: View {
             Image(systemName: failed == 0 ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
                 .foregroundStyle(failed == 0 ? Color.green : Color.orange)
             Text(String(format: text.notificationFormat, moved, byteString(bytes), failed))
-                .font(.caption)
+                .font(.subheadline)
         }
     }
 
     private var activitySection: some View {
-        Section(text.activity) {
+        Section {
             if lastCleanup > 0 {
                 Text(String(format: text.lastRunFormat,
                             Self.activityDate.string(from: Date(timeIntervalSince1970: lastCleanup)),
                             lastCount, byteString(Int64(lastBytes)), lastFailed))
-                    .font(.caption)
+                    .font(.subheadline)
             } else {
                 Text(text.neverRun)
-                    .font(.caption)
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
             if automatic, let next = scheduler.nextFire {
                 Text(String(format: text.nextRunFormat, Self.activityDate.string(from: next)))
-                    .font(.caption)
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
-        }
-    }
-
-    private var privacySection: some View {
-        Section {
-            Label(organizerEnabled ? organizerText.privacyNote : text.localNote,
-                  systemImage: "hand.raised.fill")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            Text(text.trashNote)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+        } header: {
+            Text(text.activity)
+        } footer: {
+            // With the organizer on, its privacy note already sits in the
+            // Behavior footer, where it replaces the local-only note.
+            SettingsCaptionText(organizerEnabled ? text.trashNote : text.localNote + " " + text.trashNote)
         }
     }
 

@@ -118,7 +118,7 @@ struct RecorderEditorView: View {
                 .screenshotSafeHelp("⌘C")
             }
 
-            if sharingEnabled {
+            if sharingEnabled, ScreenshotSharingSupport.isAvailable {
                 shareMenu
             }
 

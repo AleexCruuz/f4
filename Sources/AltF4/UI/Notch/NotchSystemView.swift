@@ -50,6 +50,14 @@ struct NotchSystemView: View {
                               level: power.chargePercent.map { Double($0) / 100 },
                               wantsAttention: !power.externalConnected && (power.chargePercent ?? 100) <= 20))
         }
+        // Every Mac draws power, so this card is there with or without a
+        // battery; it leads to watts, the adapter, time left and the apps
+        // using the most energy.
+        if AppFeature.monitorPower.isAvailable {
+            cards.append(Card(kind: .power, title: l10n.s.powerSection, symbol: "bolt.fill",
+                              value: snapshot.power?.systemWatts.map(MetricFormat.watts),
+                              detail: snapshot.power?.adapterWatts.map { "\(l10n.s.powerAdapter) \(MetricFormat.watts($0))" }))
+        }
         if AppFeature.monitorNetwork.isAvailable {
             cards.append(Card(kind: .network, title: l10n.s.networkSection, symbol: "network",
                               value: snapshot.netDownBytesPerSec.map { "↓ " + MetricFormat.bytesPerSec($0) },

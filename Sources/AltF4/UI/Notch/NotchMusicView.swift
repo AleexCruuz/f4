@@ -34,7 +34,7 @@ struct NotchMusicView: View {
                         .font(.system(size: 30, weight: .light))
                         .foregroundStyle(.white.opacity(0.75))
                         .frame(width: 76, height: 76)
-                        .background(.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+                        .background(.white.opacity(NotchFill.card), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
                     VStack(alignment: .leading, spacing: 6) {
                         Text(text.mediaNothingPlaying).font(.system(size: 17, weight: .semibold))
                         Text(FeatureStrings.notch(l10n.language).musicHint)
@@ -95,7 +95,7 @@ struct NotchMusicView: View {
         Button { extra = extra == target ? nil : target } label: {
             Label(title, systemImage: symbol)
                 .font(.caption.weight(.medium)).padding(.horizontal, 10).padding(.vertical, 7)
-                .background(.white.opacity(extra == target ? 0.14 : 0.05), in: Capsule())
+                .background(.white.opacity(extra == target ? NotchFill.selected : NotchFill.card), in: Capsule())
         }
         .buttonStyle(NotchButtonStyle(cornerRadius: 16))
         .accessibilityAddTraits(extra == target ? [.isSelected] : [])
@@ -296,6 +296,8 @@ private struct NotchMusicTimeline: View {
 /// The home surface shares playback actions without opening lyrics or queue readers.
 struct NotchMusicControlsView: View {
     @ObservedObject var notch: NotchService
+    var height: CGFloat = NotchLayout.musicControlHeight
+    var artworkSize: CGFloat = 64
     @ObservedObject private var music = NotchMusicService.shared
     @ObservedObject private var l10n = L10n.shared
     private var text: RadialMenuFeatureStrings { FeatureStrings.radialMenu(l10n.language) }
@@ -303,7 +305,7 @@ struct NotchMusicControlsView: View {
     var body: some View {
         HStack(spacing: 14) {
             Button { notch.select(.music) } label: {
-                NotchArtwork(image: music.artwork, size: 64)
+                NotchArtwork(image: music.artwork, size: artworkSize)
             }
             .buttonStyle(NotchButtonStyle(cornerRadius: 16))
             .accessibilityLabel(text.mediaNowPlaying)
@@ -332,7 +334,7 @@ struct NotchMusicControlsView: View {
         }
         .padding(.horizontal, 14)
         .frame(maxWidth: .infinity)
-        .frame(height: NotchLayout.musicControlHeight)
+        .frame(height: height)
         .modifier(NotchControlSurface(cornerRadius: 18))
         .onAppear { music.refreshAutomation() }
     }

@@ -290,6 +290,8 @@ if (( TEST )); then
         Sources/AltF4/Services/Notch/NotchMusicCommandWriter.swift
         Sources/AltF4/Core/FeatureCatalog.swift
         Sources/AltF4/Core/FeaturePresets.swift
+        Sources/AltF4/Core/OnboardingSupport.swift
+        Sources/AltF4/Core/OnboardingStrings.swift
         Sources/AltF4/Core/FeatureHubStrings.swift
         Sources/AltF4/Core/ShortcutSettingsStrings.swift
         Sources/AltF4/Core/SettingsBackupSupport.swift
@@ -370,6 +372,15 @@ if (( TEST )); then
         Sources/AltF4/Core/DiskImageInstallerStrings.swift
         Sources/AltF4/Services/DiskImageInstaller/DiskImageInstallerSupport.swift
         Sources/AltF4/Services/Clipboard/ClipboardHistorySupport.swift
+        Sources/AltF4/Core/ClipboardAIStrings.swift
+        Sources/AltF4/Services/ClipboardAI/ClipboardAISupport.swift
+        Sources/AltF4/Core/DictationStrings.swift
+        Sources/AltF4/Services/Dictation/DictationSupport.swift
+        Sources/AltF4/Services/Dictation/DictationHistorySupport.swift
+        Sources/AltF4/Core/NotesStrings.swift
+        Sources/AltF4/Core/SettingsLayoutStrings.swift
+        Sources/AltF4/Services/Notes/NotesSupport.swift
+        Sources/AltF4/Services/Notes/NotesStore.swift
         Sources/AltF4/Services/Clipboard/ClipboardAutoClearSupport.swift
         Sources/AltF4/Services/AutoQuit/AutoQuitSupport.swift
         Sources/AltF4/Services/Shelf/ShelfSupport.swift

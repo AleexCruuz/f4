@@ -28,7 +28,7 @@ enum AppFeature: String, CaseIterable {
     // Tools
     case quickLauncher, quickToggles, colorPicker, screenOCR, cleaningMode, mediaTools,
          cleaner, uninstaller, homebrew, appUpdates, screenshot, cameraPreview, radialMenu, scratchpad,
-         commandBar, screenRecorder, killProcess
+         commandBar, screenRecorder, killProcess, dictation
     // Dynamic Island, then its extensions
     case notch, notchCalendar, notchNotifications, notchGestures, notchTimer, notchAccessories, notchLyrics,
          notchQueue, notchLiveEqualizer, notchDownloads
@@ -112,7 +112,7 @@ extension AppFeature {
             return .energyDisplay
         case .quickLauncher, .quickToggles, .colorPicker, .screenOCR, .cleaningMode, .mediaTools,
              .cleaner, .uninstaller, .homebrew, .appUpdates, .screenshot, .cameraPreview, .radialMenu,
-             .scratchpad, .commandBar, .screenRecorder, .killProcess:
+             .scratchpad, .commandBar, .screenRecorder, .killProcess, .dictation:
             return .tools
         case .notch, .notchCalendar, .notchNotifications, .notchGestures, .notchTimer, .notchAccessories,
              .notchLyrics, .notchQueue, .notchLiveEqualizer, .notchDownloads:
@@ -188,6 +188,7 @@ extension AppFeature {
         case .radialMenu: return "circle.grid.cross"
         case .scratchpad: return "note.text"
         case .commandBar: return "command"
+        case .dictation: return "waveform.and.mic"
         case .killProcess: return "xmark.octagon"
         case .monitorCPU: return "cpu"
         case .monitorGPU: return "rectangle.connected.to.line.below"
@@ -203,13 +204,15 @@ extension AppFeature {
 
     var isBeta: Bool { self == .fanControl || self == .killProcess }
 
-    /// Ships installed and cannot be removed. Clipboard history is what this
-    /// fork is for — the AI actions are built on top of it and have nothing to
-    /// act on without it — so the hub offers no uninstall for it rather than
-    /// letting someone hollow the app out by accident. Its own enable keys
-    /// still work normally: this is about the feature existing, not about it
-    /// being forced on.
-    var isEssential: Bool { self == .clipboardHistory || self == .notch }
+    /// Ships installed and cannot be removed. The notch is the app, and
+    /// clipboard history, dictation and the camera mirror are what this fork
+    /// is for — the AI actions act on what the first two hold — so the hub
+    /// offers no uninstall for them rather than letting someone hollow the app
+    /// out by accident. Their own enable keys still work normally: this is
+    /// about the feature existing, not about it being forced on.
+    var isEssential: Bool {
+        self == .clipboardHistory || self == .notch || self == .dictation || self == .cameraPreview
+    }
 
     /// Availability read straight from defaults. Existing features stay
     /// available on update; explicit beta opt-ins may start unavailable.
@@ -259,8 +262,8 @@ extension AppFeature {
         case .notchDownloads: return [DefaultsKey.notchDownloadsEnabled]
         case .notchNotifications: return [DefaultsKey.notchNotificationsEnabled]
         case .notchCalendar: return [DefaultsKey.notchCalendarEnabled]
-        case .notch: return [DefaultsKey.notchEnabled]
         case .radialMenu: return [DefaultsKey.radialMenuEnabled]
+        case .dictation: return [DefaultsKey.dictationEnabled]
         case .clipboardHistory: return [DefaultsKey.clipboardHistoryEnabled]
         case .pastePlain: return [DefaultsKey.pastePlainEnabled]
         case .finderCutPaste: return [DefaultsKey.finderCutPasteEnabled,
@@ -276,7 +279,7 @@ extension AppFeature {
         case .windowLayout, .diskImageInstaller, .mixer, .micMute, .keepAwake,
              .quickLauncher, .quickToggles, .colorPicker, .screenOCR, .cleaningMode, .mediaTools,
              .cleaner, .uninstaller, .homebrew, .appUpdates, .screenshot, .cameraPreview, .scratchpad,
-             .commandBar, .screenRecorder, .killProcess,
+             .commandBar, .screenRecorder, .killProcess, .notch,
              .monitorCPU, .monitorGPU, .monitorMemory, .monitorNetwork, .monitorDisk, .monitorPower,
              .fanControl:
             return []
@@ -323,6 +326,8 @@ extension AppFeature {
         // typing timing.
         case .screenRecorder: return [.screenRecording, .accessibility, .audioCapture, .microphone]
         case .cameraPreview: return [.camera]
+        // Pasting the text is a ⌘V posted to the frontmost app.
+        case .dictation: return [.microphone, .accessibility]
         case .keepAwake: return [.accessibility]
         case .brightness: return [.accessibility]
         case .cleaner: return [.fullDiskAccess, .filesAndFolders, .notifications]
@@ -393,14 +398,14 @@ extension AppFeature {
             case (.switcher, .screenRecording):
                 return !boolFor(DefaultsKey.switcherSimpleMode)
             case (.notchNotifications, .accessibility):
-                return isAvailable(.notch) && boolFor(DefaultsKey.notchEnabled)
+                return isAvailable(.notch)
                     && !(stringFor(DefaultsKey.notchHiddenModules) ?? "").split(separator: ",").contains("notifications")
             case (.notchDownloads, .filesAndFolders):
-                return isAvailable(.notch) && boolFor(DefaultsKey.notchEnabled)
+                return isAvailable(.notch)
                     && dataFor(DefaultsKey.notchDownloadsFolderBookmark) != nil
                     && !(stringFor(DefaultsKey.notchHiddenModules) ?? "").split(separator: ",").contains("downloads")
             case (.notchCalendar, .calendar):
-                return isAvailable(.notch) && boolFor(DefaultsKey.notchEnabled)
+                return isAvailable(.notch)
                     && !(stringFor(DefaultsKey.notchHiddenModules) ?? "").split(separator: ",").contains("calendar")
             case (.notch, .accessibility):
                 return (boolFor(DefaultsKey.notchVolume) && isAvailable(.mixer))
@@ -444,7 +449,7 @@ extension AppFeature {
                     && boolFor(DefaultsKey.whatsAppDownloadsNotify)
                 return cleanerNotifies || whatsAppNotifies
             case (.notchLiveEqualizer, .audioCapture):
-                return isAvailable(.notch) && boolFor(DefaultsKey.notchEnabled)
+                return isAvailable(.notch)
                     && !(stringFor(DefaultsKey.notchHiddenModules) ?? "").split(separator: ",").contains("music")
             case (.screenRecorder, .audioCapture):
                 return boolFor(DefaultsKey.recorderSystemAudio)

@@ -8,10 +8,20 @@ import Carbon.HIToolbox
 /// doubles. Feature choices live only in a disposable test preferences domain.
 enum NotchDestinationContract {
     enum ReviewDefaults { static var current: UserDefaults! }
-    enum NotchContentTransition { case none, reveal, replace }
+    enum NotchContentTransition { case none, reveal, replace, dismiss }
     final class Panel {
         var acceptsKeyFocus = false
         func makeKey() {}
+        func resignKey() {}
+    }
+    final class ClipboardAIService {
+        struct Run {
+            let action: ClipboardAIAction
+            var module = NotchModule.clipboard
+        }
+        static var shared = ClipboardAIService()
+        var run: Run?
+        func dismiss() { run = nil }
     }
     final class Host { func containsHover(_ point: CGPoint) -> Bool { false } }
     enum NSEvent { static let mouseLocation = CGPoint.zero }
@@ -46,7 +56,9 @@ enum NotchDestinationContract {
         var selected = NotchModule.controls
         var selectedMetric: MetricDetailKind?
         var expanded = false
-        var showingAppPanel = false
+        var showingSettings = false
+        var showingOnboarding = false
+        var revealedOnboarding = 0
         var showingSections = false
         var peeking = false
         var pinned = false
@@ -59,8 +71,16 @@ enum NotchDestinationContract {
         var presentationTearDowns = 0
         var captureControlsCancel: (() -> Void)?
         var captureClose: (() -> Void)?
+        var captureControls: Int?
+        var heldDrag = false
+        var sectionQuery = ""
+        var highlightedSection: NotchModule?
+        var detailOrigin: NotchModule?
+        var closedAt: TimeInterval?
+        func removeEventMonitors() {}
         func mutatePresentation(transitionContent: NotchContentTransition, _ change: () -> Void) { change() }
         func installEventMonitors() {}
+        func revealOnboarding() { revealedOnboarding += 1; expanded = true }
         func syncVisibleConsumers() { requestedDetail = selectedMetric }
         func provideHapticFeedback() {}
         func endCaptureControls() {}
@@ -84,8 +104,10 @@ enum NotchDestinationContract {
         }
         for (key, value) in Defaults.registeredDefaults where key.hasPrefix("notch") { defaults.set(value, forKey: key) }
         for feature in AppFeature.allCases { defaults.set(true, forKey: feature.availabilityKey) }
-        defaults.set(true, forKey: DefaultsKey.notchEnabled)
         reopeningContracts(defaults: defaults, expect: expect)
+        navigationContracts(expect: expect)
+        resumeContracts(expect: expect)
+        onboardingContracts(expect: expect)
         for resting in [NotchIdleContent.none, .music] {
             defaults.set(resting.rawValue, forKey: DefaultsKey.notchIdleContent)
             defaults.set(false, forKey: DefaultsKey.notchShowPlayingMusic)
@@ -227,6 +249,171 @@ enum NotchDestinationContract {
         expect(invalid.selected == .controls, "a malformed saved page falls back to Controls")
         defaults.set(NotchModule.controls.rawValue, forKey: DefaultsKey.notchHomeModule)
         defaults.set(false, forKey: DefaultsKey.notchReturnHome)
+    }
+
+    /// The first run owns the panel: nothing that normally closes it or
+    /// swaps its page may do either while it shows.
+    private static func onboardingContracts(expect: (Bool, String) -> Void) {
+        let service = Service()
+        service.open(.controls)
+        service.showingOnboarding = true
+        service.collapse()
+        service.handleEscape()
+        expect(service.expanded && service.showingOnboarding,
+               "neither a collapse nor Escape closes the first run")
+        service.open(.clipboard)
+        service.toggleSections()
+        expect(service.selected == .controls && !service.showingSections && service.revealedOnboarding == 2,
+               "a route to another page brings the first run back instead of replacing it")
+        service.expanded = false
+        service.open(sections: true)
+        expect(service.expanded && !service.showingSections && service.revealedOnboarding == 3,
+               "reopening a stepped-aside first run shows it again, not Home")
+        service.showingOnboarding = false
+        service.collapse()
+        expect(!service.expanded, "once the first run ends the panel closes normally again")
+    }
+
+    private static func navigationContracts(expect: (Bool, String) -> Void) {
+        ClipboardAIService.shared = ClipboardAIService()
+        defer { ClipboardAIService.shared = ClipboardAIService() }
+
+        /// Presses Escape until the panel closes, failing on any page it has
+        /// already visited: a revisit with the same flags can only loop.
+        func escapesToClosed(_ service: Service, _ start: String) {
+            var seen: [[NotchDestination]] = []
+            for _ in 0..<8 where service.expanded {
+                let here = service.path
+                expect(!seen.contains(here), "Escape never returns to a page it already left: \(start)")
+                guard !seen.contains(here) else { return }
+                seen.append(here)
+                service.handleEscape()
+            }
+            expect(!service.expanded, "repeated Escape always ends by closing the panel: \(start)")
+        }
+
+        let orphanMetric = Service()
+        orphanMetric.open(.system, metric: .cpu)
+        expect(orphanMetric.path == [.sections, .metric(.cpu)], "a reading with no known origin hangs under Explore")
+        escapesToClosed(orphanMetric, "reading without origin")
+
+        let fromControls = Service()
+        fromControls.open(.controls)
+        fromControls.showMetric(.network)
+        expect(fromControls.path == [.sections, .module(.controls), .metric(.network)],
+               "a reading opened from Controls keeps Controls in its trail")
+        fromControls.handleEscape()
+        expect(fromControls.path == [.sections, .module(.controls)], "Escape returns a reading to where it was opened")
+        escapesToClosed(fromControls, "reading from Controls")
+
+        let overlay = Service()
+        overlay.open(.music)
+        overlay.toggleSections()
+        expect(overlay.path == [.sections], "Explore opens from any page")
+        overlay.handleEscape()
+        expect(overlay.path == [.sections, .module(.music)], "Escape on an Explore opened over a page returns to that page")
+        escapesToClosed(overlay, "Explore over Music")
+
+        let crumbs = Service()
+        crumbs.showSettings()
+        crumbs.navigate(to: .sections)
+        expect(crumbs.path == [.sections] && !crumbs.showingSettings, "the Explore crumb leaves the page below it")
+        escapesToClosed(crumbs, "Explore crumb")
+
+        let settings = Service()
+        settings.open(.music)
+        expect(settings.showSettings() && settings.path == [.sections, .settings]
+               && settings.panel?.acceptsKeyFocus == true,
+               "Settings opens as a page of its own under Explore, ready for typing")
+        settings.toggleSections()
+        settings.handleEscape()
+        expect(settings.path == [.sections, .settings], "Explore opened over Settings hands Settings back")
+        settings.handleEscape()
+        expect(settings.expanded && settings.path == [.sections] && !settings.showingSettings,
+               "Escape on Settings goes up to Explore before it closes the panel")
+        settings.showSettings()
+        escapesToClosed(settings, "Settings")
+        settings.showSettings()
+        settings.select(.music)
+        expect(settings.path == [.sections, .module(.music)] && !settings.showingSettings,
+               "choosing a module leaves Settings")
+        settings.showSettings()
+        settings.collapse()
+        expect(!settings.showingSettings, "closing the panel closes Settings with it")
+        settings.open()
+        expect(!settings.showingSettings, "the panel does not reopen on Settings once closed")
+        settings.collapse()
+        settings.captureControls = 1
+        expect(!settings.showSettings() && !settings.showingSettings,
+               "capture controls own the panel, so Settings is left to its window")
+        settings.captureControls = nil
+        settings.running = false
+        expect(!settings.showSettings(), "a notch that cannot present leaves Settings to its window")
+
+        let ai = Service()
+        ai.open(.clipboard)
+        ClipboardAIService.shared.run = .init(action: .summarize)
+        expect(ai.path == [.sections, .module(.clipboard), .clipboardAI(.summarize)],
+               "a clipboard answer sits under Clipboard in the trail")
+        ai.open(.clipboard)
+        expect(ClipboardAIService.shared.run != nil, "reopening Clipboard keeps the answer on screen")
+        ai.navigate(to: .module(.clipboard))
+        expect(ClipboardAIService.shared.run == nil && ai.path == [.sections, .module(.clipboard)],
+               "the Clipboard crumb leads out of the answer back to the list")
+        for leave in [{ ai.select(.music) }, { ai.toggleSections() }, { ai.showMetric(.cpu) },
+                      { _ = ai.showSettings() }] {
+            ai.open(.clipboard)
+            ClipboardAIService.shared.run = .init(action: .translate)
+            leave()
+            expect(ClipboardAIService.shared.run == nil,
+                   "leaving Clipboard by any route discards the answer instead of resurfacing it later")
+        }
+
+        let spoken = Service()
+        spoken.open(.dictation)
+        ClipboardAIService.shared.run = .init(action: .toneFormal, module: .dictation)
+        expect(spoken.path == [.sections, .module(.dictation), .clipboardAI(.toneFormal)],
+               "an answer about a dictation sits under Dictation in the trail")
+        spoken.open(.dictation)
+        expect(ClipboardAIService.shared.run != nil, "reopening Dictation keeps its answer on screen")
+        spoken.goBack()
+        expect(ClipboardAIService.shared.run == nil && spoken.path == [.sections, .module(.dictation)],
+               "going back from the answer returns to the dictation list")
+        ClipboardAIService.shared.run = .init(action: .summarize, module: .dictation)
+        spoken.open(.clipboard)
+        expect(ClipboardAIService.shared.run == nil,
+               "opening another list discards an answer that belongs to Dictation")
+        spoken.open(.dictation)
+        ClipboardAIService.shared.run = .init(action: .summarize)
+        expect(spoken.path == [.sections, .module(.dictation)],
+               "a clipboard answer never names itself under Dictation")
+        ClipboardAIService.shared.run = nil
+    }
+
+    private static func resumeContracts(expect: (Bool, String) -> Void) {
+        let window = NotchSupport.resumeWindow
+        expect(!NotchSupport.reopensAtHome(closedAt: nil, now: 100)
+               && !NotchSupport.reopensAtHome(closedAt: 100, now: 100 + window)
+               && NotchSupport.reopensAtHome(closedAt: 100, now: 100 + window + 1)
+               && !NotchSupport.reopensAtHome(closedAt: .nan, now: 500),
+               "a closed panel resumes its page for the resume window and no longer")
+
+        let service = Service()
+        service.open(.music)
+        service.collapse()
+        service.open()
+        expect(service.selected == .music && !service.showingSections,
+               "reopening straight after closing resumes the page that was open")
+        service.collapse()
+        service.closedAt = ProcessInfo.processInfo.systemUptime - window - 1
+        service.open()
+        expect(service.showingSections && service.path == [.sections],
+               "reopening after the resume window starts at Home")
+        service.collapse()
+        service.closedAt = ProcessInfo.processInfo.systemUptime - window - 1
+        service.open(.files)
+        expect(service.selected == .files && !service.showingSections,
+               "a named page still wins after the resume window")
     }
 
     private static func sessionContracts(expect: (Bool, String) -> Void) {

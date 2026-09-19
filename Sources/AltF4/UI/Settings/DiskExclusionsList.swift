@@ -91,11 +91,7 @@ struct DiskExclusionsList: View {
                 }
             }
 
-            Text(strings.caption)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            SettingsCaptionText(strings.caption)
         } label: {
             HStack {
                 Text(strings.listTitle)

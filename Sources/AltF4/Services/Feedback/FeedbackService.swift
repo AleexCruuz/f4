@@ -57,6 +57,10 @@ enum FeedbackError: Error {
 @MainActor
 final class FeedbackService {
     static let shared = FeedbackService()
+    /// Off: the endpoint below is upstream's feedback server with the fork's
+    /// name substituted in. No report is sent and no entry point shows until
+    /// the fork runs its own.
+    nonisolated static let isAvailable = false
 
     private let endpoint = URL(string: "https://screenshots.altf4.com/v1/feedback")!
     private let session: URLSession
@@ -77,6 +81,7 @@ final class FeedbackService {
     func submit(kind: FeedbackKind,
                 message: String,
                 diagnostics: FeedbackDiagnostics?) async throws {
+        guard Self.isAvailable else { throw FeedbackError.unavailable }
         let trimmed = message.trimmingCharacters(in: .whitespacesAndNewlines)
         guard trimmed.utf16.count >= 10, trimmed.utf16.count <= 2_000 else {
             throw FeedbackError.rejected

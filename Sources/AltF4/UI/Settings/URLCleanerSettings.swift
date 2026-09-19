@@ -28,32 +28,30 @@ struct URLCleanerSettings: View {
     var body: some View {
         Form {
             Section {
-                Toggle(l10n.s.urlCleanerEnable, isOn: $enabled)
+                SettingsToggleWithCaption(title: l10n.s.urlCleanerEnable,
+                                          caption: l10n.s.urlCleanerEnableCaption,
+                                          isOn: $enabled)
                     .onChange(of: enabled) { _, _ in
                         URLCleanerService.shared.syncWithPreferences()
                     }
-                Text(l10n.s.urlCleanerEnableCaption)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Text(l10n.s.urlCleanerLocalNote)
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
                 if enabled, cleaner.isRunning {
                     Label(l10n.s.urlCleanerActiveNow, systemImage: "checkmark.circle.fill")
-                        .font(.caption)
+                        .font(.subheadline)
                         .foregroundStyle(.green)
                     // The automatic rewrite is silent by design. Naming what it
                     // took out is the only place someone can see that the
                     // rules did anything to a link they copied.
                     if !cleaner.lastRemoved.isEmpty {
                         Text(removedSummary(cleaner.lastRemoved))
-                            .font(.caption)
+                            .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
                 }
+            } footer: {
+                SettingsCaptionText(l10n.s.urlCleanerLocalNote)
             }
 
-            Section(l10n.s.urlCleanerRulesTitle) {
+            Section {
                 ForEach(URLCleaning.ruleGroups(rules: rules)) { group in
                     DisclosureGroup {
                         parameterGrid(for: group)
@@ -89,15 +87,16 @@ struct URLCleanerSettings: View {
                     addSiteRow
                         .disclosureIndent()
                 }
-                Text(l10n.s.urlCleanerRulesCaption)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                // Why the list is as long as it is. Without this the length
-                // reads as "we delete a lot from your links", when a real link
-                // only ever carries a handful of these.
-                Text(l10n.s.urlCleanerRulesCoverageCaption)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+            } header: {
+                Text(l10n.s.urlCleanerRulesTitle)
+            } footer: {
+                VStack(alignment: .leading, spacing: 6) {
+                    SettingsCaptionText(l10n.s.urlCleanerRulesCaption)
+                    // Why the list is as long as it is. Without this the length
+                    // reads as "we delete a lot from your links", when a real
+                    // link only ever carries a handful of these.
+                    SettingsCaptionText(l10n.s.urlCleanerRulesCoverageCaption)
+                }
             }
 
             Section(l10n.s.urlCleanerManualTitle) {
@@ -128,7 +127,7 @@ struct URLCleanerSettings: View {
                 }
                 if output.isEmpty {
                     Text(message ?? l10n.s.urlCleanerOutputPlaceholder)
-                        .font(.caption)
+                        .font(.subheadline)
                         .foregroundStyle(.tertiary)
                 } else {
                     Text(output)
@@ -138,7 +137,7 @@ struct URLCleanerSettings: View {
                         .textSelection(.enabled)
                     if let message {
                         Text(message)
-                            .font(.caption)
+                            .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -190,9 +189,7 @@ struct URLCleanerSettings: View {
                 Button(l10n.s.urlCleanerRulesAddButton) { addParameter(to: site) }
                     .disabled(URLCleaning.parameterName(from: parameterDrafts[site] ?? "") == nil)
             }
-            Text(l10n.s.urlCleanerRulesMatchCaption)
-                .font(.caption2)
-                .foregroundStyle(.tertiary)
+            SettingsCaptionText(l10n.s.urlCleanerRulesMatchCaption)
         }
     }
 

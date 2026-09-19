@@ -664,7 +664,6 @@ struct Strings {
     let shelfClearAll: String
     let shelfRemoveSelected: String
     let shelfSelectedFormat: String      // + count
-    let shelfHint: String
     let shelfItemImage: String
     // Three forms, not two: Russian agrees a noun with the number in front of
     // it as one, as two through four, and as five or more. Every other
@@ -759,7 +758,6 @@ struct Strings {
     let permissionMissing: String
     let permissionOpenSettings: String
     let permissionRequest: String
-    let permissionRestartNote: String
 
     // MARK: Secure input
     let secureInputTitle: String
@@ -778,41 +776,7 @@ struct Strings {
     // MARK: Onboarding
     let obContinue: String
     let obBack: String
-    let obSkipStep: String
-    let obStart: String
-    let obStepWelcomeTitle: String
-    let obStepWelcomeBody: String
-    let obWelcomeBullet1Title: String
-    let obWelcomeBullet1Body: String
-    let obWelcomeBullet2Title: String
-    let obWelcomeBullet2Body: String
-    let obWelcomeBullet3Title: String
-    let obWelcomeBullet3Body: String
-    let obLanguageLabel: String
-    let obStepAccessibilityTitle: String
-    let obStepAccessibilityBody: String
-    let obAccessibilityWhy: String
-    let obStepRecordingTitle: String
-    let obStepRecordingBody: String
-    let obRecordingWhy: String
-    let obStepMonitorTitle: String
-    let obStepMonitorBody: String
-    let obMonitorNoPermission: String
-    let obStepOptionalTitle: String
-    let obStepOptionalBody: String
-    let obStepStatusTitle: String
-    let obStepStatusBody: String
-    let obStatusRecheck: String
-    let obStepDoneTitle: String
-    let obStepDoneBody: String
-    let obDoneHint: String
-    let obWhatsNewTitle: String
     let obWhatsNewFallback: String
-    let obLanguageUpdateTitle: String
-    let obLanguageUpdateBody: String
-    let obPurposeTitle: String
-    let obPurposeBody: String
-    let obPurposeSkip: String
 
     // MARK: Settings — monitor / menu bar metrics
     let tabMonitor: String
@@ -902,9 +866,6 @@ struct Strings {
     // MARK: Update notification + onboarding menu bar setup
     let updateBannerTitle: String
     let updateBannerAction: String
-    let obStepMenuBarTitle: String
-    let obStepMenuBarBody: String
-    let obStepMenuBarNote: String
     let monitorMenuBarPresetLabel: String
     let menuBarPresetReadable: String
     let menuBarPresetDense: String
@@ -951,10 +912,6 @@ struct Strings {
     let monitorPanelConfigHint: String
     let monitorOrderSection: String
     let monitorOrderHint: String
-    let obStepPanelTitle: String
-    let obStepPanelBody: String
-    let obStepPanelNavigationTitle: String
-    let obStepPanelNavigationBody: String
 
     // MARK: Cleaning mode
     let cleaningMenuItem: String
@@ -1718,7 +1675,6 @@ extension Strings {
         shelfClearAll: "Limpar tudo",
         shelfRemoveSelected: "Remover selecionados",
         shelfSelectedFormat: "%d selecionados",
-        shelfHint: "Clique para selecionar. Arraste para usar ou clique com o botão direito para mais ações.",
         shelfItemImage: "Imagem",
         shelfTooltipItemsFormat: "%d itens",
         shelfTooltipItemsFew: "%d itens",
@@ -1804,7 +1760,6 @@ extension Strings {
         permissionMissing: "Não concedida",
         permissionOpenSettings: "Abrir Ajustes do Sistema…",
         permissionRequest: "Conceder acesso",
-        permissionRestartNote: "O macOS pode pedir para reabrir o app depois de conceder.",
         secureInputTitle: "A entrada segura está ativa",
         secureInputHeldFormat: "%@ está mantendo-a ativa, então o AltF4 não consegue digitar por você. Saia do campo de senha do app, ou encerre-o, para liberá-la.",
         secureInputUnattributed: "Nenhum app em execução a reivindica. Encerre a sessão e entre novamente para limpá-la.",
@@ -1819,41 +1774,7 @@ extension Strings {
 
         obContinue: "Continuar",
         obBack: "Voltar",
-        obSkipStep: "Pular esta etapa",
-        obStart: "Abrir o AltF4",
-        obStepWelcomeTitle: "Bem-vindo ao AltF4",
-        obStepWelcomeBody: "Um utilitário discreto na barra de menus que deixa o macOS mais prático no dia a dia.",
-        obWelcomeBullet1Title: "Energia sob controle",
-        obWelcomeBullet1Body: "Mantenha o Mac acordado por quanto tempo quiser, até com a tampa fechada.",
-        obWelcomeBullet2Title: "Visão clara do sistema",
-        obWelcomeBullet2Body: "Temperaturas, uso de CPU e GPU e pressão de memória em tempo real.",
-        obWelcomeBullet3Title: "Mouse e janelas do seu jeito",
-        obWelcomeBullet3Body: "Rolagem invertida no mouse e um alternador de janelas com miniaturas.",
-        obLanguageLabel: "Idioma",
-        obStepAccessibilityTitle: "Acessibilidade",
-        obStepAccessibilityBody: "Necessária para inverter a rolagem do mouse e para o alternador de janelas responder ao teclado.",
-        obAccessibilityWhy: "O app só observa a roda do mouse e o atalho do alternador. Nada é gravado nem enviado a lugar algum.",
-        obStepRecordingTitle: "Gravação de Tela",
-        obStepRecordingBody: "Permite mostrar miniaturas reais das janelas no alternador, em vez de apenas ícones.",
-        obRecordingWhy: "As miniaturas são geradas na hora, ficam só na memória e nunca saem do seu Mac. Sem ela, o alternador funciona com ícones.",
-        obStepMonitorTitle: "Monitor do sistema",
-        obStepMonitorBody: "O painel mostra as temperaturas de CPU, GPU e bateria, o uso de hardware e a pressão de memória.",
-        obMonitorNoPermission: "Não precisa de permissão. Os sensores são lidos direto do sistema.",
-        obStepOptionalTitle: "Recursos opcionais",
-        obStepOptionalBody: "Ative agora o que quiser usar. Tudo pode ser mudado depois nos Ajustes.",
-        obStepStatusTitle: "Verificação",
-        obStepStatusBody: "Confira se está tudo pronto para os recursos que você quer usar.",
-        obStatusRecheck: "Verificar novamente",
-        obStepDoneTitle: "Tudo pronto!",
-        obStepDoneBody: "O AltF4 já está cuidando do seu Mac.",
-        obDoneHint: "Procure o buraco negro na barra de menus, no canto superior direito da tela.",
-        obWhatsNewTitle: "Novidades nesta versão",
         obWhatsNewFallback: "Esta atualização inclui as correções e melhorias mais recentes.",
-        obLanguageUpdateTitle: "Agora no seu idioma",
-        obLanguageUpdateBody: "O AltF4 agora fala vários idiomas. Escolha o que você prefere usar; dá para mudar quando quiser nos Ajustes.",
-        obPurposeTitle: "O que te trouxe aqui?",
-        obPurposeBody: "Escolha uma configuração pronta ou marque exatamente o que quer usar.",
-        obPurposeSkip: "Você pode adicionar ou remover recursos depois nos Ajustes.",
 
         tabMonitor: "Monitor",
         monitorMenuBarSection: "Na barra de menus",
@@ -1938,9 +1859,6 @@ extension Strings {
 
         updateBannerTitle: "Atualização disponível",
         updateBannerAction: "Atualizar",
-        obStepMenuBarTitle: "Métricas na barra de menus",
-        obStepMenuBarBody: "Escolha o que mostrar ao lado do ícone. A prévia acima muda em tempo real.",
-        obStepMenuBarNote: "Novidade: blocos de Rede e Energia e gráficos no painel. Ajuste tudo depois em Ajustes › Monitor.",
         monitorMenuBarPresetLabel: "Estilo",
         menuBarPresetReadable: "Legível",
         menuBarPresetDense: "Denso",
@@ -1985,10 +1903,6 @@ extension Strings {
         monitorPanelConfigHint: "Abra um bloco para escolher o que ele mostra.",
         monitorOrderSection: "Ordem das seções",
         monitorOrderHint: "Arraste para reordenar as seções do painel e use o olho para mostrar ou ocultar cada uma.",
-        obStepPanelTitle: "O que aparece no painel",
-        obStepPanelBody: "Abra cada bloco e escolha exatamente o que mostrar quando você clica no ícone.",
-        obStepPanelNavigationTitle: "Painel por seções",
-        obStepPanelNavigationBody: "O painel agora pode mostrar uma seção por vez. Você pode mudar entre Seções e Lista nos Ajustes.",
 
         cleaningMenuItem: "Modo de limpeza",
         utilitiesSection: "Utilidades",
@@ -2745,7 +2659,6 @@ extension Strings {
         shelfClearAll: "Clear all",
         shelfRemoveSelected: "Remove selected",
         shelfSelectedFormat: "%d selected",
-        shelfHint: "Click to select. Drag out to use or right-click for more actions.",
         shelfItemImage: "Image",
         shelfTooltipItemsFormat: "%d items",
         shelfTooltipItemsFew: "%d items",
@@ -2831,7 +2744,6 @@ extension Strings {
         permissionMissing: "Not granted",
         permissionOpenSettings: "Open System Settings…",
         permissionRequest: "Grant access",
-        permissionRestartNote: "macOS may ask to reopen the app after granting.",
         secureInputTitle: "Secure input is on",
         secureInputHeldFormat: "%@ is holding it, so AltF4 cannot type for you. Dismiss its password field, or quit it, to release it.",
         secureInputUnattributed: "No running app claims it. Log out and back in to clear it.",
@@ -2846,41 +2758,7 @@ extension Strings {
 
         obContinue: "Continue",
         obBack: "Back",
-        obSkipStep: "Skip this step",
-        obStart: "Open AltF4",
-        obStepWelcomeTitle: "Welcome to AltF4",
-        obStepWelcomeBody: "A discreet menu bar utility that makes everyday macOS more practical.",
-        obWelcomeBullet1Title: "Energy under control",
-        obWelcomeBullet1Body: "Keep the Mac awake for as long as you want, even with the lid closed.",
-        obWelcomeBullet2Title: "A clear view of the system",
-        obWelcomeBullet2Body: "CPU, GPU and battery temperatures, hardware usage and memory pressure in real time.",
-        obWelcomeBullet3Title: "Mouse and windows, your way",
-        obWelcomeBullet3Body: "Reversed mouse scrolling and a window switcher with thumbnails.",
-        obLanguageLabel: "Language",
-        obStepAccessibilityTitle: "Accessibility",
-        obStepAccessibilityBody: "Needed to invert mouse scrolling and for the window switcher to respond to the keyboard.",
-        obAccessibilityWhy: "The app only watches the mouse wheel and the switcher shortcut. Nothing is recorded or sent anywhere.",
-        obStepRecordingTitle: "Screen Recording",
-        obStepRecordingBody: "Lets the switcher show real window thumbnails instead of icons only.",
-        obRecordingWhy: "Thumbnails are generated on the fly, stay in memory and never leave your Mac. Without it, the switcher still works with icons.",
-        obStepMonitorTitle: "System monitor",
-        obStepMonitorBody: "The panel shows CPU, GPU and battery temperatures, hardware usage and memory pressure.",
-        obMonitorNoPermission: "No permission needed. Sensors are read straight from the system.",
-        obStepOptionalTitle: "Optional features",
-        obStepOptionalBody: "Turn on what you want to use now. Everything can be changed later in Settings.",
-        obStepStatusTitle: "Checkup",
-        obStepStatusBody: "Make sure everything is ready for the features you want.",
-        obStatusRecheck: "Check again",
-        obStepDoneTitle: "All set!",
-        obStepDoneBody: "AltF4 is already looking after your Mac.",
-        obDoneHint: "Look for the black hole in the menu bar, at the top right of the screen.",
-        obWhatsNewTitle: "What’s new in this version",
         obWhatsNewFallback: "This update includes the latest fixes and improvements.",
-        obLanguageUpdateTitle: "Now in your language",
-        obLanguageUpdateBody: "AltF4 now speaks several languages. Choose the one you’d like to use; you can change it anytime in Settings.",
-        obPurposeTitle: "What brought you here?",
-        obPurposeBody: "Choose a ready setup or select exactly what you want to use.",
-        obPurposeSkip: "You can add or remove features later in Settings.",
 
         tabMonitor: "Monitor",
         monitorMenuBarSection: "In the menu bar",
@@ -2965,9 +2843,6 @@ extension Strings {
 
         updateBannerTitle: "Update available",
         updateBannerAction: "Update",
-        obStepMenuBarTitle: "Metrics in the menu bar",
-        obStepMenuBarBody: "Pick what to show next to the icon. The preview above updates live.",
-        obStepMenuBarNote: "New: Network and Power blocks and graphs in the panel. Fine-tune it all later in Settings › Monitor.",
         monitorMenuBarPresetLabel: "Style",
         menuBarPresetReadable: "Readable",
         menuBarPresetDense: "Dense",
@@ -3012,10 +2887,6 @@ extension Strings {
         monitorPanelConfigHint: "Open a block to choose what it shows.",
         monitorOrderSection: "Section order",
         monitorOrderHint: "Drag to reorder the panel sections and use the eye to show or hide each one.",
-        obStepPanelTitle: "What’s in the panel",
-        obStepPanelBody: "Open each block and pick exactly what shows when you click the icon.",
-        obStepPanelNavigationTitle: "Section-based panel",
-        obStepPanelNavigationBody: "The panel can now show one section at a time. You can switch between Sections and List in Settings.",
 
         cleaningMenuItem: "Cleaning Mode",
         utilitiesSection: "Utilities",

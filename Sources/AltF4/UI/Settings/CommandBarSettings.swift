@@ -21,10 +21,10 @@ struct CommandBarSettings: View {
     @AppStorage(DefaultsKey.commandBarFileIgnores) private var fileIgnoresRaw = ""
     @State private var editing: CommandBarLink?
     @State private var ignoreDraft = ""
-    @State private var showsFileOptions = false
     @State private var showsAppShortcuts = false
 
     private var text: CommandBarFeatureStrings { FeatureStrings.commandBar(l10n.language) }
+    private var layoutText: SettingsLayoutStrings { FeatureStrings.settingsLayout(l10n.language) }
     /// The snippet library already says "save", "delete" and "name" in every
     /// language; saying them twice would only mean two things to keep.
     private var common: SnippetFeatureStrings { FeatureStrings.snippets(l10n.language) }
@@ -53,12 +53,11 @@ struct CommandBarSettings: View {
                     }
                     .disabled(!service.hasCustomPosition)
                 }
-                // One row for the whole explanation. As separate rows the form
-                // drew a divider between every sentence, cutting one paragraph
-                // about one feature into four cards that looked like settings.
+            } header: {
+                Text(text.pageTitle)
+            } footer: {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(text.positionCaption)
-                    Text(text.settingsCaption)
+                    SettingsCaptionText(text.settingsCaption + " " + text.positionCaption)
                     Label(text.privacyNote, systemImage: "lock.laptopcomputer")
                     HStack(spacing: 6) {
                         Text(text.tryTheseLabel)
@@ -73,26 +72,12 @@ struct CommandBarSettings: View {
                     }
                     .padding(.top, 2)
                 }
-                .font(.caption)
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
-                // No callback: the bar reads this on every open, and opening
-                // Settings has already hidden it, so the two can never be on
-                // screen with a stale value between them.
-                Toggle(text.compactModeToggle, isOn: $compactMode)
-                Text(text.compactModeCaption)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                if CommandBarPreferences.isEnabled(.emoji, disabledRaw: disabledSources) {
-                    Picker(text.emojiSkinToneLabel, selection: $emojiSkinTone) {
-                        ForEach(CommandBarEmoji.SkinTone.allCases) { tone in
-                            Text(tone.swatch).tag(tone.rawValue)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    Text(text.emojiSkinToneCaption)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
+            Section {
                 // Not the shared "Global shortcut" label the other feature
                 // pages use: this page already has an "open the bar" button at
                 // the top, so the toggle has to say which of the two it arms.
@@ -105,25 +90,40 @@ struct CommandBarSettings: View {
                 }
                 if shortcutEnabled, service.shortcutRegistrationFailed {
                     Text(l10n.s.shortcutUnavailable)
-                        .font(.caption)
+                        .font(.subheadline)
                         .foregroundStyle(.orange)
                 }
                 if secureInput.holder != .off {
                     SecureInputRow()
                 }
-            } header: {
-                Text(text.pageTitle)
-            }
-
-            Section {
                 Button {
                     showsAppShortcuts = true
                 } label: {
                     Label(text.appCenterTitle, systemImage: "app.badge")
                 }
-                Text(text.appCenterCaption)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+            } header: {
+                Text(layoutText.shortcuts)
+            } footer: {
+                SettingsCaptionText(text.appCenterCaption)
+            }
+
+            Section(layoutText.appearance) {
+                // No callback: the bar reads this on every open, and opening
+                // Settings has already hidden it, so the two can never be on
+                // screen with a stale value between them.
+                SettingsToggleWithCaption(title: text.compactModeToggle,
+                                          caption: text.compactModeCaption,
+                                          isOn: $compactMode)
+                if CommandBarPreferences.isEnabled(.emoji, disabledRaw: disabledSources) {
+                    Picker(selection: $emojiSkinTone) {
+                        ForEach(CommandBarEmoji.SkinTone.allCases) { tone in
+                            Text(tone.swatch).tag(tone.rawValue)
+                        }
+                    } label: {
+                        SettingsLabel(text.emojiSkinToneLabel, caption: text.emojiSkinToneCaption)
+                    }
+                    .pickerStyle(.segmented)
+                }
             }
 
             Section {
@@ -136,19 +136,12 @@ struct CommandBarSettings: View {
             } header: {
                 Text(text.sourcesTitle)
             } footer: {
-                Text(text.sourcesCaption)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                SettingsCaptionText(text.sourcesCaption)
             }
 
             Section {
-                Text(text.filesCaption)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
                 if fileScopes.isEmpty {
-                    Text(text.filesEmpty)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    SettingsCaptionText(text.filesEmpty)
                 }
                 ForEach(fileScopes, id: \.self) { scope in
                     HStack(spacing: 8) {
@@ -171,51 +164,42 @@ struct CommandBarSettings: View {
                 } label: {
                     Label(text.filesAddFolder, systemImage: "plus")
                 }
-                DisclosureHeaderRow(isExpanded: $showsFileOptions) {
-                    Text(FeatureStrings.recorder(l10n.language).moreOptions)
-                    Spacer()
-                }
-                if showsFileOptions {
-                    Group {
-                        Text(text.filesIgnoreCaption)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        ForEach(fileIgnores, id: \.self) { pattern in
-                            HStack(spacing: 8) {
-                                Image(systemName: "eye.slash")
-                                    .font(.system(size: 11))
-                                    .foregroundStyle(.secondary)
-                                    .frame(width: 16)
-                                Text(pattern)
-                                    .font(.system(size: 12))
-                                    .lineLimit(1)
-                                Spacer()
-                                Button(text.removeButton) { removeFileIgnore(pattern) }
-                                    .buttonStyle(.bordered)
-                                    .controlSize(.mini)
-                            }
-                        }
+                SettingsMoreOptions {
+                    SettingsCaptionText(text.filesIgnoreCaption)
+                    ForEach(fileIgnores, id: \.self) { pattern in
                         HStack(spacing: 8) {
-                            TextField(text.filesIgnorePlaceholder, text: $ignoreDraft)
-                                .textFieldStyle(.roundedBorder)
-                                .onSubmit { addFileIgnore() }
-                            Button(text.filesIgnoreAdd) { addFileIgnore() }
+                            Image(systemName: "eye.slash")
+                                .font(.system(size: 11))
+                                .foregroundStyle(.secondary)
+                                .frame(width: 16)
+                            Text(pattern)
+                                .font(.system(size: 12))
+                                .lineLimit(1)
+                            Spacer()
+                            Button(text.removeButton) { removeFileIgnore(pattern) }
                                 .buttonStyle(.bordered)
-                                .controlSize(.small)
-                                .disabled(ignoreDraft.trimmingCharacters(in: .whitespaces).isEmpty)
+                                .controlSize(.mini)
                         }
                     }
-                    .disclosureIndent()
+                    HStack(spacing: 8) {
+                        TextField(text.filesIgnorePlaceholder, text: $ignoreDraft)
+                            .textFieldStyle(.roundedBorder)
+                            .onSubmit { addFileIgnore() }
+                        Button(text.filesIgnoreAdd) { addFileIgnore() }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                            .disabled(ignoreDraft.trimmingCharacters(in: .whitespaces).isEmpty)
+                    }
                 }
             } header: {
                 Text(text.filesTitle)
+            } footer: {
+                SettingsCaptionText(text.filesCaption)
             }
 
             Section {
                 if links.isEmpty {
-                    Text(text.linksEmpty)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    SettingsCaptionText(text.linksEmpty)
                 }
                 ForEach(links) { link in
                     HStack(spacing: 8) {
@@ -250,9 +234,7 @@ struct CommandBarSettings: View {
 
             Section {
                 if boundRows.isEmpty {
-                    Text(text.rowShortcutsEmpty)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    SettingsCaptionText(text.rowShortcutsEmpty)
                 }
                 ForEach(boundRows, id: \.key) { entry in
                     HStack {
@@ -268,7 +250,7 @@ struct CommandBarSettings: View {
                         // and a row showing a dead key is worse than no key.
                         if service.refusedRowShortcutKeys.contains(entry.key) {
                             Text(l10n.s.shortcutUnavailable)
-                                .font(.caption)
+                                .font(.subheadline)
                                 .foregroundStyle(.orange)
                         }
                         Button(text.removeButton) { removeRowShortcut(entry.key) }
@@ -282,9 +264,7 @@ struct CommandBarSettings: View {
 
             Section {
                 if named.isEmpty {
-                    Text(text.namedEmpty)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    SettingsCaptionText(text.namedEmpty)
                 }
                 ForEach(named, id: \.key) { entry in
                     HStack {
@@ -307,9 +287,7 @@ struct CommandBarSettings: View {
 
             Section {
                 if pinned.isEmpty {
-                    Text(text.pinnedEmpty)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    SettingsCaptionText(text.pinnedEmpty)
                 }
                 ForEach(pinned, id: \.key) { entry in
                     HStack {
@@ -328,9 +306,7 @@ struct CommandBarSettings: View {
 
             Section {
                 if hidden.isEmpty {
-                    Text(text.hiddenEmpty)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    SettingsCaptionText(text.hiddenEmpty)
                 }
                 ForEach(hidden, id: \.key) { entry in
                     HStack {
@@ -587,9 +563,7 @@ private struct CommandBarLinkEditor: View {
 
             if draft.kind != .script {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(text.linkPlaceholdersHint)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    SettingsCaptionText(text.linkPlaceholdersHint)
                     HStack(spacing: 6) {
                         ForEach(CommandBarLinkPlaceholder.allCases) { placeholder in
                             Button {
@@ -613,9 +587,7 @@ private struct CommandBarLinkEditor: View {
                 }
             } else {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text(text.scriptHint)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    SettingsCaptionText(text.scriptHint)
                     Toggle(text.scriptRunsWithoutArgument, isOn: $draft.runsWithoutArgument)
                         .font(.caption)
                 }

@@ -10,6 +10,8 @@ import SwiftUI
 struct CameraPreviewView: View {
     var size = CGSize(width: 320, height: 240)
     var showsCameraMenu = false
+    /// Zero when a silhouette around the picture already shapes it.
+    var cornerRadius: CGFloat = 14
     @ObservedObject private var l10n = L10n.shared
     @ObservedObject private var service = CameraPreviewService.shared
     @State private var hovering = false
@@ -24,10 +26,10 @@ struct CameraPreviewView: View {
             content
         }
         .frame(width: size.width, height: size.height)
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.14), lineWidth: 1)
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                .strokeBorder(Color.white.opacity(cornerRadius > 0 ? 0.14 : 0), lineWidth: 1)
         )
         // The surface is always black, so the controls (spinner, menu,
         // buttons) must draw for a dark background in either system look.

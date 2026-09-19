@@ -1332,7 +1332,7 @@ final class ShelfService: ObservableObject {
             closeAfterDrop: defaults.bool(forKey: DefaultsKey.shelfCloseAfterDrop),
             pinned: fromNotch ? notch.pinned : isPinned) {
             if fromNotch {
-                if notch.expanded, notch.selected == .files, !notch.showingAppPanel, !notch.showingSections {
+                if notch.expanded, notch.selected == .files, !notch.showingSettings, !notch.showingSections {
                     notch.collapse()
                 }
             } else if isVisible, let source, source === panel {

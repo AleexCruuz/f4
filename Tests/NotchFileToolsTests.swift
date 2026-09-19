@@ -18,7 +18,6 @@ enum NotchFileToolsTests {
                "the download preference is portable")
         expect(!SettingsBackupSupport.exportKeys().contains(DefaultsKey.notchDownloadsFolderBookmark),
                "folder authority never leaves this Mac in a settings backup")
-        defaults.set(true, forKey: DefaultsKey.notchEnabled)
         defaults.set(true, forKey: DefaultsKey.notchDownloadsEnabled)
         defaults.set(true, forKey: AppFeature.notch.availabilityKey)
         defaults.set(true, forKey: AppFeature.notchDownloads.availabilityKey)

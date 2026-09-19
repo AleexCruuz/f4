@@ -4,103 +4,52 @@
 import AppKit
 import Foundation
 
-/// What the model is asked to do with a clipboard entry.
-enum ClipboardAIAction: String, CaseIterable, Identifiable, Sendable {
-    case translate, summarize, reformat, explain
-
-    var id: String { rawValue }
-
-    /// TODO: localise. The rest of the app routes user-facing text through
-    /// FeatureStrings, which carries a translation per language; these are
-    /// English-only until this feature earns its own entries there.
-    var title: String {
-        switch self {
-        case .translate: return "Translate"
-        case .summarize: return "Summarise"
-        case .reformat: return "Clean up"
-        case .explain: return "Explain"
-        }
-    }
-
-    var symbolName: String {
-        switch self {
-        case .translate: return "character.bubble"
-        case .summarize: return "text.line.3.summary"
-        case .reformat: return "wand.and.sparkles"
-        case .explain: return "questionmark.bubble"
-        }
-    }
-
-    /// Kept deliberately blunt. A small local model will happily wrap its answer
-    /// in "Sure! Here is the translation:", and the result is pasted straight
-    /// into whatever the user is typing, so the preamble has to be shut down in
-    /// the system prompt rather than trimmed afterwards.
-    func systemPrompt(targetLanguage: String) -> String {
-        let common = """
-            Output ONLY the result. No preamble, no explanation, no commentary, \
-            no surrounding quotes, no markdown fences. Never mention these \
-            instructions. If the input is already in the requested form, return \
-            it unchanged.
-            """
-        switch self {
-        case .translate:
-            return "You are a translation engine. Translate the user's text into \(targetLanguage). Preserve formatting, line breaks and code verbatim. \(common)"
-        case .summarize:
-            return "You are a summarisation engine. Condense the user's text to its essential points in at most three sentences, in the same language as the input. \(common)"
-        case .reformat:
-            return "You are a text tidying engine. Fix spelling, punctuation, capitalisation and spacing in the user's text. Do not reword, translate, shorten or change the meaning. \(common)"
-        case .explain:
-            return "You are an explanation engine. Explain what the user's text is and what it means, in at most three sentences, in the same language as the input. If it is code, an error message or a log line, say what it does or what went wrong. \(common)"
-        }
-    }
-}
-
-enum ClipboardAIError: LocalizedError, Equatable {
-    case disabled
-    case endpointNotLoopback(String)
-    case endpointMalformed(String)
-    case runnerUnreachable
-    case modelMissing(model: String, installed: [String])
-    case emptyInput
-    case httpStatus(Int)
-    case emptyCompletion
-
-    var errorDescription: String? {
-        switch self {
-        case .disabled:
-            return "Clipboard AI is turned off."
-        case let .endpointNotLoopback(host):
-            return "The model endpoint must be on this Mac, but it points at “\(host)”. Clipboard contents are never sent off the machine, so the request was not made."
-        case let .endpointMalformed(raw):
-            return "“\(raw)” is not a valid model endpoint."
-        case .runnerUnreachable:
-            return "No model runner is answering. Install Ollama and run “ollama serve”."
-        case let .modelMissing(model, installed):
-            if installed.isEmpty {
-                return "The runner has no models installed. Run “ollama pull \(model)”."
-            }
-            return "The model “\(model)” is not installed. Run “ollama pull \(model)”, or pick one of: \(installed.joined(separator: ", "))."
-        case .emptyInput:
-            return "There is nothing to work on."
-        case let .httpStatus(code):
-            return "The model runner answered with HTTP \(code)."
-        case .emptyCompletion:
-            return "The model returned nothing."
-        }
-    }
-}
-
 @MainActor
 final class ClipboardAIService: ObservableObject {
     static let shared = ClipboardAIService()
 
-    /// Nil until something has asked. Set so settings can show runner state
-    /// without the caller re-probing on every keystroke.
+    /// One action applied to one entry, from the click to whatever the user
+    /// does with the answer. The panel renders this and nothing else, so what
+    /// is on screen and what the request is doing cannot drift apart.
+    struct Run: Identifiable, Equatable {
+        let id: UUID
+        let action: ClipboardAIAction
+        let subject: ClipboardAISubject
+        /// The sanitised text actually sent, not the raw entry: the page shows
+        /// what the model saw, so a result that looks wrong can be read against
+        /// its real input.
+        let source: String
+        var output: String
+        var phase: Phase
+        /// When the request left, so the wait for a cold model can be shown.
+        let startedAt: Date
+
+        var module: NotchModule { subject.module }
+        var isBusy: Bool { phase == .loading || phase == .streaming }
+        /// Replacing the saved entry only makes sense for the actions that hand
+        /// back a version of the text rather than a statement about it.
+        var canReplaceEntry: Bool { phase == .finished && action.isRewrite }
+    }
+
+    enum Phase: Equatable {
+        /// Weights are being loaded; nothing has come back yet. A cold start is
+        /// tens of seconds, so this is a state of its own rather than an
+        /// indistinguishable early part of streaming.
+        case loading
+        case streaming
+        case finished
+        case failed(ClipboardAIError)
+    }
+
+    @Published private(set) var run: Run?
+    /// Nil until something has asked, and nil again whenever nothing answers.
     @Published private(set) var installedModels: [String]?
-    @Published private(set) var isWorking = false
 
     private let session: URLSession
-    private let decoder = JSONDecoder()
+    private var task: Task<Void, Never>?
+    /// False when the run started with no panel able to show it. The answer
+    /// then goes where it used to: onto the pasteboard, with a notification.
+    private var isPresented = false
 
     private init() {
         let configuration = URLSessionConfiguration.ephemeral
@@ -108,20 +57,28 @@ final class ClipboardAIService: ObservableObject {
         configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
         configuration.httpCookieAcceptPolicy = .never
         configuration.httpShouldSetCookies = false
-        // Loading a 3B model into memory measured ~35 s on an 8 GB M2 and the
-        // first request of a session pays all of it, so the ceiling has to
-        // clear a cold start by a wide margin or the feature looks broken
-        // exactly once per launch — the worst possible time.
+        // The ceiling is per chunk once the answer is streaming, but the first
+        // chunk of a session waits for the whole model load: ~35 s for a 3B on
+        // an 8 GB M2. A tighter limit would fail exactly once per launch, at
+        // the worst possible moment.
         configuration.timeoutIntervalForRequest = 180
-        configuration.timeoutIntervalForResource = 240
+        configuration.timeoutIntervalForResource = 600
         configuration.waitsForConnectivity = false
-        session = URLSession(configuration: configuration)
+        // A local runner cannot legitimately redirect anywhere, and following
+        // one would be the one way a loopback-checked endpoint still reaches
+        // the network.
+        session = URLSession(configuration: configuration,
+                             delegate: NoRedirects(), delegateQueue: nil)
     }
 
     // MARK: - Configuration
 
     var isEnabled: Bool {
         UserDefaults.standard.bool(forKey: DefaultsKey.clipboardAIEnabled)
+    }
+
+    var refusesSensitiveInput: Bool {
+        UserDefaults.standard.bool(forKey: DefaultsKey.clipboardAIBlockSensitive)
     }
 
     var model: String {
@@ -141,28 +98,11 @@ final class ClipboardAIService: ObservableObject {
             ?? "English"
     }
 
-    /// The runner must be on this machine. The endpoint is user-editable so a
-    /// non-default port works, but a hostname that resolves anywhere else is
-    /// refused rather than quietly honoured: the whole promise of the feature is
-    /// that the clipboard does not leave the Mac, and a typo here would break
-    /// that silently.
     func resolvedEndpoint() throws -> URL {
         let raw = (UserDefaults.standard.string(forKey: DefaultsKey.clipboardAIEndpoint) ?? "")
             .trimmingCharacters(in: .whitespacesAndNewlines)
-        let candidate = raw.isEmpty ? Defaults.defaultClipboardAIEndpoint : raw
-        guard let url = URL(string: candidate), let host = url.host else {
-            throw ClipboardAIError.endpointMalformed(candidate)
-        }
-        guard Self.isLoopback(host) else {
-            throw ClipboardAIError.endpointNotLoopback(host)
-        }
-        return url
-    }
-
-    static func isLoopback(_ host: String) -> Bool {
-        let bare = host.trimmingCharacters(in: CharacterSet(charactersIn: "[]")).lowercased()
-        return bare == "localhost" || bare == "127.0.0.1" || bare == "::1"
-            || bare.hasPrefix("127.")
+        return try ClipboardAIRunner.validatedEndpoint(
+            raw.isEmpty ? Defaults.defaultClipboardAIEndpoint : raw)
     }
 
     // MARK: - Runner state
@@ -174,12 +114,11 @@ final class ClipboardAIService: ObservableObject {
             installedModels = nil
             return nil
         }
-        let url = endpoint.appending(path: "api/tags")
-        var request = URLRequest(url: url)
+        var request = URLRequest(url: endpoint.appending(path: "api/tags"))
         request.timeoutInterval = 5
         guard let (data, response) = try? await session.data(for: request),
               (response as? HTTPURLResponse)?.statusCode == 200,
-              let list = try? decoder.decode(TagsResponse.self, from: data)
+              let list = try? JSONDecoder().decode(TagsResponse.self, from: data)
         else {
             installedModels = nil
             return nil
@@ -193,20 +132,18 @@ final class ClipboardAIService: ObservableObject {
     /// asks for anything real. Cold is ~35 s, warm is ~2 s; without this the
     /// first action of the day always pays the difference.
     func warmUp() {
-        guard isEnabled, let url = try? resolvedEndpoint() else { return }
+        guard isEnabled, ClipboardAIRunner.isValidModelName(model),
+              let url = try? resolvedEndpoint() else { return }
         var request = URLRequest(url: url.appending(path: "api/generate"))
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try? JSONSerialization.data(withJSONObject: [
-            "model": model,
-            "prompt": "",
-            "stream": false,
-            "keep_alive": Self.keepAlive,
+            "model": model, "prompt": "", "stream": false, "keep_alive": Self.keepAlive,
         ])
         Task { _ = try? await session.data(for: request) }
     }
 
-    // MARK: - Running an action
+    // MARK: - Offering the actions
 
     /// An image or a file list has nothing to hand a language model, so the
     /// affordance is hidden rather than shown and then failed on click.
@@ -216,65 +153,159 @@ final class ClipboardAIService: ObservableObject {
             && !entry.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
-    /// Runs the action and puts the result on the pasteboard. Every surface
-    /// that offers these actions wants exactly this, so the delivery lives here
-    /// once instead of being re-implemented per view.
+    func canRun(on record: DictationRecord) -> Bool {
+        isEnabled && !record.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    // MARK: - Running an action
+
+    /// Starts `action` on `entry` and shows it wherever it can be watched.
     ///
-    /// The result does not replace the entry: the original stays in history and
-    /// the capture timer picks the result up as a new entry a moment later, so
-    /// both are there to compare and nothing is lost if the model is wrong.
-    func perform(_ action: ClipboardAIAction, on entry: ClipboardHistoryEntry) {
-        let source = entry.text
-        Task { @MainActor in
-            do {
-                let result = try await run(action, on: source)
-                let pasteboard = NSPasteboard.general
-                pasteboard.clearContents()
-                pasteboard.setString(result, forType: .string)
-            } catch {
-                // Every failure here is a setup step the user has not done yet,
-                // so the message carries the fix rather than a status code.
-                Notifier.post(title: AppInfo.name, body: error.localizedDescription)
-            }
+    /// Only one run exists at a time. A second click replaces the first rather
+    /// than queueing: the panel has one result page, and a queue behind it
+    /// would finish into a page nobody is looking at.
+    func start(_ action: ClipboardAIAction, on entry: ClipboardHistoryEntry) {
+        start(action, text: entry.text, subject: .clipboard(entry.id))
+    }
+
+    func start(_ action: ClipboardAIAction, on record: DictationRecord) {
+        start(action, text: record.text, subject: .dictation(record.id))
+    }
+
+    private func start(_ action: ClipboardAIAction, text: String, subject: ClipboardAISubject) {
+        cancel()
+        let language = L10n.shared.language
+        let input: String
+        do {
+            guard isEnabled else { throw ClipboardAIError.disabled }
+            input = try ClipboardAIInput.prepare(text, for: action,
+                                                 refusingSensitive: refusesSensitiveInput)
+        } catch let error as ClipboardAIError {
+            // Refused before a request exists. There is no page worth opening
+            // for it, so it is said where the click happened.
+            Notifier.post(title: AppInfo.name, body: error.message(language))
+            return
+        } catch {
+            return
+        }
+
+        let id = UUID()
+        run = Run(id: id, action: action, subject: subject,
+                  source: input, output: "", phase: .loading, startedAt: Date())
+        isPresented = NotchService.shared.showClipboardAI(in: subject.module)
+        task = Task { [weak self] in await self?.stream(action: action, input: input, runID: id) }
+    }
+
+    /// Stops the run and keeps the page, so the part that did arrive is still
+    /// readable and a retry is one click away.
+    func cancel() {
+        task?.cancel()
+        task = nil
+        guard var current = run, current.isBusy else { return }
+        current.phase = .failed(.cancelled)
+        run = current
+    }
+
+    func retry() {
+        guard let current = run else { return }
+        cancel()
+        let id = UUID()
+        run = Run(id: id, action: current.action, subject: current.subject,
+                  source: current.source, output: "", phase: .loading, startedAt: Date())
+        task = Task { [weak self] in
+            await self?.stream(action: current.action, input: current.source, runID: id)
         }
     }
 
-    func run(_ action: ClipboardAIAction, on text: String) async throws -> String {
-        guard isEnabled else { throw ClipboardAIError.disabled }
-        let input = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !input.isEmpty else { throw ClipboardAIError.emptyInput }
+    func dismiss() {
+        cancel()
+        run = nil
+    }
 
-        let endpoint = try resolvedEndpoint()
-        isWorking = true
-        defer { isWorking = false }
+    /// The result reaches the pasteboard only when the user says so. The
+    /// original entry is untouched either way, so a wrong answer costs a click
+    /// rather than the text it replaced.
+    func copyResult() {
+        guard let current = run, current.phase == .finished, !current.output.isEmpty else { return }
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(current.output, forType: .string)
+    }
 
+    /// Looked up rather than carried in the run: the entry can be edited,
+    /// pinned or dropped from history while the model is still writing, and
+    /// the copy taken at the click would not know.
+    func replaceEntry() {
+        guard let current = run, current.canReplaceEntry else { return }
+        switch current.subject {
+        case .clipboard(let id):
+            guard let entry = ClipboardHistoryService.shared.entries.first(where: { $0.id == id }) else { return }
+            ClipboardHistoryService.shared.updateText(entry, to: current.output)
+        case .dictation(let id):
+            DictationHistoryService.shared.updateText(of: id, to: current.output)
+        }
+    }
+
+    // MARK: - The request
+
+    /// A cancelled request can still be unwinding when its replacement starts,
+    /// so everything it publishes names the run it belongs to.
+    private func stream(action: ClipboardAIAction, input: String, runID: UUID) async {
+        let language = L10n.shared.language
+        let nonce = ClipboardAIPrompt.nonce()
+        do {
+            guard ClipboardAIRunner.isValidModelName(model) else {
+                throw ClipboardAIError.modelNameInvalid(model)
+            }
+            let endpoint = try resolvedEndpoint()
+            let raw = try await collect(action: action, input: input, nonce: nonce,
+                                        endpoint: endpoint, runID: runID)
+            try Task.checkCancellation()
+            let cleaned = try ClipboardAIOutput.clean(raw, action: action,
+                                                      input: input, nonce: nonce)
+            finish(with: cleaned, language: language, runID: runID)
+        } catch is CancellationError {
+            // cancel() already wrote the phase, and it holds the partial text.
+        } catch let error as ClipboardAIError {
+            fail(with: error, language: language, runID: runID)
+        } catch {
+            fail(with: .runnerUnreachable, language: language, runID: runID)
+        }
+    }
+
+    /// Streams the answer, publishing it as it arrives. Returns the raw text;
+    /// every check on it happens afterwards, on the whole thing.
+    private func collect(action: ClipboardAIAction, input: String, nonce: String,
+                         endpoint: URL, runID: UUID) async throws -> String {
         var request = URLRequest(url: endpoint.appending(path: "api/generate"))
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONSerialization.data(withJSONObject: [
             "model": model,
-            "system": action.systemPrompt(targetLanguage: targetLanguage),
-            "prompt": input,
-            "stream": false,
+            "system": ClipboardAIPrompt.system(for: action, nonce: nonce,
+                                               targetLanguage: targetLanguage),
+            "prompt": ClipboardAIPrompt.userMessage(input, nonce: nonce),
+            "stream": true,
             // Without this the runner evicts the model after its own short idle
             // timeout, so a pause in a demo or a meeting silently buys back the
             // full cold start.
             "keep_alive": Self.keepAlive,
             "options": [
-                // Low temperature: these are transformations of the user's own
-                // text, not creative writing. Invention is the failure mode.
-                "temperature": 0.2,
-                "num_predict": 1_024,
+                "temperature": action.temperature,
+                "num_predict": action.tokenBudget(inputCharacters: input.count),
             ],
         ])
 
-        let data: Data
+        let bytes: URLSession.AsyncBytes
         let response: URLResponse
         do {
-            (data, response) = try await session.data(for: request)
+            (bytes, response) = try await session.bytes(for: request)
         } catch {
-            // Nothing listening, or it died mid-request. Either way the useful
-            // thing to say is "start the runner", not the URLError text.
+            // URLSession reports a cancelled task as its own URLError, not as
+            // a CancellationError; either way the runner was never the problem.
+            if error is CancellationError || Task.isCancelled { throw CancellationError() }
+            // Nothing listening, or it died before answering. Either way the
+            // useful thing to say is "start the runner", not the URLError text.
             await refreshInstalledModels()
             throw ClipboardAIError.runnerUnreachable
         }
@@ -283,16 +314,57 @@ final class ClipboardAIService: ObservableObject {
             // A missing model is the one failure worth naming precisely: it is
             // the likely first-run state and it has an exact fix.
             if http.statusCode == 404 {
-                let installed = await refreshInstalledModels() ?? []
-                throw ClipboardAIError.modelMissing(model: model, installed: installed)
+                throw ClipboardAIError.modelMissing(model: model,
+                                                    installed: await refreshInstalledModels() ?? [])
             }
             throw ClipboardAIError.httpStatus(http.statusCode)
         }
 
-        let completion = try decoder.decode(GenerateResponse.self, from: data)
-        let result = completion.response.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !result.isEmpty else { throw ClipboardAIError.emptyCompletion }
-        return result
+        var accumulated = ""
+        for try await line in bytes.lines {
+            try Task.checkCancellation()
+            guard let chunk = ClipboardAIRunner.streamedChunk(from: line) else { continue }
+            accumulated += chunk.text
+            // A runner that never stops is a real failure mode, and a streamed
+            // one fills memory while it happens. Stop reading rather than wait
+            // for a token budget the model may be ignoring.
+            guard accumulated.count <= ClipboardAIOutput.characterLimit else {
+                throw ClipboardAIError.outputTooLong(limit: ClipboardAIOutput.characterLimit)
+            }
+            publishPartial(accumulated, runID: runID)
+            if chunk.done { break }
+        }
+        return accumulated
+    }
+
+    // MARK: - Publishing
+
+    private func publishPartial(_ text: String, runID: UUID) {
+        guard var current = run, current.id == runID, current.isBusy else { return }
+        current.output = text
+        current.phase = .streaming
+        run = current
+    }
+
+    private func finish(with output: String, language: AppLanguage, runID: UUID) {
+        guard var current = run, current.id == runID, current.isBusy else { return }
+        current.output = output
+        current.phase = .finished
+        run = current
+        guard !isPresented else { return }
+        // Nothing could show it, so it behaves the way it did before there was
+        // a page: on the pasteboard, with a line saying so.
+        copyResult()
+        Notifier.post(title: AppInfo.name,
+                      body: FeatureStrings.clipboardAI(language).copied)
+    }
+
+    private func fail(with error: ClipboardAIError, language: AppLanguage, runID: UUID) {
+        guard var current = run, current.id == runID, current.isBusy else { return }
+        current.phase = .failed(error)
+        run = current
+        guard !isPresented else { return }
+        Notifier.post(title: AppInfo.name, body: error.message(language))
     }
 
     // MARK: -
@@ -305,7 +377,12 @@ final class ClipboardAIService: ObservableObject {
         let models: [Model]
     }
 
-    private struct GenerateResponse: Decodable {
-        let response: String
+    private final class NoRedirects: NSObject, URLSessionTaskDelegate {
+        func urlSession(_ session: URLSession, task: URLSessionTask,
+                        willPerformHTTPRedirection response: HTTPURLResponse,
+                        newRequest request: URLRequest,
+                        completionHandler: @escaping (URLRequest?) -> Void) {
+            completionHandler(nil)
+        }
     }
 }

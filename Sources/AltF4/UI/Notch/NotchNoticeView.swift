@@ -19,25 +19,39 @@ struct NotchNoticeView: View {
     }
 
     var body: some View {
-        HStack(spacing: 0) {
-            leading
-                .padding(.horizontal, inset)
-                .frame(width: wingWidth, height: geometry.menuBarHeight)
-                .clipped()
-            Color.clear.frame(width: geometry.noticeCameraGap)
-            trailing
-                .padding(.horizontal, inset)
-                .frame(width: wingWidth, height: geometry.menuBarHeight)
-                .clipped()
+        VStack(spacing: 0) {
+            HStack(spacing: 0) {
+                leading
+                    .padding(.horizontal, inset)
+                    .frame(width: wingWidth, height: geometry.menuBarHeight)
+                    .clipped()
+                Color.clear.frame(width: geometry.noticeCameraGap)
+                trailing
+                    .padding(.horizontal, inset)
+                    .frame(width: wingWidth, height: geometry.menuBarHeight)
+                    .clipped()
+            }
+            .frame(height: geometry.menuBarHeight)
+            if notice.footerHeight > 0 {
+                footer.frame(height: notice.footerHeight)
+            }
         }
         .foregroundStyle(.white)
-        .frame(height: geometry.menuBarHeight)
+        .frame(height: geometry.menuBarHeight + notice.footerHeight)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(notice.accessibilityText)
     }
 
+    @ViewBuilder private var footer: some View {
+        if notice.event == .dictation {
+            NotchDictationActivity(notice: notice, height: notice.footerHeight)
+        }
+    }
+
     @ViewBuilder private var leading: some View {
-        if let content = notice.notification {
+        if notice.event == .dictation {
+            Color.clear
+        } else if let content = notice.notification {
             HStack(spacing: 8) {
                 NotchNotificationAppIcon(app: content.app, size: min(22, geometry.menuBarHeight - 4))
                 Text(content.compactTitle)
@@ -64,7 +78,9 @@ struct NotchNoticeView: View {
     }
 
     @ViewBuilder private var trailing: some View {
-        if let content = notice.notification {
+        if notice.event == .dictation {
+            Color.clear
+        } else if let content = notice.notification {
             Text(content.compactDetail)
                 .font(.system(size: 11))
                 .foregroundStyle(.white.opacity(0.85))

@@ -39,6 +39,10 @@ struct ScreenshotShareResponse: Decodable {
 }
 
 enum ScreenshotSharingSupport {
+    /// Off: `productionEndpoint` is upstream's share server with the fork's
+    /// name substituted in, and nothing there belongs to this project. Every
+    /// share control hides and no upload starts until the fork runs its own.
+    static let isAvailable = false
     static let productionEndpoint = URL(string: "https://screenshots.altf4.com")!
     static let developerBundleIdentifier = "com.altf4.utils.dev"
     static let maximumUploadBytes = 25 * 1_024 * 1_024

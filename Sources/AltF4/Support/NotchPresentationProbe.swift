@@ -585,10 +585,10 @@ enum NotchPresentationProbe {
                             failures.insert("a closed or compact simulated notch escaped the actual menu bar")
                         }
                         previouslyCompact = compact
-                        let shoulder = min(NotchLayout.shoulder, visible.height * 0.28)
-                        if !host.contains(CGPoint(x: visible.minX + shoulder, y: visible.maxY - 0.25))
-                            || host.contains(CGPoint(x: visible.minX + shoulder, y: visible.minY + 0.25)) {
-                            failures.insert("a physical or simulated notch lost its attached shoulders or rounded lower corners")
+                        let corner = NotchLayout.surfaceRadius(height: visible.height)
+                        if !host.contains(CGPoint(x: visible.minX + 0.25, y: visible.maxY - 0.25))
+                            || host.contains(CGPoint(x: visible.minX + corner * 0.25, y: visible.minY + 0.25)) {
+                            failures.insert("a physical or simulated notch lost its square top corners or rounded lower corners")
                         }
                     }
                 }

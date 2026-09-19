@@ -15,12 +15,13 @@ final class CameraPreviewRequest: @unchecked Sendable {
 enum NotchCameraSupport {
     static func isEnabled(in defaults: UserDefaults = .standard) -> Bool {
         NotchSupport.isEnabled(in: defaults) && AppFeature.cameraPreview.isAvailable(in: defaults)
-            && defaults.bool(forKey: DefaultsKey.notchCameraEnabled)
             && NotchSupport.modules(in: defaults).contains(.camera)
     }
 
-    static func canPresent(expanded: Bool, selected: NotchModule, appPanel: Bool,
+    /// `covered` is a page drawn over the module, such as Settings, which
+    /// leaves nothing of the mirror on screen.
+    static func canPresent(expanded: Bool, selected: NotchModule, covered: Bool,
                            captureControls: Bool, in defaults: UserDefaults = .standard) -> Bool {
-        isEnabled(in: defaults) && expanded && selected == .camera && !appPanel && !captureControls
+        isEnabled(in: defaults) && expanded && selected == .camera && !covered && !captureControls
     }
 }

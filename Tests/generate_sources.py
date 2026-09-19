@@ -268,6 +268,7 @@ def main():
           + declaration(notch, "    private func clearCapture(")
           + "}\n}\n")
     metric_view = "Sources/AltF4/UI/MenuPanel/MetricDetailView.swift"
+    navigation = "Sources/AltF4/Services/Notch/NotchNavigation.swift"
     renderer = "Sources/AltF4/App/MenuBarRenderer.swift"
     metric_cases = "\n".join(line for line in declaration(metric_view, "enum MetricDetailKind:").splitlines()
                              if line.startswith("    case "))
@@ -288,7 +289,17 @@ def main():
               .replace("UserDefaults.standard", "ReviewDefaults.current!")
           + declaration(notch, "    private func updateSession(").replace("private func", "func", 1)
               .replace("AppFeature.mixer.isAvailable", "AppFeature.mixer.isAvailable(in: ReviewDefaults.current)")
-          + "}\n}\n")
+          + "".join(declaration(notch, prefix).replace("    private ", "    ", 1) for prefix in [
+              "    func collapse(", "    func toggleSections(", "    func select(_ module:",
+              "    func showMetric(", "    var path:", "    private var clipboardAIAction:",
+              "    private var clipboardAIRun:", "    func navigate(to", "    func goBack(", "    func handleEscape(",
+              "    var acceptsSystemFeedback:"])
+          + declaration(notch, "    func showSettings(")
+              .replace("    func showSettings(", "    @discardableResult func showSettings(", 1)
+          + "}\n"
+          + declaration(navigation, "enum NotchDestination:")
+          + declaration(navigation, "enum NotchNavigation {")
+          + "}\n")
     write("ShelfDropRouting.swift", "import AppKit\n\nextension ShelfDropRoutingContract {\n"
           + declaration(canvas, "struct NotchFileDropActions {")
           + declaration("Sources/AltF4/Services/Notch/NotchFileToolsService.swift", "struct NotchMediaSession:")
@@ -425,7 +436,8 @@ def main():
     write("NotchCaptureKeyboard.swift", "import Foundation\nimport Carbon.HIToolbox\n\nextension NotchCaptureKeyboardContract {\n"
           + "final class NotchService {\nstatic var shared = NotchService()\n"
           + "var presentationWindow: NSPanel? = NSPanel()\nvar acceptsSystemFeedback = true\n"
-          + "var expanded = true\nvar selected = NotchModule.captures\nvar showingAppPanel = false\n"
+          + "var expanded = true\nvar selected = NotchModule.captures\n"
+          + "var showingSettings = false\n"
           + "var showingSections = false\nvar selectedMetric: Int?\nvar captureControls: Int?\n"
           + "var captureID: UUID?\nvar captureContent: Bool? = true\n"
           + declaration("Sources/AltF4/Services/Notch/NotchService.swift", "    func isCaptureVisible(")

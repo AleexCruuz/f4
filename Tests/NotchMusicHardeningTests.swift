@@ -75,7 +75,7 @@ enum NotchLyricsContract {
         var acceptsSystemFeedback = true
         var expanded = true
         var selected: NotchModule = .music
-        var showingAppPanel = false
+        var showingSettings = false
         var selectedMetric: Bool?
         var captureControls: Bool?
         var pinned = false

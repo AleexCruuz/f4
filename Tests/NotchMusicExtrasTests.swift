@@ -181,7 +181,6 @@ enum NotchMusicExtrasTests {
         defer { defaults.removePersistentDomain(forName: suite) }
         for (key, value) in Defaults.registeredDefaults where key.hasPrefix("notch") { defaults.set(value, forKey: key) }
         for (key, value) in AppFeature.availabilityDefaults { defaults.set(value, forKey: key) }
-        defaults.set(true, forKey: DefaultsKey.notchEnabled)
         expect(!NotchLyricsSupport.isEnabled(in: defaults) && !NotchLyricsSupport.onlineEnabled(in: defaults)
                && !NotchQueueSupport.isEnabled(in: defaults), "new music surfaces and online metadata sharing start disabled")
         defaults.set(true, forKey: DefaultsKey.notchLyricsEnabled)

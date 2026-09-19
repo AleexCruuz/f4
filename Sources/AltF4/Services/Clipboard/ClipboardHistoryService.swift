@@ -1002,8 +1002,11 @@ final class ClipboardHistoryService: ObservableObject {
         }
     }
 
-    func showHistoryWindow(preferNotch: Bool = true) {
-        if preferNotch, NotchSupport.routesClipboardWindow(), NotchService.shared.showClipboard() { return }
+    // `preferNotch` is gone with the notch's pop-out button, which was its only
+    // caller: every remaining entry point wants the island when it is routing
+    // the clipboard, and a parameter nothing passes is a branch nothing tests.
+    func showHistoryWindow() {
+        if NotchSupport.routesClipboardWindow(), NotchService.shared.showClipboard() { return }
         let panel = ensurePanel()
         rememberPasteTarget()
         quickWindowPresentationID = UUID()

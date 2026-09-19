@@ -27,6 +27,10 @@ struct RadialMenuSettings: View {
     @Environment(\.colorScheme) private var colorScheme
 
     private var text: RadialMenuFeatureStrings { FeatureStrings.radialMenu(l10n.language) }
+    private var layoutText: SettingsLayoutStrings { FeatureStrings.settingsLayout(l10n.language) }
+    private var needsAccessibilityGrant: Bool {
+        RadialMenuSupport.needsAccessibility(profiles) && !permissions.accessibility
+    }
 
     private var selectedProfileIndex: Int {
         if let selectedProfileID, let idx = profiles.firstIndex(where: { $0.id == selectedProfileID }) {
@@ -61,27 +65,39 @@ struct RadialMenuSettings: View {
     var body: some View {
         Form {
             Section {
-                Toggle(text.enableLabel, isOn: $enabled)
-                Text(text.hubDescription)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                SettingsToggleWithCaption(title: text.enableLabel,
+                                          caption: text.hubDescription,
+                                          isOn: $enabled)
                 if service.registrationFailed {
                     Text(l10n.s.shortcutInvalid)
-                        .font(.caption)
+                        .font(.subheadline)
                         .foregroundStyle(.orange)
                 }
-                Picker(text.activationModeLabel, selection: $activationModeRaw) {
+                if needsAccessibilityGrant {
+                    PermissionRow(kind: .accessibility)
+                }
+            } header: {
+                Text(text.pageTitle)
+            } footer: {
+                if needsAccessibilityGrant {
+                    SettingsCaptionText(RadialMenuSupport.usesWindowLayout(currentProfileItems)
+                                        ? FeatureStrings.windowLayout(l10n.language).missingPermission
+                                        : text.permissionCaption)
+                }
+            }
+
+            Section(layoutText.behavior) {
+                Picker(selection: $activationModeRaw) {
                     Text(text.activationModePressOrHold)
                         .tag(RadialMenuActivationMode.pressOrHold.rawValue)
                     Text(text.activationModePress)
                         .tag(RadialMenuActivationMode.press.rawValue)
                     Text(text.activationModeHold)
                         .tag(RadialMenuActivationMode.hold.rawValue)
+                } label: {
+                    SettingsLabel(text.activationModeLabel, caption: text.activationModeCaption)
                 }
                 .disabled(!enabled)
-                Text(text.activationModeCaption)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
                 Picker(text.positionLabel, selection: $atPointer) {
                     Text(text.positionPointer).tag(true)
                     Text(text.positionCenter).tag(false)
@@ -90,19 +106,6 @@ struct RadialMenuSettings: View {
                 Button(text.tryButton) {
                     RadialMenuService.shared.presentPreview(for: selectedProfile)
                 }
-            } header: {
-                Text(text.pageTitle)
-            }
-
-            if RadialMenuSupport.needsAccessibility(profiles), !permissions.accessibility {
-                Section {
-                    PermissionRow(kind: .accessibility)
-                    Text(RadialMenuSupport.usesWindowLayout(currentProfileItems)
-                         ? FeatureStrings.windowLayout(l10n.language).missingPermission
-                         : text.permissionCaption)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
             }
 
             Section {
@@ -110,6 +113,10 @@ struct RadialMenuSettings: View {
                 profileConfigurationRows
             } header: {
                 Text(text.profilesHeader)
+            }
+
+            Section(layoutText.shortcuts) {
+                profileTriggerRows
             }
 
             Section {
@@ -127,10 +134,6 @@ struct RadialMenuSettings: View {
                     onReset: canResetProfile ? { resetToPresetDefaults() } : nil
                 )
                 .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
-
-                Text(text.canvasHint)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
 
                 if level.count < RadialMenuSupport.maxItemsPerWheel {
                     Button {
@@ -153,9 +156,7 @@ struct RadialMenuSettings: View {
                         .foregroundStyle(Color.accentColor)
                     }
                     if level.isEmpty {
-                        Text(text.emptyCaption)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                        SettingsCaptionText(text.emptyCaption)
                     }
                     ForEach(level) { item in
                         RadialItemRow(item: item,
@@ -172,9 +173,12 @@ struct RadialMenuSettings: View {
             } header: {
                 Text(text.actionsHeader)
             } footer: {
-                Text(level.count >= RadialMenuSupport.maxItemsPerWheel ? text.limitCaption : text.hubDescription)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 6) {
+                    SettingsCaptionText(text.canvasHint)
+                    if level.count >= RadialMenuSupport.maxItemsPerWheel {
+                        SettingsCaptionText(text.limitCaption)
+                    }
+                }
             }
         }
         .formStyle(.grouped)
@@ -289,6 +293,12 @@ struct RadialMenuSettings: View {
             )
         }
         .disabled(!enabled)
+    }
+
+    @ViewBuilder
+    private var profileTriggerRows: some View {
+        let profile = selectedProfile
+        let pIndex = selectedProfileIndex
 
         ProfileShortcutRow(
             shortcutValue: Binding(
@@ -307,7 +317,7 @@ struct RadialMenuSettings: View {
             }
         )
 
-        Picker(text.profileMouseTriggerLabel, selection: Binding(
+        Picker(selection: Binding(
             get: { profile.mouseButton },
             set: { newTrigger in
                 guard profiles.indices.contains(pIndex) else { return }
@@ -323,20 +333,16 @@ struct RadialMenuSettings: View {
                 Text(mouseTriggerName(for: button))
                     .tag(RadialMenuMouseTrigger.button(button).rawValue)
             }
+        } label: {
+            SettingsLabel(text.profileMouseTriggerLabel, caption: text.mouseTriggerRequirement)
         }
         .disabled(!enabled)
-
-        Text(text.mouseTriggerRequirement)
-            .font(.caption)
-            .foregroundStyle(.secondary)
 
         if RadialMenuMouseTrigger.sanitized(profile.mouseButton) != .off {
             if let button = RadialMenuMouseTrigger.sanitized(profile.mouseButton).buttonNumber,
                button == MouseButtonShortcutSupport.backButtonNumber
                 || button == MouseButtonShortcutSupport.forwardButtonNumber {
-                Text(text.mouseTriggerWarning)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                SettingsCaptionText(text.mouseTriggerWarning)
             }
             buttonTestRow(for: profile.mouseButton)
         }
@@ -496,9 +502,7 @@ struct RadialMenuSettings: View {
                 Text(state.message)
                     .foregroundStyle(.secondary)
             }
-            Text(text.buttonTestHint)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            SettingsCaptionText(text.buttonTestHint)
         }
         .onAppear { RadialMenuService.shared.setReportingMouseButtons(true) }
         .onDisappear { RadialMenuService.shared.setReportingMouseButtons(false) }
@@ -587,7 +591,7 @@ private struct ProfileShortcutRow: View {
             }
             if let message {
                 Text(message)
-                    .font(.caption)
+                    .font(.subheadline)
                     .foregroundStyle(.orange)
             }
         }
@@ -817,20 +821,18 @@ private struct RadialItemEditor: View {
 
             if urlIsInvalid, !item.payload.isEmpty {
                 Text(text.urlInvalid)
-                    .font(.caption)
+                    .font(.subheadline)
                     .foregroundStyle(.orange)
             }
             if item.kind == .shortcut, let shortcutMessage {
                 Text(shortcutMessage.text)
-                    .font(.caption)
+                    .font(.subheadline)
                     .foregroundStyle(shortcutMessage.isProblem ? AnyShapeStyle(.orange)
                                                                : AnyShapeStyle(.secondary))
                     .fixedSize(horizontal: false, vertical: true)
             }
             if item.kind == .submenu {
-                Text(text.submenuCaption)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                SettingsCaptionText(text.submenuCaption)
                 if let openChildren {
                     Button {
                         dismiss()
@@ -932,7 +934,7 @@ private struct RadialItemEditor: View {
                                 Image(systemName: "checkmark.circle.fill")
                                     .foregroundStyle(.green)
                                 Text(text.fetchFaviconSuccess)
-                                    .font(.caption)
+                                    .font(.subheadline)
                                     .foregroundStyle(.secondary)
                             }
                         case .error:
@@ -940,16 +942,14 @@ private struct RadialItemEditor: View {
                                 Image(systemName: "exclamationmark.triangle.fill")
                                     .foregroundStyle(.orange)
                                 Text(text.fetchFaviconError)
-                                    .font(.caption)
+                                    .font(.subheadline)
                                     .foregroundStyle(.orange)
                             }
                         }
                     }
                 }
 
-                Text(text.fetchFaviconDisclaimer)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                SettingsCaptionText(text.fetchFaviconDisclaimer)
             }
         case .shortcut:
             LabeledContent(text.kindShortcut) {

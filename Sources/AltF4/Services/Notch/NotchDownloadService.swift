@@ -139,7 +139,7 @@ final class NotchDownloadService: ObservableObject {
         return AppFeature.notchDownloads.isAvailable && NotchSupport.isEnabled()
             && NotchSupport.modules().contains(.downloads) && notch.acceptsSystemFeedback
             && notch.presentationWindow === window && window.isVisible
-            && notch.expanded && notch.selected == .downloads && !notch.showingAppPanel
+            && notch.expanded && notch.selected == .downloads && !notch.showingSettings
             && notch.selectedMetric == nil && notch.captureControls == nil
     }
 

@@ -6,6 +6,7 @@ import AppKit
 enum NotchGestureTests {
     static func run(expect: (Bool, String) -> Void) {
         nativeInteractionContracts(expect: expect)
+        spaceSwipeContracts(expect: expect)
         expect(NotchSupport.compactActivity(timer: true, downloads: true, music: true) == .timer
                && NotchSupport.compactActivity(timer: false, downloads: true, music: true) == .downloads
                && NotchSupport.compactActivity(timer: false, downloads: false, music: true) == .music
@@ -114,7 +115,6 @@ enum NotchGestureTests {
         defer { defaults.removePersistentDomain(forName: suite) }
         for (key, value) in Defaults.registeredDefaults where key.hasPrefix("notch") { defaults.set(value, forKey: key) }
         for (key, value) in AppFeature.availabilityDefaults { defaults.set(value, forKey: key) }
-        defaults.set(true, forKey: DefaultsKey.notchEnabled)
         expect(NotchGestureSupport.isEnabled(in: defaults), "gestures start enabled with the island")
         defaults.set(false, forKey: DefaultsKey.notchGesturesEnabled)
         expect(!NotchGestureSupport.isEnabled(in: defaults), "gestures retain an independent opt-out")
@@ -122,12 +122,45 @@ enum NotchGestureTests {
         defaults.set(false, forKey: AppFeature.notchGestures.availabilityKey)
         expect(!NotchGestureSupport.isEnabled(in: defaults), "removing gestures from the hub clears their handler")
         defaults.set(true, forKey: AppFeature.notchGestures.availabilityKey)
-        defaults.set(false, forKey: DefaultsKey.notchEnabled)
-        expect(!NotchGestureSupport.isEnabled(in: defaults), "gestures cannot keep the master notch alive")
+        defaults.set(false, forKey: AppFeature.notch.availabilityKey)
+        expect(!NotchGestureSupport.isEnabled(in: defaults), "gestures cannot keep a removed island alive")
         expect(SettingsBackupSupport.exportKeys().isSuperset(of: [DefaultsKey.notchGesturesEnabled,
                                                                  AppFeature.notchGestures.availabilityKey]),
                "gesture preferences travel in backup")
         expect(AppFeature.notchGestures.permissions.isEmpty, "window-local gestures need no global input permission")
+    }
+
+    private static func spaceSwipeContracts(expect: (Bool, String) -> Void) {
+        // Field values observed from a real trackpad swipe between Spaces.
+        expect(NotchSpaceSwipe.phase(gestureType: 23, motion: 1, phase: 1) == .moving
+               && NotchSpaceSwipe.phase(gestureType: 23, motion: 1, phase: 2) == .moving
+               && NotchSpaceSwipe.phase(gestureType: 23, motion: 1, phase: 4) == .lifted
+               && NotchSpaceSwipe.phase(gestureType: 23, motion: 1, phase: 8) == .lifted,
+               "a horizontal Dock swipe reports its began, changed, ended and cancelled phases")
+        expect(NotchSpaceSwipe.phase(gestureType: 23, motion: 2, phase: 1) == nil
+               && NotchSpaceSwipe.phase(gestureType: 8, motion: 1, phase: 1) == nil
+               && NotchSpaceSwipe.phase(gestureType: 23, motion: 1, phase: 128) == nil,
+               "Mission Control, other gestures and a possible start move no Space")
+
+        var swipe = NotchSpaceSwipe()
+        expect(!swipe.record(.lifted, at: 1) && !swipe.inProgress,
+               "a lift whose start was never observed hides nothing")
+        expect(swipe.record(.moving, at: 1) && swipe.inProgress && !swipe.record(.moving, at: 1.1),
+               "only the first movement starts a transition")
+        expect(!swipe.isSettled(at: 3, displayAnimating: false),
+               "fingers resting mid-swipe keep the island hidden")
+        _ = swipe.record(.lifted, at: 2)
+        expect(!swipe.isSettled(at: 2 + NotchSpaceSwipe.settleDelay / 2, displayAnimating: false),
+               "the island stays hidden while the Space slides to rest after the lift")
+        expect(!swipe.isSettled(at: 2 + NotchSpaceSwipe.settleDelay, displayAnimating: true),
+               "a committed switch still animating keeps the island hidden")
+        expect(swipe.isSettled(at: 2 + NotchSpaceSwipe.settleDelay, displayAnimating: false),
+               "the island returns once the Space is at rest")
+        expect(swipe.isSettled(at: 2 + NotchSpaceSwipe.staleAfter, displayAnimating: true),
+               "a lost end event or a stuck animation never keeps the island hidden")
+        expect(swipe.isSettled(at: 1, displayAnimating: false),
+               "a clock that runs backwards releases the island")
+        expect(NotchSpaceSwipe().isSettled(at: 0, displayAnimating: true), "no swipe hides nothing")
     }
 
     private static func nativeInteractionContracts(expect: (Bool, String) -> Void) {

@@ -89,9 +89,7 @@ struct DateVariableBuilder: View {
             // that pattern is what gets saved, so say so: the labels on
             // their own read as if the token would follow the language.
             if TextSnippetSupport.DateVariableStyle.localeDependent.contains(style) {
-                Text(text.dateTimeStyleLocaleNote)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                SettingsCaptionText(text.dateTimeStyleLocaleNote)
             }
 
             // Offered for every type, Date included: the calendar date

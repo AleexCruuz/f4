@@ -123,7 +123,7 @@ struct CommandBarAppShortcutsView: View {
 
             HStack(alignment: .center, spacing: 16) {
                 Text(message ?? text.shortcutCaptureHint)
-                    .font(.caption)
+                    .font(.subheadline)
                     .foregroundStyle(message == nil ? Color.secondary : Color.orange)
                     .fixedSize(horizontal: false, vertical: true)
                 Spacer()

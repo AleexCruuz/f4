@@ -23,12 +23,27 @@ struct NotchButtonStyle: ButtonStyle {
                     .allowsHitTesting(false)
             }
             .opacity(enabled ? (configuration.isPressed ? 0.8 : 1) : 0.4)
-            .scaleEffect(reduceMotion || !lifts ? 1
-                         : configuration.isPressed ? 0.965 : (active ? 1.022 : 1))
+            .visualEffect { [pressed = configuration.isPressed, lifts = !reduceMotion && lifts] content, proxy in
+                content.scaleEffect(NotchButtonStyle.scale(width: proxy.size.width, pressed: pressed,
+                                                           hovered: active, lifts: lifts))
+            }
             .animation(reduceMotion ? nil : .spring(response: 0.16, dampingFraction: 0.78),
                        value: configuration.isPressed)
             .animation(reduceMotion ? nil : .spring(response: 0.18, dampingFraction: 0.8), value: hovered)
             .onHover { hovered = $0 }
+    }
+
+    /// Controls wider than this keep the highlight but do not grow.
+    nonisolated static let maximumLiftWidth: CGFloat = 120
+
+    /// The lift is a share of the control's size, so on a card as wide as
+    /// the page it reaches past the scroll view or the silhouette holding it
+    /// and the card's edge is cut. Only controls small enough to have room
+    /// lift; every control still settles when pressed, which never grows.
+    nonisolated static func scale(width: CGFloat, pressed: Bool, hovered: Bool, lifts: Bool) -> CGFloat {
+        guard lifts else { return 1 }
+        if pressed { return 0.965 }
+        return hovered && width <= maximumLiftWidth ? 1.022 : 1
     }
 }
 
@@ -89,7 +104,7 @@ struct NotchIconButton: View {
                 .contentTransition(.symbolEffect(.replace))
                 .animation(reduceMotion ? nil : .smooth(duration: 0.24), value: symbol)
                 .frame(width: 28, height: 28)
-                .background(.white.opacity(selected ? 0.12 : 0),
+                .background(.white.opacity(selected ? NotchFill.selected : 0),
                             in: RoundedRectangle(cornerRadius: 9, style: .continuous))
                 .contentShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
         }
@@ -110,7 +125,7 @@ struct NotchEmptyView: View {
                 .font(.system(size: 28, weight: .light))
                 .foregroundStyle(.white.opacity(0.65))
                 .frame(width: 64, height: 64)
-                .background(.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                .background(.white.opacity(NotchFill.quiet), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
                 .accessibilityHidden(true)
             Text(message)
                 .font(.system(size: 12))
@@ -170,6 +185,20 @@ struct NotchTileGrid<Item: Identifiable, Content: View>: View {
     }
 }
 
+/// Opacities of white over the notch's opaque black. Cards and controls read
+/// against the black only by how far they lift off it, so they share one
+/// scale and move together.
+enum NotchFill {
+    /// Tiles, list rows and wells that sit many to a page.
+    static let quiet = 0.09
+    /// A card, field or button resting on the black.
+    static let card = 0.12
+    /// A small control on top of a card.
+    static let raised = 0.16
+    /// The selected, pinned or editing item among its siblings.
+    static let selected = 0.2
+}
+
 /// The base remains opaque black. Optional glass belongs to controls alone.
 struct NotchControlSurface: ViewModifier {
     let cornerRadius: CGFloat
@@ -184,13 +213,13 @@ struct NotchControlSurface: ViewModifier {
         Group {
 #if compiler(>=6.2)
             if #available(macOS 26, *), glass, !reduceTransparency {
-                content.background(.white.opacity(selected ? 0.12 : 0.065), in: shape)
+                content.background(.white.opacity(selected ? NotchFill.selected : NotchFill.card), in: shape)
                     .glassEffect(.regular.interactive(interactive), in: shape)
             } else {
-                content.background(.white.opacity(selected ? 0.12 : 0.065), in: shape)
+                content.background(.white.opacity(selected ? NotchFill.selected : NotchFill.card), in: shape)
             }
 #else
-            content.background(.white.opacity(selected ? 0.12 : 0.065), in: shape)
+            content.background(.white.opacity(selected ? NotchFill.selected : NotchFill.card), in: shape)
 #endif
         }
         .overlay {

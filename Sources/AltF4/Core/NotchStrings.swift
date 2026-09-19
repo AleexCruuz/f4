@@ -5,7 +5,6 @@ import Foundation
 
 struct NotchStrings {
     let title: String
-    let enable: String
     let description: String
     let menuBarAccessHint: String
     let display: String
@@ -22,7 +21,6 @@ struct NotchStrings {
     let collapse: String
     let pin: String
     let unpin: String
-    let panel: String
     let dropHint: String
     let empty: String
     let volume: String
@@ -47,7 +45,6 @@ struct NotchStrings {
     let dragReveal: String
     let captureControls: String
     let quickPanel: String
-    let appPanel: String
     let idleContent: String
     let idleNone: String
     let controlShortcuts: String
@@ -67,7 +64,6 @@ struct NotchStrings {
     let switchSection: String
     let sectionsTitle: String
     let searchSections: String
-    let sectionKeyboardHint: String
     let quickAccessLeft: String
     let quickAccessRight: String
 }
@@ -95,8 +91,7 @@ extension FeatureStrings {
 extension NotchStrings {
     static let enUS = NotchStrings(
         title: "Dynamic Island",
-        enable: "Enable Dynamic Island",
-        description: "Your music, controls and everyday tools, together at the top of your screen. Optional. Turn it off to keep using the separate panels.",
+        description: "Your music, controls and everyday tools, together at the top of your screen.",
         menuBarAccessHint: "Allow Accessibility so Dynamic Island can appear on this display without covering the menus.",
         display: "Display",
         automatic: "Automatic",
@@ -112,7 +107,6 @@ extension NotchStrings {
         collapse: "Collapse",
         pin: "Keep open",
         unpin: "Allow automatic closing",
-        panel: "Open app panel",
         dropHint: "Drop files here",
         empty: "Choose what appears in Dynamic Island settings.",
         volume: "Volume",
@@ -137,7 +131,6 @@ extension NotchStrings {
         dragReveal: "Show a drop target while dragging",
         captureControls: "Show screen capture controls in the Dynamic Island",
         quickPanel: "Open the quick panel in the Dynamic Island",
-        appPanel: "Open the app panel in the Dynamic Island",
         idleContent: "While inactive",
         idleNone: "Nothing",
         controlShortcuts: "Controls and shortcuts",
@@ -155,17 +148,15 @@ extension NotchStrings {
         captures: "Captures",
         customizeTools: "Customize tools",
         switchSection: "Switch section",
-        sectionsTitle: "Explore",
+        sectionsTitle: "Home",
         searchSections: "Find a section",
-        sectionKeyboardHint: "Use the arrow keys, then press Return",
         quickAccessLeft: "Left",
         quickAccessRight: "Right"
     )
 
     static let ptBR = NotchStrings(
         title: "Dynamic Island",
-        enable: "Ativar Dynamic Island",
-        description: "Sua música, controles e ferramentas do dia a dia, juntos no topo da tela. Opcional. Desative para continuar usando os painéis separados.",
+        description: "Sua música, controles e ferramentas do dia a dia, juntos no topo da tela.",
         menuBarAccessHint: "Permita Acessibilidade para a Dynamic Island aparecer nesta tela sem cobrir os menus.",
         display: "Tela",
         automatic: "Automática",
@@ -181,7 +172,6 @@ extension NotchStrings {
         collapse: "Recolher",
         pin: "Manter aberto",
         unpin: "Permitir fechamento automático",
-        panel: "Abrir painel do app",
         dropHint: "Solte arquivos aqui",
         empty: "Escolha o que aparece nos ajustes do Dynamic Island.",
         volume: "Volume",
@@ -206,7 +196,6 @@ extension NotchStrings {
         dragReveal: "Mostrar um espaço para soltar ao arrastar",
         captureControls: "Mostrar os controles de captura no Dynamic Island",
         quickPanel: "Abrir o painel rápido no Dynamic Island",
-        appPanel: "Abrir o painel do aplicativo no Dynamic Island",
         idleContent: "Em repouso",
         idleNone: "Nada",
         controlShortcuts: "Controles e atalhos",
@@ -224,17 +213,15 @@ extension NotchStrings {
         captures: "Capturas",
         customizeTools: "Personalizar ferramentas",
         switchSection: "Trocar de seção",
-        sectionsTitle: "Explorar",
+        sectionsTitle: "Início",
         searchSections: "Encontrar uma seção",
-        sectionKeyboardHint: "Use as setas e pressione Return",
         quickAccessLeft: "Esquerdo",
         quickAccessRight: "Direito"
     )
 
     static let es = NotchStrings(
         title: "Dynamic Island",
-        enable: "Activar Dynamic Island",
-        description: "Tu música, controles y herramientas cotidianas, juntos en la parte superior de la pantalla. Opcional. Desactívalo para seguir usando los paneles por separado.",
+        description: "Tu música, controles y herramientas cotidianas, juntos en la parte superior de la pantalla.",
         menuBarAccessHint: "Permite Accesibilidad para que Dynamic Island aparezca en esta pantalla sin cubrir los menús.",
         display: "Pantalla",
         automatic: "Automática",
@@ -250,7 +237,6 @@ extension NotchStrings {
         collapse: "Contraer",
         pin: "Mantener abierto",
         unpin: "Permitir cierre automático",
-        panel: "Abrir panel de la app",
         dropHint: "Suelta archivos aquí",
         empty: "Elige qué aparece en los ajustes de Dynamic Island.",
         volume: "Volumen",
@@ -275,7 +261,6 @@ extension NotchStrings {
         dragReveal: "Mostrar un destino al arrastrar",
         captureControls: "Mostrar controles de captura en el Dynamic Island",
         quickPanel: "Abrir el panel rápido en el Dynamic Island",
-        appPanel: "Abrir el panel de la aplicación en el Dynamic Island",
         idleContent: "En reposo",
         idleNone: "Nada",
         controlShortcuts: "Controles y atajos",
@@ -293,17 +278,15 @@ extension NotchStrings {
         captures: "Capturas",
         customizeTools: "Personalizar herramientas",
         switchSection: "Cambiar de sección",
-        sectionsTitle: "Explorar",
+        sectionsTitle: "Inicio",
         searchSections: "Buscar una sección",
-        sectionKeyboardHint: "Usa las flechas y pulsa Intro",
         quickAccessLeft: "Izquierdo",
         quickAccessRight: "Derecho"
     )
 
     static let de = NotchStrings(
         title: "Dynamic Island",
-        enable: "Dynamic Island aktivieren",
-        description: "Musik, Steuerelemente und alltägliche Werkzeuge am oberen Bildschirmrand. Optional. Deaktiviere die Funktion, um die separaten Bereiche weiter zu nutzen.",
+        description: "Musik, Steuerelemente und alltägliche Werkzeuge am oberen Bildschirmrand.",
         menuBarAccessHint: "Erlaube die Bedienungshilfen, damit Dynamic Island auf diesem Bildschirm erscheint, ohne die Menüs zu verdecken.",
         display: "Bildschirm",
         automatic: "Automatisch",
@@ -319,7 +302,6 @@ extension NotchStrings {
         collapse: "Einklappen",
         pin: "Geöffnet lassen",
         unpin: "Automatisches Schließen erlauben",
-        panel: "App-Panel öffnen",
         dropHint: "Dateien hier ablegen",
         empty: "Wähle die Inhalte in den Dynamic Island-Einstellungen.",
         volume: "Lautstärke",
@@ -344,7 +326,6 @@ extension NotchStrings {
         dragReveal: "Ablageziel beim Ziehen anzeigen",
         captureControls: "Aufnahmesteuerung im Dynamic Island anzeigen",
         quickPanel: "Schnellzugriff im Dynamic Island öffnen",
-        appPanel: "App-Bereich im Dynamic Island öffnen",
         idleContent: "Im Ruhezustand",
         idleNone: "Nichts",
         controlShortcuts: "Steuerung und Kurzbefehle",
@@ -362,17 +343,15 @@ extension NotchStrings {
         captures: "Aufnahmen",
         customizeTools: "Werkzeuge anpassen",
         switchSection: "Bereich wechseln",
-        sectionsTitle: "Entdecken",
+        sectionsTitle: "Start",
         searchSections: "Bereich finden",
-        sectionKeyboardHint: "Mit den Pfeiltasten wählen, mit Eingabe öffnen",
         quickAccessLeft: "Links",
         quickAccessRight: "Rechts"
     )
 
     static let fr = NotchStrings(
         title: "Dynamic Island",
-        enable: "Activer Dynamic Island",
-        description: "Votre musique, vos commandes et vos outils du quotidien, réunis en haut de l’écran. Facultatif. Désactivez cette option pour continuer à utiliser les panneaux séparés.",
+        description: "Votre musique, vos commandes et vos outils du quotidien, réunis en haut de l’écran.",
         menuBarAccessHint: "Autorisez l’accessibilité pour afficher Dynamic Island sur cet écran sans masquer les menus.",
         display: "Écran",
         automatic: "Automatique",
@@ -388,7 +367,6 @@ extension NotchStrings {
         collapse: "Réduire",
         pin: "Garder ouvert",
         unpin: "Autoriser la fermeture automatique",
-        panel: "Ouvrir le panneau de l’app",
         dropHint: "Déposez des fichiers ici",
         empty: "Choisissez le contenu dans les réglages de Dynamic Island.",
         volume: "Volume",
@@ -413,7 +391,6 @@ extension NotchStrings {
         dragReveal: "Afficher une zone de dépôt pendant le glissement",
         captureControls: "Afficher les commandes de capture dans le Dynamic Island",
         quickPanel: "Ouvrir le panneau rapide dans le Dynamic Island",
-        appPanel: "Ouvrir le panneau de l’application dans le Dynamic Island",
         idleContent: "Au repos",
         idleNone: "Rien",
         controlShortcuts: "Commandes et raccourcis",
@@ -431,17 +408,15 @@ extension NotchStrings {
         captures: "Captures",
         customizeTools: "Personnaliser les outils",
         switchSection: "Changer de section",
-        sectionsTitle: "Explorer",
+        sectionsTitle: "Accueil",
         searchSections: "Rechercher une section",
-        sectionKeyboardHint: "Utilisez les flèches, puis appuyez sur Retour",
         quickAccessLeft: "Gauche",
         quickAccessRight: "Droite"
     )
 
     static let it = NotchStrings(
         title: "Dynamic Island",
-        enable: "Attiva Dynamic Island",
-        description: "Musica, controlli e strumenti quotidiani, insieme nella parte superiore dello schermo. Facoltativo. Disattiva questa opzione per continuare a usare i pannelli separati.",
+        description: "Musica, controlli e strumenti quotidiani, insieme nella parte superiore dello schermo.",
         menuBarAccessHint: "Consenti Accessibilità per mostrare Dynamic Island su questo schermo senza coprire i menu.",
         display: "Schermo",
         automatic: "Automatico",
@@ -457,7 +432,6 @@ extension NotchStrings {
         collapse: "Riduci",
         pin: "Mantieni aperto",
         unpin: "Consenti chiusura automatica",
-        panel: "Apri pannello dell’app",
         dropHint: "Rilascia i file qui",
         empty: "Scegli cosa mostrare nelle impostazioni di Dynamic Island.",
         volume: "Volume",
@@ -482,7 +456,6 @@ extension NotchStrings {
         dragReveal: "Mostra un’area di rilascio durante il trascinamento",
         captureControls: "Mostra i controlli di cattura nel Dynamic Island",
         quickPanel: "Apri il pannello rapido nel Dynamic Island",
-        appPanel: "Apri il pannello dell’app nel Dynamic Island",
         idleContent: "A riposo",
         idleNone: "Niente",
         controlShortcuts: "Controlli e scorciatoie",
@@ -500,17 +473,15 @@ extension NotchStrings {
         captures: "Catture",
         customizeTools: "Personalizza strumenti",
         switchSection: "Cambia sezione",
-        sectionsTitle: "Esplora",
+        sectionsTitle: "Home",
         searchSections: "Trova una sezione",
-        sectionKeyboardHint: "Usa le frecce, poi premi Invio",
         quickAccessLeft: "Sinistra",
         quickAccessRight: "Destra"
     )
 
     static let ru = NotchStrings(
         title: "Dynamic Island",
-        enable: "Включить Dynamic Island",
-        description: "Музыка, управление и повседневные инструменты в верхней части экрана. Необязательно. Отключите, чтобы продолжить пользоваться отдельными панелями.",
+        description: "Музыка, управление и повседневные инструменты в верхней части экрана.",
         menuBarAccessHint: "Разрешите универсальный доступ, чтобы Dynamic Island отображалась на этом экране, не закрывая меню.",
         display: "Экран",
         automatic: "Автоматически",
@@ -526,7 +497,6 @@ extension NotchStrings {
         collapse: "Свернуть",
         pin: "Оставить открытым",
         unpin: "Разрешить автоматическое закрытие",
-        panel: "Открыть панель приложения",
         dropHint: "Перетащите файлы сюда",
         empty: "Выберите содержимое в настройках Dynamic Island.",
         volume: "Громкость",
@@ -551,7 +521,6 @@ extension NotchStrings {
         dragReveal: "Показывать область при перетаскивании",
         captureControls: "Показывать управление захватом в вырезе",
         quickPanel: "Открывать быструю панель в вырезе",
-        appPanel: "Открывать панель приложения в вырезе",
         idleContent: "В состоянии покоя",
         idleNone: "Ничего",
         controlShortcuts: "Управление и быстрые действия",
@@ -569,17 +538,15 @@ extension NotchStrings {
         captures: "Снимки",
         customizeTools: "Настроить инструменты",
         switchSection: "Сменить раздел",
-        sectionsTitle: "Обзор",
+        sectionsTitle: "Главная",
         searchSections: "Найти раздел",
-        sectionKeyboardHint: "Выберите стрелками и нажмите Return",
         quickAccessLeft: "Слева",
         quickAccessRight: "Справа"
     )
 
     static let tr = NotchStrings(
         title: "Dynamic Island",
-        enable: "Dynamic Island’u etkinleştir",
-        description: "Müziğiniz, denetimleriniz ve günlük araçlarınız ekranın üst kısmında bir arada. İsteğe bağlıdır. Ayrı panelleri kullanmaya devam etmek için kapatın.",
+        description: "Müziğiniz, denetimleriniz ve günlük araçlarınız ekranın üst kısmında bir arada.",
         menuBarAccessHint: "Dynamic Island’ın bu ekranda menüleri kapatmadan görünmesi için Erişilebilirlik izni verin.",
         display: "Ekran",
         automatic: "Otomatik",
@@ -595,7 +562,6 @@ extension NotchStrings {
         collapse: "Daralt",
         pin: "Açık tut",
         unpin: "Otomatik kapanmaya izin ver",
-        panel: "Uygulama panelini aç",
         dropHint: "Dosyaları buraya bırakın",
         empty: "Dynamic Island ayarlarında gösterilecek içeriği seçin.",
         volume: "Ses düzeyi",
@@ -620,7 +586,6 @@ extension NotchStrings {
         dragReveal: "Sürüklerken bırakma alanını göster",
         captureControls: "Ekran yakalama kontrollerini çentikte göster",
         quickPanel: "Hızlı paneli çentikte aç",
-        appPanel: "Uygulama panelini çentikte aç",
         idleContent: "Boştayken",
         idleNone: "Hiçbir şey",
         controlShortcuts: "Kontroller ve kısayollar",
@@ -638,17 +603,15 @@ extension NotchStrings {
         captures: "Yakalamalar",
         customizeTools: "Araçları özelleştir",
         switchSection: "Bölüm değiştir",
-        sectionsTitle: "Keşfet",
+        sectionsTitle: "Ana Sayfa",
         searchSections: "Bölüm bul",
-        sectionKeyboardHint: "Ok tuşlarıyla seçin, Return ile açın",
         quickAccessLeft: "Sol",
         quickAccessRight: "Sağ"
     )
 
     static let ja = NotchStrings(
         title: "Dynamic Island",
-        enable: "Dynamic Islandを有効にする",
-        description: "音楽、コントロール、毎日のツールを画面上部にまとめます。 必要に応じて有効にできます。オフにすると、個別のパネルを引き続き使用できます。",
+        description: "音楽、コントロール、毎日のツールを画面上部にまとめます。",
         menuBarAccessHint: "メニューを隠さずにこのディスプレイにDynamic Islandを表示するには、アクセシビリティを許可してください。",
         display: "ディスプレイ",
         automatic: "自動",
@@ -664,7 +627,6 @@ extension NotchStrings {
         collapse: "閉じる",
         pin: "開いたままにする",
         unpin: "自動で閉じる",
-        panel: "アプリのパネルを開く",
         dropHint: "ここにファイルをドロップ",
         empty: "Dynamic Islandの設定で表示する内容を選んでください。",
         volume: "音量",
@@ -689,7 +651,6 @@ extension NotchStrings {
         dragReveal: "ドラッグ中にドロップ先を表示",
         captureControls: "画面キャプチャの操作をDynamic Islandに表示",
         quickPanel: "クイックパネルをDynamic Islandで開く",
-        appPanel: "アプリのパネルをDynamic Islandで開く",
         idleContent: "待機中",
         idleNone: "なし",
         controlShortcuts: "操作とショートカット",
@@ -707,17 +668,15 @@ extension NotchStrings {
         captures: "キャプチャ",
         customizeTools: "ツールをカスタマイズ",
         switchSection: "セクションを切り替える",
-        sectionsTitle: "見つける",
+        sectionsTitle: "ホーム",
         searchSections: "セクションを検索",
-        sectionKeyboardHint: "矢印キーで選び、Returnキーで開きます",
         quickAccessLeft: "左",
         quickAccessRight: "右"
     )
 
     static let ko = NotchStrings(
         title: "Dynamic Island",
-        enable: "Dynamic Island 활성화",
-        description: "음악, 제어 기능과 일상 도구를 화면 상단에 모아 보세요. 선택 기능입니다. 끄면 기존의 개별 패널을 계속 사용할 수 있습니다.",
+        description: "음악, 제어 기능과 일상 도구를 화면 상단에 모아 보세요.",
         menuBarAccessHint: "이 디스플레이에서 메뉴를 가리지 않고 Dynamic Island를 표시하려면 손쉬운 사용을 허용하세요.",
         display: "디스플레이",
         automatic: "자동",
@@ -733,7 +692,6 @@ extension NotchStrings {
         collapse: "접기",
         pin: "열린 상태 유지",
         unpin: "자동으로 닫기 허용",
-        panel: "앱 패널 열기",
         dropHint: "여기에 파일을 놓으세요",
         empty: "Dynamic Island 설정에서 표시할 항목을 선택하세요.",
         volume: "음량",
@@ -758,7 +716,6 @@ extension NotchStrings {
         dragReveal: "드래그 중 놓을 영역 표시",
         captureControls: "화면 캡처 제어를 Dynamic Island에 표시",
         quickPanel: "빠른 패널을 Dynamic Island에서 열기",
-        appPanel: "앱 패널을 Dynamic Island에서 열기",
         idleContent: "대기 중",
         idleNone: "없음",
         controlShortcuts: "제어 및 단축키",
@@ -776,17 +733,15 @@ extension NotchStrings {
         captures: "캡처",
         customizeTools: "도구 사용자화",
         switchSection: "섹션 전환",
-        sectionsTitle: "둘러보기",
+        sectionsTitle: "홈",
         searchSections: "섹션 찾기",
-        sectionKeyboardHint: "방향키로 선택하고 Return 키로 열기",
         quickAccessLeft: "왼쪽",
         quickAccessRight: "오른쪽"
     )
 
     static let zhHans = NotchStrings(
         title: "Dynamic Island",
-        enable: "启用Dynamic Island",
-        description: "音乐、控制和日常工具，汇聚在屏幕顶部。 可选功能。关闭后可继续使用独立面板。",
+        description: "音乐、控制和日常工具，汇聚在屏幕顶部。",
         menuBarAccessHint: "请允许辅助功能权限，让 Dynamic Island 在此显示器上显示而不遮挡菜单。",
         display: "显示器",
         automatic: "自动",
@@ -802,7 +757,6 @@ extension NotchStrings {
         collapse: "收起",
         pin: "保持打开",
         unpin: "允许自动关闭",
-        panel: "打开应用面板",
         dropHint: "将文件拖到这里",
         empty: "在Dynamic Island设置中选择要显示的内容。",
         volume: "音量",
@@ -827,7 +781,6 @@ extension NotchStrings {
         dragReveal: "拖动时显示放置区域",
         captureControls: "在Dynamic Island中显示屏幕捕获控制",
         quickPanel: "在Dynamic Island中打开快捷面板",
-        appPanel: "在Dynamic Island中打开应用面板",
         idleContent: "闲置时",
         idleNone: "无",
         controlShortcuts: "控制与快捷操作",
@@ -845,17 +798,15 @@ extension NotchStrings {
         captures: "截图",
         customizeTools: "自定义工具",
         switchSection: "切换分区",
-        sectionsTitle: "探索",
+        sectionsTitle: "主页",
         searchSections: "查找分区",
-        sectionKeyboardHint: "使用方向键选择，然后按回车键打开",
         quickAccessLeft: "左侧",
         quickAccessRight: "右侧"
     )
 
     static let zhTW = NotchStrings(
         title: "Dynamic Island",
-        enable: "啟用Dynamic Island",
-        description: "音樂、控制項與日常工具，匯聚在螢幕頂端。 選用功能。關閉後可繼續使用獨立面板。",
+        description: "音樂、控制項與日常工具，匯聚在螢幕頂端。",
         menuBarAccessHint: "請允許輔助使用權限，讓 Dynamic Island 在此顯示器上顯示而不遮擋選單。",
         display: "顯示器",
         automatic: "自動",
@@ -871,7 +822,6 @@ extension NotchStrings {
         collapse: "收合",
         pin: "保持開啟",
         unpin: "允許自動關閉",
-        panel: "開啟 App 面板",
         dropHint: "將檔案拖到這裡",
         empty: "在Dynamic Island設定中選擇要顯示的內容。",
         volume: "音量",
@@ -896,7 +846,6 @@ extension NotchStrings {
         dragReveal: "拖移時顯示放置區域",
         captureControls: "在Dynamic Island中顯示螢幕擷取控制",
         quickPanel: "在Dynamic Island中開啟快捷面板",
-        appPanel: "在Dynamic Island中開啟應用程式面板",
         idleContent: "閒置時",
         idleNone: "無",
         controlShortcuts: "控制與快捷操作",
@@ -914,17 +863,15 @@ extension NotchStrings {
         captures: "擷取",
         customizeTools: "自訂工具",
         switchSection: "切換區域",
-        sectionsTitle: "探索",
+        sectionsTitle: "首頁",
         searchSections: "尋找區域",
-        sectionKeyboardHint: "使用方向鍵選取，再按 Return 鍵開啟",
         quickAccessLeft: "左側",
         quickAccessRight: "右側"
     )
 
     static let zhHK = NotchStrings(
         title: "Dynamic Island",
-        enable: "啟用Dynamic Island",
-        description: "音樂、控制項與日常工具，集中在螢幕頂端。 選用功能。關閉後可繼續使用獨立面板。",
+        description: "音樂、控制項與日常工具，集中在螢幕頂端。",
         menuBarAccessHint: "請允許輔助使用權限，讓 Dynamic Island 在此顯示器上顯示而不遮擋選單。",
         display: "顯示器",
         automatic: "自動",
@@ -940,7 +887,6 @@ extension NotchStrings {
         collapse: "收合",
         pin: "保持開啟",
         unpin: "允許自動關閉",
-        panel: "開啟 App 面板",
         dropHint: "將檔案拖到這裏",
         empty: "在Dynamic Island設定中選擇要顯示的內容。",
         volume: "音量",
@@ -965,7 +911,6 @@ extension NotchStrings {
         dragReveal: "拖移時顯示放置區域",
         captureControls: "在Dynamic Island中顯示螢幕擷取控制",
         quickPanel: "在Dynamic Island中開啟快捷面板",
-        appPanel: "在Dynamic Island中開啟應用程式面板",
         idleContent: "閒置時",
         idleNone: "無",
         controlShortcuts: "控制與快捷操作",
@@ -983,9 +928,8 @@ extension NotchStrings {
         captures: "擷取",
         customizeTools: "自訂工具",
         switchSection: "切換區域",
-        sectionsTitle: "探索",
+        sectionsTitle: "主頁",
         searchSections: "尋找區域",
-        sectionKeyboardHint: "使用方向鍵選取，再按 Return 鍵開啟",
         quickAccessLeft: "左側",
         quickAccessRight: "右側"
     )

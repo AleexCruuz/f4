@@ -351,12 +351,14 @@ struct ShortcutPreferenceRow: View {
                                                captureAction: save)
                             .frame(width: 108)
                             .disabled(!isEnabled)
-                        Button(l10n.s.shortcutReset) {
-                            rawValue = role.defaultShortcut.storageValue
-                            errorText = nil
-                            onChange()
+                        if shortcut != role.defaultShortcut {
+                            Button(l10n.s.shortcutReset) {
+                                rawValue = role.defaultShortcut.storageValue
+                                errorText = nil
+                                onChange()
+                            }
+                            .disabled(!isEnabled)
                         }
-                        .disabled(!isEnabled || shortcut == role.defaultShortcut)
                     }
                     if let alternative = superKeyAlternative {
                         Text(String(format: FeatureStrings.shortcuts(l10n.language)
@@ -444,7 +446,7 @@ struct ShortcutRowLabel: View {
                             Text(statusText)
                         }
                     }
-                    .font(.caption)
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
                 }
             }

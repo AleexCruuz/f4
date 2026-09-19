@@ -27,6 +27,12 @@ final class UpdateService: ObservableObject {
     /// preview. Set alongside `.available`; cleared otherwise.
     @Published private(set) var availableNotes: String?
 
+    /// Off: `repository` is upstream's release feed with the fork's name
+    /// substituted in (another GitHub account), and installs are verified
+    /// against upstream's signing team, so no fork build could ever pass. The
+    /// app never checks, downloads or installs until the fork publishes its own.
+    static let isAvailable = false
+
     private let repository = "altf4/altf4-utils"
     private var downloadURL: URL?
     /// Size the release advertises for the asset, used to bound the download.
@@ -61,6 +67,7 @@ final class UpdateService: ObservableObject {
 
     /// Called at launch: checks shortly after start and then daily, if enabled.
     func startAutomaticChecks() {
+        guard Self.isAvailable else { return }
         consumeInstallResult()
         if AppInfo.isBeta && UserDefaults.standard.object(forKey: DefaultsKey.includeBetaUpdates) == nil {
             UserDefaults.standard.set(true, forKey: DefaultsKey.includeBetaUpdates)
@@ -100,6 +107,7 @@ final class UpdateService: ObservableObject {
     // MARK: - Check
 
     func check(manual: Bool) {
+        guard Self.isAvailable else { return }
         if AppInfo.isDeveloperBuild {
             // No real update target; reflect the simulation default so the
             // notification UI can be exercised locally.
@@ -193,7 +201,7 @@ final class UpdateService: ObservableObject {
     /// or the panel opens, so a new release surfaces promptly without hammering the
     /// API. The hourly timer is the floor; this makes it feel immediate.
     func checkIfStale(maxAge: TimeInterval = 15 * 60) {
-        if AppInfo.isDeveloperBuild { return }
+        guard Self.isAvailable, !AppInfo.isDeveloperBuild else { return }
         guard autoCheckEnabled else { return }
         switch state {
         case .checking, .downloading, .installing: return
@@ -206,6 +214,7 @@ final class UpdateService: ObservableObject {
     // MARK: - Download & install
 
     func downloadAndInstall() {
+        guard Self.isAvailable else { return }
         if AppInfo.isDeveloperBuild { return }  // never replace the local dev build over itself
         guard let downloadURL else { return }
         // Pre-flight BEFORE spending the download: a translocated app or one

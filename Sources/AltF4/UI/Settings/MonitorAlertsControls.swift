@@ -26,11 +26,14 @@ struct MonitorAlertsControls: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: compact ? 7 : 8) {
-            Text(text.caption)
-                .font(compact ? .system(size: 9.5) : .caption)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+        VStack(alignment: .leading, spacing: compact ? 7 : 14) {
+            // The Settings page carries this explanation in its section footer.
+            if compact {
+                Text(text.caption)
+                    .font(.system(size: 9.5))
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             if AppFeature.monitorCPU.isAvailable {
                 Toggle(text.cpu, isOn: $alertCPU)
                 if alertCPU {
@@ -75,27 +78,25 @@ struct MonitorAlertsControls: View {
                             step: 5)
                 }
             }
-            if anyAlertEnabled {
-                Picker(text.cooldown, selection: $alertCooldown) {
-                    Text(text.cooldown2).tag(2)
-                    Text(text.cooldown5).tag(5)
-                    Text(text.cooldown15).tag(15)
-                    Text(text.cooldown30).tag(30)
-                    Text(text.cooldown60).tag(60)
-                }
-                .pickerStyle(.menu)
+            if anyAlertEnabled, compact {
+                cooldownPicker
             }
             // Alerts silently cannot fire when macOS notifications are denied
             // for the app; without this line that state is invisible (the
             // user just never hears anything).
             if notificationsDenied, anyAlertEnabled {
                 Text(text.notificationsDenied)
-                    .font(compact ? .system(size: 9.5) : .caption)
+                    .font(compact ? .system(size: 9.5) : .subheadline)
                     .foregroundStyle(.orange)
                     .fixedSize(horizontal: false, vertical: true)
             }
+            if anyAlertEnabled, !compact {
+                SettingsMoreOptions {
+                    cooldownPicker
+                }
+            }
         }
-        .toggleStyle(.checkbox)
+        .modifier(AlertToggleStyle(compact: compact))
         .controlSize(compact ? .small : .regular)
         .font(compact ? .system(size: 10.5) : .body)
         .onAppear {
@@ -114,6 +115,17 @@ struct MonitorAlertsControls: View {
         .onChange(of: alertDiskFreePercent) { _, _ in sanitizeAlertValues() }
         .onChange(of: alertBatteryPercent) { _, _ in sanitizeAlertValues() }
         .onChange(of: alertCooldown) { _, _ in sanitizeAlertValues() }
+    }
+
+    private var cooldownPicker: some View {
+        Picker(text.cooldown, selection: $alertCooldown) {
+            Text(text.cooldown2).tag(2)
+            Text(text.cooldown5).tag(5)
+            Text(text.cooldown15).tag(15)
+            Text(text.cooldown30).tag(30)
+            Text(text.cooldown60).tag(60)
+        }
+        .pickerStyle(.menu)
     }
 
     private var anyAlertEnabled: Bool {
@@ -142,5 +154,31 @@ struct MonitorAlertsControls: View {
         alertDiskFreePercent = Defaults.sanitizedPercent(alertDiskFreePercent, fallback: 10, range: 5...30)
         alertBatteryPercent = Defaults.sanitizedPercent(alertBatteryPercent, fallback: 15, range: 5...50)
         alertCooldown = Defaults.sanitizedMonitorAlertCooldown(alertCooldown)
+    }
+}
+
+/// Checkboxes in the compact panel; on the Settings page each alert reads
+/// like the page's other rows, with its switch on the trailing edge.
+private struct AlertToggleStyle: ViewModifier {
+    let compact: Bool
+
+    func body(content: Content) -> some View {
+        if compact {
+            content.toggleStyle(.checkbox)
+        } else {
+            content.toggleStyle(TrailingSwitchToggleStyle())
+        }
+    }
+}
+
+private struct TrailingSwitchToggleStyle: ToggleStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        HStack {
+            configuration.label
+            Spacer(minLength: 12)
+            Toggle("", isOn: configuration.$isOn)
+                .toggleStyle(.switch)
+                .labelsHidden()
+        }
     }
 }

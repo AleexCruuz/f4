@@ -97,11 +97,13 @@ struct NotchQuickAccessView: View {
         let selected: Bool = {
             if action == .explore { return service.showingSections }
             if action == .pin { return service.pinned }
+            if action == .settings { return service.showingSettings && !service.showingSections }
             if action == .control(.keepAwake) { return awake.isActive }
             if action == .control(.microphone) { return microphone.isMuted }
             if action == .control(.recording) { return recorder.isRecording }
             if case .module(let module) = action {
-                return !service.showingSections && !service.showingAppPanel && service.selected == module
+                return !service.showingSections && !service.showingSettings
+                    && service.selected == module
             }
             return false
         }()
@@ -182,7 +184,7 @@ struct NotchQuickAccessDrop: Shape {
 extension NotchQuickAction {
     var symbol: String {
         switch self {
-        case .explore: return "square.grid.2x2"
+        case .explore: return "house"
         case .settings: return "gearshape"
         case .pin: return "pin"
         case .module(let module): return module.symbol

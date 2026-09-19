@@ -483,6 +483,26 @@ enum DefaultsKey {
     static let clipboardAIModel = "clipboardAIModel"
     static let clipboardAIEndpoint = "clipboardAIEndpoint"
     static let clipboardAITargetLanguage = "clipboardAITargetLanguage"
+    // Refuses entries that look like private keys, tokens, card numbers or
+    // password lines before a request is built. On by default: a local model
+    // is still a process with a log and a disk, and re-copying recovers from a
+    // refusal while an exposed key is not recoverable at all.
+    static let clipboardAIBlockSensitive = "clipboardAIBlockSensitive"
+
+    // Dictation: hold a shortcut, speak, and the text is pasted at the cursor.
+    // Transcribed by a whisper.cpp server on loopback (the endpoint is
+    // validated like Clipboard AI's), cleaned up by the same runner and model.
+    // Language "" follows the Mac; the model path may start with "~".
+    static let dictationEnabled = "dictationEnabled"
+    static let dictationShortcut = "dictationShortcut"
+    static let dictationLanguage = "dictationLanguage"
+    static let dictationPolishMode = "dictationPolishMode"
+    static let dictationVocabulary = "dictationVocabulary"
+    static let dictationModelPath = "dictationModelPath"
+    static let dictationEndpoint = "dictationEndpoint"
+    /// The Globe key action the user had before dictation took Fn; unset when
+    /// there is nothing to hand back.
+    static let dictationGlobeActionToRestore = "dictationGlobeActionToRestore"
 
     // Auto clear: wipes the system pasteboard on a delay or on sleep and lock.
     // Deliberately outside the clipboardHistory family, since it clears the
@@ -690,7 +710,6 @@ enum DefaultsKey {
     static let notchDragReveal = "notchDragReveal"
     static let notchCaptureControls = "notchCaptureControls"
     static let notchQuickPanel = "notchQuickPanel"
-    static let notchAppPanel = "notchAppPanel"
     static let notchHoverExpands = "notchHoverExpands"
     static let notchGesturesEnabled = "notchGesturesEnabled"
     static let notchKeyboardLight = "notchKeyboardLight"
@@ -704,7 +723,6 @@ enum DefaultsKey {
     static let notchPomodoroLongBreakMinutes = "notchPomodoroLongBreakMinutes"
     static let notchPomodoroLongBreakInterval = "notchPomodoroLongBreakInterval"
     static let notchPomodoroTotalSessions = "notchPomodoroTotalSessions"
-    static let notchCameraEnabled = "notchCameraEnabled"
     static let notchAccessoriesEnabled = "notchAccessoriesEnabled"
     static let notchLyricsEnabled = "notchLyricsEnabled"
     static let notchLyricsOnline = "notchLyricsOnline"
@@ -713,7 +731,6 @@ enum DefaultsKey {
     static let notchDownloadsEnabled = "notchDownloadsEnabled"
     static let notchDownloadsFolderBookmark = "notchDownloadsFolderBookmark"
     static let notchCalendarEnabled = "notchCalendarEnabled"
-    static let notchEnabled = "notchEnabled"
     static let notchDisplay = "notchDisplay"
     static let notchOpenOnHover = "notchOpenOnHover"
     static let notchHideUntilHover = "notchHideUntilHover"
@@ -740,7 +757,6 @@ enum DefaultsKey {
     static let notchShowInCaptures = "notchShowInCaptures"
     // Legacy inverse preference; the explicit visibility switch supersedes it.
     static let notchHideInCaptures = "notchHideInCaptures"
-    static let panelControlNotch = "panelControlNotch"
 
     // Radial menu: a wheel of actions on a shortcut.
     static let radialMenuEnabled = "radialMenuEnabled"
@@ -1156,7 +1172,6 @@ enum Defaults {
         DefaultsKey.notchDragReveal: true,
         DefaultsKey.notchCaptureControls: true,
         DefaultsKey.notchQuickPanel: true,
-        DefaultsKey.notchAppPanel: true,
         DefaultsKey.notchHoverExpands: true,
         DefaultsKey.notchGesturesEnabled: true,
         DefaultsKey.notchKeyboardLight: false,
@@ -1170,7 +1185,6 @@ enum Defaults {
         DefaultsKey.notchPomodoroLongBreakMinutes: 15,
         DefaultsKey.notchPomodoroLongBreakInterval: 4,
         DefaultsKey.notchPomodoroTotalSessions: 4,
-        DefaultsKey.notchCameraEnabled: false,
         DefaultsKey.notchAccessoriesEnabled: false,
         DefaultsKey.notchCalendarEnabled: true,
         DefaultsKey.notchLyricsEnabled: false,
@@ -1178,7 +1192,6 @@ enum Defaults {
         DefaultsKey.notchLiveEqualizer: false,
         DefaultsKey.notchQueueEnabled: false,
         DefaultsKey.notchDownloadsEnabled: false,
-        DefaultsKey.notchEnabled: true,
         DefaultsKey.notchDisplay: NotchDisplay.automatic.rawValue,
         DefaultsKey.notchOpenOnHover: true,
         DefaultsKey.notchHideUntilHover: false,
@@ -1197,7 +1210,6 @@ enum Defaults {
         DefaultsKey.notchMusicActivity: false,
         DefaultsKey.notchShowInCaptures: true,
         DefaultsKey.notchHideInCaptures: false,
-        DefaultsKey.panelControlNotch: true,
         DefaultsKey.radialMenuEnabled: false,
         DefaultsKey.radialMenuShortcut: GlobalShortcut.radialMenuDefault.storageValue,
         DefaultsKey.radialMenuAtPointer: true,
@@ -1407,6 +1419,14 @@ enum Defaults {
         DefaultsKey.clipboardAIModel: Defaults.defaultClipboardAIModel,
         DefaultsKey.clipboardAIEndpoint: Defaults.defaultClipboardAIEndpoint,
         DefaultsKey.clipboardAITargetLanguage: "",
+        DefaultsKey.clipboardAIBlockSensitive: true,
+        DefaultsKey.dictationEnabled: true,
+        DefaultsKey.dictationShortcut: GlobalShortcut.dictationDefault.storageValue,
+        DefaultsKey.dictationLanguage: "",
+        DefaultsKey.dictationPolishMode: DictationPolishMode.smart.rawValue,
+        DefaultsKey.dictationVocabulary: "",
+        DefaultsKey.dictationModelPath: DictationEngineSupport.defaultModelPath,
+        DefaultsKey.dictationEndpoint: DictationEngineSupport.defaultEndpoint,
         DefaultsKey.clipboardAutoClearOnDelay: false,
         DefaultsKey.clipboardAutoClearDelay: Defaults.defaultClipboardAutoClearDelay,
         DefaultsKey.clipboardAutoClearOnSleep: false,

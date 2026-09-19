@@ -87,6 +87,7 @@ enum NotchPresentationRefreshContract {
         var captureHover: ((Bool) -> Void)?
         var pinned = false
         var showingSections = false
+        var showingOnboarding = false
         var expanded = true
         var peeking = false, dragPlaceholder = false, compactActivityIsVisible = false
         var notice: Bool?
@@ -101,6 +102,7 @@ enum NotchPresentationRefreshContract {
         func syncVisibleConsumers() {}
         var hoverWork: DispatchWorkItem?
         var hoverState = NotchHoverState()
+        var spaceSwipe = NotchSpaceSwipe()
         var windowHost: Host? = Host()
         var panel: Panel? { windowHost?.panel }
         var geometry = NotchGeometry(screen: CGRect(x: 0, y: 0, width: 1440, height: 900),
@@ -278,5 +280,21 @@ enum NotchPresentationRefreshContract {
                && physical.compactActivityGeometry.compactActivityWingWidth == 0
                && physical.windowHost?.targetSize.height == physical.geometry.menuBarHeight,
                "an active timer on a physical camera retracts its wings and stays at menu-bar height without a menu measurement")
+
+        let swiping = Service()
+        swiping.expanded = false
+        swiping.compactActivityIsVisible = true
+        _ = swiping.spaceSwipe.record(.moving, at: 1)
+        swiping.refreshPresentation(animated: false)
+        expect(swiping.panel?.isVisible == false && !swiping.edgeClicksEnabled,
+               "a closed island leaves the screen while a Space swipe carries it away from the camera")
+        swiping.expanded = true
+        swiping.refreshPresentation(animated: false)
+        expect(swiping.panel?.isVisible == true, "an open island stays during a Space swipe")
+        swiping.expanded = false
+        swiping.spaceSwipe = NotchSpaceSwipe()
+        swiping.refreshPresentation(animated: false)
+        expect(swiping.panel?.isVisible == true && swiping.edgeClicksEnabled,
+               "the closed island returns once the swipe settles")
     }
 }

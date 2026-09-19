@@ -50,7 +50,8 @@ enum NotchMusicVisibilityTests {
         var suspended = false
         var expanded = false
         var peeking = false
-        var showingAppPanel = false
+        var showingSettings = false
+        var showingOnboarding = false
         var showingSections = false
         var selected: NotchModule = .controls
         var selectedMetric: Metric?
@@ -70,6 +71,7 @@ enum NotchMusicVisibilityTests {
         var pinned = false
         var openedByHover = false
         var sectionQuery = ""
+        var closedAt: TimeInterval?
         var highlightedSection: NotchModule?
         var hoverState = NotchHoverState()
         var hoverWork: DispatchWorkItem?
@@ -97,7 +99,6 @@ enum NotchMusicVisibilityTests {
         }
         for (key, value) in Defaults.registeredDefaults where key.hasPrefix("notch") { defaults.set(value, forKey: key) }
         for feature in AppFeature.allCases { defaults.set(true, forKey: feature.availabilityKey) }
-        defaults.set(true, forKey: DefaultsKey.notchEnabled)
         let service = Service()
         let reader = NotchMusicService.shared
         service.modules = NotchSupport.modules(in: defaults)
@@ -199,15 +200,19 @@ enum NotchMusicVisibilityTests {
         defaults.set(NotchIdleContent.none.rawValue, forKey: DefaultsKey.notchIdleContent)
         service.selected = .music
         service.expanded = true
-        for surface in ["sections", "appPanel", "unrelated", "hiddenModule", "hiddenControl"] {
+        for surface in ["sections", "settings", "unrelated", "hiddenModule", "hiddenControl"] {
             service.showingSections = surface == "sections"
-            service.showingAppPanel = surface == "appPanel"
+            service.showingSettings = surface == "settings"
             service.selected = surface == "unrelated" ? .files : surface == "hiddenControl" ? .controls : .music
             defaults.set(surface == "hiddenModule" ? "music" : "", forKey: DefaultsKey.notchHiddenModules)
             defaults.set(surface == "hiddenControl" ? "music" : "", forKey: DefaultsKey.notchHiddenControls)
             service.modules = NotchSupport.modules(in: defaults)
             service.syncVisibleConsumers()
-            expect(!reader.running, "\(surface) cannot retain an invisible on-demand music reader")
+            if surface == "sections" {
+                expect(reader.running, "Home keeps the music reader running for its player card")
+            } else {
+                expect(!reader.running, "\(surface) cannot retain an invisible on-demand music reader")
+            }
         }
         defaults.set("", forKey: DefaultsKey.notchHiddenModules)
         defaults.set("", forKey: DefaultsKey.notchHiddenControls)

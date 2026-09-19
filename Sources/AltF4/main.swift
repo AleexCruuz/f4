@@ -12,6 +12,9 @@ MouseAccelerationService.recoverPendingAtLaunch()
 if CommandLine.arguments.contains("--notch-presentation-test") {
     NotchPresentationProbe.runAndExit()
 }
+if CommandLine.arguments.contains("--dictation-probe") {
+    DictationProbe.runAndExit()
+}
 #endif
 
 if CommandLine.arguments.contains("--selftest") {

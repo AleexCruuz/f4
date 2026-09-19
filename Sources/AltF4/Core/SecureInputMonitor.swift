@@ -47,8 +47,9 @@ final class SecureInputMonitor: ObservableObject {
         schedulePolling()
     }
 
-    /// Called from the Settings window's own delegate callbacks, not from a
-    /// page's view lifecycle: a page's demand is left untouched by a close,
+    /// Called when Settings itself opens or closes (its window's delegate
+    /// callbacks, or its page in the notch), not from a page's view
+    /// lifecycle: a page's demand is left untouched by a close,
     /// so the same demand that was live before the window closed resumes
     /// polling the moment it reopens, on that same page or a different one.
     func setSettingsWindowOpen(_ open: Bool) {

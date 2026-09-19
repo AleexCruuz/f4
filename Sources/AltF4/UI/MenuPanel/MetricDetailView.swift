@@ -156,7 +156,9 @@ struct MetricDetailView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             summaryCard
-            detailCard
+            // Every disk, not only the startup one: choosing, ejecting, SMART
+            // and the Finder and Storage shortcuts all live in its section.
+            if kind == .disk { DiskSection(embedded: true) } else { detailCard }
             if kind == .network {
                 speedTestCard
             }
@@ -728,7 +730,8 @@ struct MetricDetailView: View {
     private func adapterText(_ power: PowerReading?) -> String {
         guard let power else { return "-" }
         if power.externalConnected, let adapter = power.adapterWatts {
-            return MetricFormat.watts(adapter)
+            guard let rated = power.adapterMaxWatts else { return MetricFormat.watts(adapter) }
+            return "\(MetricFormat.watts(adapter)) · \(String(format: l10n.s.powerAdapterMaxFormat, MetricFormat.watts(rated)))"
         }
         if power.externalConnected { return l10n.s.powerPluggedIn }
         return "-"

@@ -9,6 +9,10 @@ struct NotchView: View {
     @ObservedObject private var l10n = L10n.shared
     @ObservedObject private var music = NotchMusicService.shared
     @ObservedObject private var launcher = QuickLauncherService.shared
+    /// The header reads its trail from `service.path`, and the last crumb of
+    /// that trail comes from the run. Without observing it here the breadcrumbs
+    /// would keep naming Clipboard while the result page is on screen.
+    @ObservedObject private var clipboardAI = ClipboardAIService.shared
     @Environment(\.colorSchemeContrast) private var contrast
     private var text: NotchStrings { FeatureStrings.notch(l10n.language) }
 
@@ -29,8 +33,7 @@ struct NotchView: View {
     }
 
     private var shape: NotchShape {
-        NotchShape(attached: true,
-                   radius: NotchLayout.surfaceRadius(height: service.surfaceSize.height))
+        NotchShape(attached: true, radius: NotchLayout.surfaceRadius(height: service.surfaceSize.height))
     }
 
     @ViewBuilder private var surface: some View {
@@ -48,6 +51,18 @@ struct NotchView: View {
                 NotchCaptureControlsView(options: options, service: service)
                     .padding(.horizontal, 18).padding(.top, service.geometry.safeContentTop)
             }
+        } else if service.expanded, service.showingOnboarding {
+            NotchOnboardingView(notch: service, topInset: service.geometry.safeContentTop) {
+                appDelegate()?.finishOnboarding()
+            }
+            .frame(width: service.expandedSize.width, height: service.expandedSize.height, alignment: .top)
+            .clipped()
+        } else if service.expanded, showsMirror {
+            // The camera page is the picture alone, filling the silhouette
+            // under the cutout, so the island takes the picture's shape.
+            NotchCameraView(size: CGSize(width: service.surfaceSize.width,
+                                         height: service.surfaceSize.height - service.geometry.cameraHeight))
+                .padding(.top, service.geometry.cameraHeight)
         } else if service.expanded {
             expanded
         } else if service.dragPlaceholder {
@@ -95,6 +110,11 @@ struct NotchView: View {
         }
     }
 
+    private var showsMirror: Bool {
+        service.selected == .camera && service.selectedMetric == nil
+            && !service.showingSettings && !service.showingSections && !service.modules.isEmpty
+    }
+
     private var compact: some View {
         HStack(spacing: 0) {
             if service.idleContent != .none, service.geometry.restingWingWidth > 0 {
@@ -133,14 +153,14 @@ struct NotchView: View {
         .accessibilityHidden(true)
     }
 
-    private var showsDetail: Bool { service.showingAppPanel || service.selectedMetric != nil }
-
     private var expanded: some View {
         VStack(spacing: NotchLayout.spacing) {
             header.zIndex(1)
             if service.showingSections {
                 NotchSectionsView(service: service)
-            } else if service.showingAppPanel || [.files, .music, .clipboard, .calendar, .notifications, .timer, .camera, .downloads].contains(service.selected)
+            } else if service.showingSettings
+                        || [.files, .music, .clipboard, .dictation, .calendar, .notifications, .timer, .camera, .downloads, .notes]
+                            .contains(service.selected)
                 || (service.selected == .captures && service.captureContent == nil) {
                 content.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             } else if [.controls, .system, .tools].contains(service.selected), service.selectedMetric == nil {
@@ -172,31 +192,12 @@ struct NotchView: View {
     private var header: some View {
         HStack(spacing: 6) {
             let quickActions = NotchQuickAccessConfiguration.current().actions
-            if service.showingSections {
-                NotchIconButton(symbol: "chevron.left", title: l10n.s.obBack, action: service.toggleSections)
-                Text(text.sectionsTitle)
-                    .font(.system(size: 16, weight: .semibold))
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            } else if showsDetail || service.modules.isEmpty {
-                if showsDetail {
-                    NotchIconButton(symbol: "chevron.left", title: l10n.s.obBack, action: service.goBack)
-                }
-                Text(service.showingAppPanel ? "AltF4" : service.selectedMetric?.title(l10n.s) ?? text.title)
-                    .font(.system(size: 15, weight: .semibold))
-                    .lineLimit(1)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            } else {
-                if !quickActions.contains(.explore) {
-                    NotchIconButton(symbol: "square.grid.2x2", title: text.sectionsTitle, action: service.toggleSections)
-                }
-                Text(service.selected.title(l10n.language))
-                    .font(.system(size: 16, weight: .semibold))
-                    .lineLimit(1)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
+            // One header for every page. The trail names the location and the
+            // ancestors in it are the only way up, so the grid button and the
+            // back chevron it replaced are both gone.
+            NotchBreadcrumbs(path: service.path, navigate: service.navigate)
             NotchUpdateControl(action: service.showUpdate)
-            if service.selected == .tools, !service.showingAppPanel, !service.showingSections, service.selectedMetric == nil,
-               !service.modules.isEmpty, launcher.activeUtility == nil {
+            if service.path.last == .module(.tools), launcher.activeUtility == nil {
                 NotchIconButton(symbol: launcher.isEditing ? "checkmark" : "slider.horizontal.3",
                                 title: text.customizeTools, selected: launcher.isEditing) {
                     withAnimation(.easeOut(duration: 0.15)) { launcher.isEditing.toggle() }
@@ -208,7 +209,7 @@ struct NotchView: View {
             // so they cost a permanent slot in a row that has to stay readable
             // at a glance. Settings is the one header action with no gesture
             // equivalent, so it stays.
-            if !quickActions.contains(.settings) {
+            if !quickActions.contains(.settings), !service.showingSettings {
                 NotchIconButton(symbol: "gearshape", title: l10n.s.menuSettings, action: service.openSettings)
             }
         }
@@ -219,7 +220,7 @@ struct NotchView: View {
     private var navigation: some View {
         Button(action: service.toggleSections) {
             HStack(spacing: 9) {
-                Image(systemName: "square.grid.2x2")
+                Image(systemName: "house")
                     .font(.system(size: 14, weight: .medium))
                     .foregroundStyle(.white.opacity(0.7))
                 Text(service.selected.title(l10n.language))
@@ -234,12 +235,12 @@ struct NotchView: View {
         .accessibilityLabel(text.switchSection)
         .accessibilityValue(service.selected.title(l10n.language))
         .accessibilityIdentifier("notch.navigation")
-        .help(text.switchSection + "  ⌘K")
+        .help(text.switchSection)
     }
 
     @ViewBuilder private var content: some View {
-        if service.showingAppPanel {
-            MenuPanelView(notchSize: service.contentSize)
+        if service.showingSettings {
+            SettingsView(notchSize: service.contentSize)
         } else if let metric = service.selectedMetric {
             MetricDetailView(kind: metric)
         } else if service.modules.isEmpty {
@@ -264,11 +265,15 @@ struct NotchView: View {
             case .files: NotchFilesView(service: service)
             case .system: NotchSystemView(columns: service.geometry.systemColumns) { service.showMetric($0) }
             case .tools: QuickLauncherView(notchSize: service.contentSize)
+            case .notes: NotchNotesView(size: service.contentSize)
+            case .dictation: NotchDictationHistoryView()
             }
         }
     }
 }
 
+/// Square where it meets the menu bar, straight down the sides, and rounded
+/// only at the bottom, at every size the panel takes.
 struct NotchShape: Shape {
     var attached: Bool
     var radius: CGFloat
@@ -279,27 +284,19 @@ struct NotchShape: Shape {
 
     func path(in rect: CGRect) -> Path {
         guard attached else { return Path(roundedRect: rect, cornerRadius: radius) }
-        let shoulder = min(NotchLayout.shoulder, rect.height * 0.28)
-        let bottom = min(radius, rect.height / 2, (rect.width - shoulder * 2) / 2)
+        let bottom = min(radius, rect.height / 2, rect.width / 2)
         let tangent: CGFloat = 0.55228475
         var path = Path()
         path.move(to: CGPoint(x: 0, y: 0))
         path.addLine(to: CGPoint(x: rect.width, y: 0))
-        path.addCurve(to: CGPoint(x: rect.width - shoulder, y: shoulder),
-                      control1: CGPoint(x: rect.width - shoulder * tangent, y: 0),
-                      control2: CGPoint(x: rect.width - shoulder, y: shoulder * (1 - tangent)))
-        path.addLine(to: CGPoint(x: rect.width - shoulder, y: rect.height - bottom))
-        path.addCurve(to: CGPoint(x: rect.width - shoulder - bottom, y: rect.height),
-                      control1: CGPoint(x: rect.width - shoulder, y: rect.height - bottom * (1 - tangent)),
-                      control2: CGPoint(x: rect.width - shoulder - bottom * (1 - tangent), y: rect.height))
-        path.addLine(to: CGPoint(x: shoulder + bottom, y: rect.height))
-        path.addCurve(to: CGPoint(x: shoulder, y: rect.height - bottom),
-                      control1: CGPoint(x: shoulder + bottom * (1 - tangent), y: rect.height),
-                      control2: CGPoint(x: shoulder, y: rect.height - bottom * (1 - tangent)))
-        path.addLine(to: CGPoint(x: shoulder, y: shoulder))
-        path.addCurve(to: .zero,
-                      control1: CGPoint(x: shoulder, y: shoulder * (1 - tangent)),
-                      control2: CGPoint(x: shoulder * tangent, y: 0))
+        path.addLine(to: CGPoint(x: rect.width, y: rect.height - bottom))
+        path.addCurve(to: CGPoint(x: rect.width - bottom, y: rect.height),
+                      control1: CGPoint(x: rect.width, y: rect.height - bottom * (1 - tangent)),
+                      control2: CGPoint(x: rect.width - bottom * (1 - tangent), y: rect.height))
+        path.addLine(to: CGPoint(x: bottom, y: rect.height))
+        path.addCurve(to: CGPoint(x: 0, y: rect.height - bottom),
+                      control1: CGPoint(x: bottom * (1 - tangent), y: rect.height),
+                      control2: CGPoint(x: 0, y: rect.height - bottom * (1 - tangent)))
         path.closeSubpath()
         return path
     }
@@ -315,12 +312,14 @@ extension NotchModule: PanelOrderItem {
         case .calendar: return FeatureStrings.notchCalendar(language).title
         case .controls: return FeatureStrings.notch(language).controls
         case .mixer: return L10n.shared.s.mixerSection
-        case .music: return FeatureStrings.radialMenu(language).mediaNowPlaying
+        case .music: return FeatureStrings.notch(language).music
         case .clipboard: return FeatureStrings.clipboard(language).title
         case .captures: return FeatureStrings.recentCaptures(language).title
         case .files: return FeatureStrings.notch(language).files
         case .system: return FeatureStrings.notch(language).system
         case .tools: return FeatureStrings.notch(language).tools
+        case .notes: return FeatureStrings.notes(language).title
+        case .dictation: return FeatureStrings.dictation(language).pageTitle
         }
     }
 }

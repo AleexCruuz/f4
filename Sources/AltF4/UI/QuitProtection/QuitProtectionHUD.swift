@@ -23,7 +23,7 @@ final class QuitProtectionHUD {
 
     /// `screen` is for callers that already place a panel of their own, so the
     /// confirmation cannot land on a different display than what it confirms.
-    func show(title: String, detail: String, on screen: NSScreen? = nil) {
+    func show(title: String, detail: String = "", on screen: NSScreen? = nil) {
         if panel == nil {
             let panel = NSPanel(contentRect: CGRect(origin: .zero, size: size),
                                 styleMask: [.borderless, .nonactivatingPanel],
@@ -101,7 +101,9 @@ final class QuitProtectionHUD {
         override func layout() {
             super.layout()
             let inset = QuitProtectionHUD.textInset
-            title.frame = CGRect(x: inset, y: 23, width: bounds.width - inset * 2, height: 17)
+            // Alone, the title takes the pill's vertical centre.
+            let titleY = detail.stringValue.isEmpty ? ((bounds.height - 17) / 2).rounded() : 23
+            title.frame = CGRect(x: inset, y: titleY, width: bounds.width - inset * 2, height: 17)
             detail.frame = CGRect(x: inset, y: 7, width: bounds.width - inset * 2, height: 14)
         }
 

@@ -34,7 +34,7 @@ struct DisplayBrightnessShortcutControls: View {
         }
         if enabled, brightness.displayBrightnessShortcutRegistrationFailed {
             Text(l10n.s.shortcutUnavailable)
-                .font(.caption)
+                .font(.subheadline)
                 .foregroundStyle(.red)
         }
     }

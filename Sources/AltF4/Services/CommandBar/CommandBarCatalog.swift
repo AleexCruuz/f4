@@ -1437,7 +1437,7 @@ enum CommandBarCatalog {
         CommandBarEntry(
             id: "link.\(link.id.uuidString)",
             title: result.text,
-            subtitle: bar.copyHint,
+            subtitle: "",
             icon: .symbol(link.kind.symbolName),
             isAnswer: true,
             countsUsage: false,
@@ -1564,11 +1564,11 @@ enum CommandBarCatalog {
             var expression = query.trimmingCharacters(in: .whitespacesAndNewlines)
             if expression.hasSuffix("=") { expression.removeLast() }
             let completed = result.closingBrackets.isEmpty ? ""
-                : expression.trimmingCharacters(in: .whitespaces) + result.closingBrackets + " · "
+                : expression.trimmingCharacters(in: .whitespaces) + result.closingBrackets
             return CommandBarEntry(
                 id: "math.result",
                 title: result.formatted,
-                subtitle: completed + bar.copyHint,
+                subtitle: completed,
                 icon: .symbol("equal.square"),
                 isAnswer: true,
                 countsUsage: false,
@@ -1578,7 +1578,7 @@ enum CommandBarCatalog {
             return CommandBarEntry(
                 id: "units.result",
                 title: converted.formatted,
-                subtitle: bar.copyHint,
+                subtitle: "",
                 icon: .symbol("arrow.left.arrow.right"),
                 isAnswer: true,
                 countsUsage: false,
