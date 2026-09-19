@@ -228,5 +228,5 @@ F4 is free and will stay that way. If it earned its place in your menu bar, a st
 [GPL 3.0 or later](LICENSE), copyright 2026 F4. The license covers the source code; the F4 name, logo and look are covered separately in [TRADEMARKS.md](TRADEMARKS.md).
 
 <p align="center">
-  <sub>Made by <a href="https://x.com/f4">@f4</a></sub>
+  <sub>Made by <a href="https://github.com/AleexCruuz">@AleexCruuz</a></sub>
 </p>
