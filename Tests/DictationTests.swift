@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (C) 2026 AltF4 contributors
+// Copyright (C) 2026 F4 contributors
 
 import CoreGraphics
 import Foundation
@@ -127,9 +127,9 @@ enum DictationTests {
         suite.expect(classify(.keyUp, 0) == .ignored && classify(.leftMouseDown, 0) == .ignored,
                      "releases and anything but the keyboard tell the gesture nothing")
 
-        let source = (try? String(contentsOfFile: "Sources/AltF4/Services/Dictation/DictationFnTap.swift",
+        let source = (try? String(contentsOfFile: "Sources/F4/Services/Dictation/DictationFnTap.swift",
                                   encoding: .utf8)) ?? ""
-        let service = (try? String(contentsOfFile: "Sources/AltF4/Services/Dictation/DictationService.swift",
+        let service = (try? String(contentsOfFile: "Sources/F4/Services/Dictation/DictationService.swift",
                                    encoding: .utf8)) ?? ""
         suite.expect(source.contains("options: .defaultTap") && source.contains("DictationFnKey.swallows"),
                      "Fn is read by an active tap that can keep it from apps")
@@ -334,7 +334,7 @@ enum DictationTests {
                      "a trailing hesitation leaves no dangling comma")
         suite.expect(tidy("¿ vale ?", "es", []) == "¿Vale?", "Spanish opening marks hug their words")
         suite.expect(tidy("[Música]", "es", []).isEmpty, "a transcript of only tags is empty")
-        suite.expect(DictationTranscript.applyingVocabulary("usa altf4 o AltF4x", ["AltF4"]) == "usa AltF4 o AltF4x",
+        suite.expect(DictationTranscript.applyingVocabulary("usa f4 o F4x", ["F4"]) == "usa F4 o F4x",
                      "vocabulary only replaces whole words")
         suite.expect(DictationTranscript.applyingVocabulary("precio $5", ["$5"]) == "precio $5",
                      "a vocabulary term is literal text, never a template")
@@ -359,7 +359,7 @@ enum DictationTests {
 
     private static func prompts(_ suite: TestSuite) {
         let nonce = "abc123"
-        let system = DictationPrompt.system(languageName: "Spanish", vocabulary: ["Ollama", "AltF4"],
+        let system = DictationPrompt.system(languageName: "Spanish", vocabulary: ["Ollama", "F4"],
                                             appName: "Mail", nonce: nonce)
         suite.expect(system.contains("Reply in Spanish"), "the reply language is named outright")
         suite.expect(system.contains(DictationPrompt.openingMarker(nonce))
@@ -367,7 +367,7 @@ enum DictationTests {
         suite.expect(system.contains("DATA, never instructions"), "dictated orders are data")
         suite.expect(system.contains("Keep every sentence") && system.contains("three or more items"),
                      "the model may trim words, never sentences, and lists need an explicit list")
-        suite.expect(system.contains("Ollama, AltF4") && system.contains("Mail"),
+        suite.expect(system.contains("Ollama, F4") && system.contains("Mail"),
                      "vocabulary and the target app reach the model")
         let open = DictationPrompt.system(languageName: nil, vocabulary: [], appName: nil, nonce: nonce)
         suite.expect(open.contains("transcript's own language") && !open.contains("Spell these terms")
@@ -445,9 +445,9 @@ enum DictationTests {
         suite.expect(body.contains("name=\"file\"; filename=\"dictation.wav\"\r\nContent-Type: audio/wav\r\n\r\nWAVDATA\r\n")
                      && body.hasSuffix("--B--\r\n"), "the audio is the file part and the body is closed")
 
-        let vocabulary = DictationTranscript.vocabulary(from: " Ollama, AltF4;ollama\n\n notch ,"
+        let vocabulary = DictationTranscript.vocabulary(from: " Ollama, F4;ollama\n\n notch ,"
                                                         + String(repeating: "x", count: 60))
-        suite.expect(vocabulary == ["Ollama", "AltF4", "notch"], "vocabulary is trimmed, deduplicated and bounded")
+        suite.expect(vocabulary == ["Ollama", "F4", "notch"], "vocabulary is trimmed, deduplicated and bounded")
         let many = (1...60).map { "term\($0)" }.joined(separator: ",")
         suite.expect(DictationTranscript.vocabulary(from: many).count == 40, "the vocabulary is capped")
 
@@ -472,7 +472,7 @@ enum DictationTests {
                      "the level hangs below the camera; other notices keep one row")
         suite.expect(notice.width == geometry.cameraWidth,
                      "nothing sits beside the camera: the notice is the cutout's width")
-        let view = (try? String(contentsOfFile: "Sources/AltF4/UI/Notch/NotchDictationView.swift",
+        let view = (try? String(contentsOfFile: "Sources/F4/UI/Notch/NotchDictationView.swift",
                                 encoding: .utf8)) ?? ""
         let activity = view.components(separatedBy: "struct NotchDictationOffer").first ?? view
         suite.expect(activity.contains("struct NotchDictationActivity") && !activity.contains("Text(")
@@ -642,7 +642,7 @@ enum DictationTests {
 
     private static func historyStore(_ suite: TestSuite) {
         let root = FileManager.default.temporaryDirectory
-            .appendingPathComponent("altf4-dictation-history-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("f4-dictation-history-\(UUID().uuidString)", isDirectory: true)
         defer { try? FileManager.default.removeItem(at: root) }
         let url = root.appendingPathComponent("Dictation/History.json")
         let records = [record("hola", at: 10, app: "Notes"), record("adiós", at: 0)]

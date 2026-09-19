@@ -2,12 +2,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2026 Vorssaint
 
-# Creates a stable, self-signed code-signing identity named "AltF4 Utils
+# Creates a stable, self-signed code-signing identity named "F4 Utils
 # Signing" in a dedicated keychain. build.sh uses it automatically, giving every
 # build the same code signature — so macOS keeps granted permissions
 # (Accessibility, Screen Recording) across updates instead of re-prompting.
 #
-# This identity name keeps its original "AltF4 Utils Signing" on purpose: it
+# This identity name keeps its original "F4 Utils Signing" on purpose: it
 # is the lookup key build.sh matches, and the released app's designated
 # requirement is pinned to this exact certificate. Renaming it would change that
 # requirement and drop every user's granted permissions. The name lives only in
@@ -21,9 +21,9 @@
 # Run this only to get the same permission-preserving behavior for local builds.
 set -euo pipefail
 
-IDENTITY="AltF4 Utils Signing"
-KC="$HOME/Library/Keychains/altf4-signing.keychain-db"
-KCPASS="altf4-signing"
+IDENTITY="F4 Utils Signing"
+KC="$HOME/Library/Keychains/f4-signing.keychain-db"
+KCPASS="f4-signing"
 
 # A find-identity listing also names certificates codesign then rejects, and -v
 # excludes every self-signed one; ask codesign itself with a throwaway copy.
@@ -48,7 +48,7 @@ WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
 openssl req -x509 -newkey rsa:2048 -keyout "$WORK/key.pem" -out "$WORK/cert.pem" -days 3650 -nodes \
-    -subj "/CN=$IDENTITY/O=AltF4" \
+    -subj "/CN=$IDENTITY/O=F4" \
     -addext "keyUsage=critical,digitalSignature" \
     -addext "extendedKeyUsage=critical,codeSigning" \
     -addext "basicConstraints=critical,CA:false" 2>/dev/null

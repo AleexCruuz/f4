@@ -5,7 +5,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "AltF4",
+    name: "F4",
     platforms: [.macOS(.v14)],
     targets: [
         .systemLibrary(
@@ -17,9 +17,9 @@ let package = Package(
             path: "Sources/VMStatisticsCompat"
         ),
         .executableTarget(
-            name: "AltF4",
+            name: "F4",
             dependencies: ["VMStatisticsCompat", "HIDEventSystem"],
-            path: "Sources/AltF4"
+            path: "Sources/F4"
         )
     ]
 )

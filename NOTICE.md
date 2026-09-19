@@ -2,7 +2,7 @@
 
 ## This is a modified fork
 
-**AltF4** is a modified version of **Vorssaint** (`vorssaint-utils`), originally
+**F4** is a modified version of **Vorssaint** (`vorssaint-utils`), originally
 developed by the Vorssaint project maintainer.
 
 - Upstream project: https://github.com/vorssaint/vorssaint-utils
@@ -10,12 +10,12 @@ developed by the Vorssaint project maintainer.
 - This fork is **not affiliated with, endorsed by, or supported by** the
   Vorssaint project or its maintainer.
 
-Report bugs in AltF4 to this fork. Do **not** report them to the upstream
+Report bugs in F4 to this fork. Do **not** report them to the upstream
 Vorssaint project — they are not responsible for these modifications.
 
 ## License
 
-AltF4 is licensed under **GPL-3.0-or-later**, the same license as upstream.
+F4 is licensed under **GPL-3.0-or-later**, the same license as upstream.
 See [LICENSE](LICENSE) for the full text.
 
 The original copyright notices in the source files are retained. Modified
@@ -27,7 +27,7 @@ you are welcome to redistribute it under the conditions of the GPL.
 ### Source availability
 
 GPL-3.0 §6 requires that recipients of a binary can obtain the corresponding
-source. The complete source for any AltF4 build is available at the repository
+source. The complete source for any F4 build is available at the repository
 this NOTICE ships with. If you received a binary without the source, request it
 from whoever distributed the binary.
 
@@ -48,11 +48,11 @@ required by the GPL.
 
 Per GPL-3.0 §5(a), modifications are recorded here with the date each landed.
 
-### 2026-09-18 — Renamed the application to AltF4
+### 2026-09-18 — Renamed the application to F4
 
 - Renamed the app, executable, Swift package and target from `Vorssaint` to
-  `AltF4`; moved `Sources/Vorssaint/` to `Sources/AltF4/`.
-- Changed every bundle identifier from `com.vorssaint.*` to `com.altf4.*`,
+  `F4`; moved `Sources/Vorssaint/` to `Sources/F4/`.
+- Changed every bundle identifier from `com.vorssaint.*` to `com.f4.*`,
   including the app, the developer variant and the fan-control helper. Because
   the app derives its Application Support directory from its bundle identifier,
   this also isolates the fork's data from an installed upstream build.
@@ -74,7 +74,7 @@ has no licence to it and it has been deleted rather than reused or renamed:
 - `docs/assets/readme/logo.svg`, `logo-dark.svg`, `logo-dark.png`, `icon.png`
 - `ReleaseAssets/vorssaint-3.1.4-showcase-1.mp4` (upstream promotional video)
 
-Replaced with an original AltF4 brandmark (`altf4-brandmark.svg`, plus PNG
+Replaced with an original F4 brandmark (`f4-brandmark.svg`, plus PNG
 renditions), drawn for this fork and licensed under GPL-3.0-or-later like the
 rest of the repository.
 
@@ -88,7 +88,7 @@ clipboard panel offers translate, summarise, clean up and explain, answered by a
 model running on the user's own machine via Ollama. Off by default; the endpoint
 is rejected unless it is on loopback, so clipboard contents never leave the Mac.
 
-- New: `Sources/AltF4/Services/ClipboardAI/ClipboardAIService.swift`
+- New: `Sources/F4/Services/ClipboardAI/ClipboardAIService.swift`
 - Modified: `Core/Defaults.swift`, `UI/MenuPanel/ClipboardQuickPanelView.swift`,
   `UI/Settings/ClipboardSettings.swift`
 

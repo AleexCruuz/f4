@@ -67,7 +67,7 @@ enum CommandBarEmojiContract {
     }
 
     static func run(_ suite: TestSuite) {
-        let domain = "com.altf4.tests.command-bar-emoji"
+        let domain = "com.f4.tests.command-bar-emoji"
         let defaults = Foundation.UserDefaults(suiteName: domain)!
         defaults.removePersistentDomain(forName: domain)
         UserDefaults.standard = defaults

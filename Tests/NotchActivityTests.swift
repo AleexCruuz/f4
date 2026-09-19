@@ -21,7 +21,7 @@ enum NotchActivityTests {
     }
 
     private static func alertContracts(expect: (Bool, String) -> Void) {
-        let suite = "com.altf4.tests.timer-alert"
+        let suite = "com.f4.tests.timer-alert"
         let defaults = UserDefaults(suiteName: suite)!
         defaults.removePersistentDomain(forName: suite)
         defer { defaults.removePersistentDomain(forName: suite) }
@@ -249,7 +249,7 @@ enum NotchActivityTests {
         expect(bounded.focusMinutes == 180 && bounded.shortBreakMinutes == 1 && bounded.longBreakMinutes == 60
                && bounded.longBreakInterval == 1 && bounded.totalSessions == 24,
                "restored out-of-range values cannot overflow deadlines or create invalid cycle intervals")
-        let suite = "com.altf4.tests.pomodoro"
+        let suite = "com.f4.tests.pomodoro"
         let defaults = UserDefaults(suiteName: suite)!
         defaults.removePersistentDomain(forName: suite)
         defer { defaults.removePersistentDomain(forName: suite) }
@@ -382,7 +382,7 @@ enum NotchActivityTests {
                && NotchTimerSupport.compactText(for: hours, at: 3601, locale: locale) == "59m",
                "compact countdowns still switch from hours to minutes at the hour boundary")
 
-        let suite = "com.altf4.tests.timer-mode"
+        let suite = "com.f4.tests.timer-mode"
         let defaults = UserDefaults(suiteName: suite)!
         defaults.removePersistentDomain(forName: suite)
         defer { defaults.removePersistentDomain(forName: suite) }
@@ -602,7 +602,7 @@ enum NotchActivityTests {
     }
 
     private static func gateContracts(expect: (Bool, String) -> Void) {
-        let suite = "com.altf4.tests.notch-activities"
+        let suite = "com.f4.tests.notch-activities"
         let defaults = UserDefaults(suiteName: suite)!
         defaults.removePersistentDomain(forName: suite)
         defer { defaults.removePersistentDomain(forName: suite) }

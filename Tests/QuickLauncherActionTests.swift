@@ -74,7 +74,7 @@ enum QuickLauncherContract {
     enum CleaningModeManager { static let shared = Spy(name: "cleaning") }
 
     static func run(_ suite: TestSuite) {
-        let domain = "com.altf4.tests.quick-launcher-presentation"
+        let domain = "com.f4.tests.quick-launcher-presentation"
         let defaults = UserDefaults(suiteName: domain)!
         defaults.removePersistentDomain(forName: domain)
         ReviewDefaults.current = defaults

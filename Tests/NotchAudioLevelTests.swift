@@ -35,7 +35,7 @@ enum NotchAudioLevelTests {
         expect(!NotchAudioLevelSupport.fallsBack(heard: false, elapsed: 1) && !NotchAudioLevelSupport.fallsBack(heard: true, elapsed: 10)
                && NotchAudioLevelSupport.fallsBack(heard: false, elapsed: NotchAudioLevelSupport.silenceGrace),
                "a tap that only ever delivers silence hands the bars back to their synthetic motion")
-        expect(!NotchAudioLevelSupport.isEnabled(in: UserDefaults(suiteName: "altf4.tests.audio-levels")!),
+        expect(!NotchAudioLevelSupport.isEnabled(in: UserDefaults(suiteName: "f4.tests.audio-levels")!),
                "the live equalizer stays off until chosen")
         expect(NotchAudioLevelSupport.silenceGrace >= 5,
                "a tap outlasts a permission prompt being read and a player that buffers before it sounds")

@@ -100,7 +100,7 @@ enum NotchNotificationTests {
         inbox = NotchNotificationInbox()
         expect(inbox.items.isEmpty, "locking or disabling discards mirrored messages")
 
-        let suite = "com.altf4.tests.notch-notifications"
+        let suite = "com.f4.tests.notch-notifications"
         let defaults = UserDefaults(suiteName: suite)!
         defaults.removePersistentDomain(forName: suite)
         defer { defaults.removePersistentDomain(forName: suite) }

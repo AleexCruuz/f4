@@ -8,8 +8,8 @@ import os
 private let log = Logger(subsystem: FanControlIdentifiers.helperID, category: "FanControl")
 
 private final class FanControlOwnership {
-    private let lockPath = "/var/run/altf4-fan-control.lock"
-    private let markerPath = "/var/run/altf4-fan-control.active"
+    private let lockPath = "/var/run/f4-fan-control.lock"
+    private let markerPath = "/var/run/f4-fan-control.active"
     private var lockFile: Int32 = -1
 
     var isHeld: Bool { lockFile >= 0 }
@@ -81,7 +81,7 @@ private final class FanControlOwnership {
 }
 
 private final class FanControlController {
-    private let queue = DispatchQueue(label: "com.altf4.fan-control.helper")
+    private let queue = DispatchQueue(label: "com.f4.fan-control.helper")
     private let ownership = FanControlOwnership()
     private var hardware: FanControlHardware?
     private var owner: UUID?

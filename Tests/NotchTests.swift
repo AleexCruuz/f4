@@ -261,7 +261,7 @@ enum NotchTests {
         NotchKeyboardLightTests.run(expect: expect)
         NotchActivityTests.run(expect: expect)
         NotchMusicExtrasTests.run(expect: expect)
-        let suite = "com.altf4.tests.notch"
+        let suite = "com.f4.tests.notch"
         let defaults = UserDefaults(suiteName: suite)!
         defaults.removePersistentDomain(forName: suite)
         defer { defaults.removePersistentDomain(forName: suite) }
@@ -304,14 +304,14 @@ enum NotchTests {
         expect(smallScreen.settingsSize.width <= 1024 - 24 - NotchQuickAccessLayout.gutter * 2
                && smallScreen.settingsSize.height <= 600 - 48,
                "a small screen shrinks Settings rather than pushing it off the display")
-        let delegateSource = (try? String(contentsOfFile: "Sources/AltF4/App/AppDelegate.swift", encoding: .utf8)) ?? ""
+        let delegateSource = (try? String(contentsOfFile: "Sources/F4/App/AppDelegate.swift", encoding: .utf8)) ?? ""
         let openSettingsBody = delegateSource.components(separatedBy: "func openSettingsWindow() {").dropFirst().first?
             .components(separatedBy: "\n    }\n").first ?? ""
         let asksNotch = openSettingsBody.range(of: "NotchService.shared.showSettings()")
         let buildsWindow = openSettingsBody.range(of: "SettingsView(")
         expect(asksNotch != nil && buildsWindow != nil && asksNotch!.lowerBound < buildsWindow!.lowerBound,
                "every way into Settings asks the notch first and keeps the window as the fallback")
-        let notchViewSource = (try? String(contentsOfFile: "Sources/AltF4/UI/Notch/NotchView.swift", encoding: .utf8)) ?? ""
+        let notchViewSource = (try? String(contentsOfFile: "Sources/F4/UI/Notch/NotchView.swift", encoding: .utf8)) ?? ""
         expect(notchViewSource.contains("SettingsView(notchSize:"), "the notch hosts the Settings pages themselves")
 
         expect(AppFeature.notch.enabledKeys.isEmpty && Defaults.registeredDefaults["notchEnabled"] == nil,
@@ -1160,7 +1160,7 @@ enum NotchTests {
                "invalid internal positions cannot be serialized into adapter input")
     }
     private static func calendarContracts(expect: (Bool, String) -> Void) {
-        let entitlements = NSDictionary(contentsOfFile: "Resources/AltF4.entitlements") as? [String: Any]
+        let entitlements = NSDictionary(contentsOfFile: "Resources/F4.entitlements") as? [String: Any]
         let info = NSDictionary(contentsOfFile: "Resources/Info.plist") as? [String: Any]
         expect(entitlements?["com.apple.security.personal-information.calendars"] as? Bool == true
                && !(info?["NSCalendarsFullAccessUsageDescription"] as? String ?? "").isEmpty,
@@ -1189,9 +1189,9 @@ enum NotchTests {
                && !NotchSupport.keepsPermissionSurface(requesting: false, resolvedAt: 10, now: 11)
                && !NotchSupport.keepsPermissionSurface(requesting: false, resolvedAt: 10, now: 9),
                "permission resolution protects only the short reactivation interval")
-        let defaults = UserDefaults(suiteName: "com.altf4.tests.notch-calendar")!
-        defaults.removePersistentDomain(forName: "com.altf4.tests.notch-calendar")
-        defer { defaults.removePersistentDomain(forName: "com.altf4.tests.notch-calendar") }
+        let defaults = UserDefaults(suiteName: "com.f4.tests.notch-calendar")!
+        defaults.removePersistentDomain(forName: "com.f4.tests.notch-calendar")
+        defer { defaults.removePersistentDomain(forName: "com.f4.tests.notch-calendar") }
         for (key, value) in Defaults.registeredDefaults where key.hasPrefix("notch") { defaults.set(value, forKey: key) }
         for (key, value) in AppFeature.availabilityDefaults { defaults.set(value, forKey: key) }
         expect(NotchCalendarSupport.isEnabled(in: defaults), "calendar starts on with the island")

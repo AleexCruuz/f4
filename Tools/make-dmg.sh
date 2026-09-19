@@ -3,12 +3,12 @@
 # Copyright (C) 2026 Vorssaint
 
 # Packages the built app into a styled, distributable DMG
-# (dist/AltF4-<version>.dmg): a window with the app icon, an arrow and
+# (dist/F4-<version>.dmg): a window with the app icon, an arrow and
 # the Applications folder for drag-and-drop install. Run ./build.sh first.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-APP_NAME="AltF4"
+APP_NAME="F4"
 APP="build/stage/$APP_NAME.app"
 VOLUME="$APP_NAME"
 STAGING=""
@@ -34,7 +34,7 @@ xattr -cr "$APP"
 codesign --verify --deep --strict "$APP"
 
 VERSION="$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$APP/Contents/Info.plist")"
-OUT="dist/AltF4-$VERSION.dmg"
+OUT="dist/F4-$VERSION.dmg"
 
 echo "▸ Rendering installer background…"
 swift Tools/MakeDMGBackground.swift build/dmg-background.png

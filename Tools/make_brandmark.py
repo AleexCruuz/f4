@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 AltF4 contributors
+# Copyright (C) 2026 F4 contributors
 
-"""Renders the AltF4 brandmark to a transparent PNG.
+"""Renders the F4 brandmark to a transparent PNG.
 
 The mark is six rectangles, so it is drawn here directly rather than rasterised
 from the SVG. Every SVG rasteriser reachable without Xcode (qlmanage) composites
@@ -10,7 +10,7 @@ onto an opaque white background, which is exactly what an app icon must not
 have. Writing the pixels means the alpha channel is whatever we say it is.
 
 Geometry is kept in the SVG's 512x512 coordinate space and scaled on output, so
-this file and altf4-brandmark.svg stay in step.
+this file and f4-brandmark.svg stay in step.
 
     python3 Tools/make_brandmark.py <out.png> [size] [--white]
 """
@@ -21,7 +21,7 @@ import zlib
 
 VIEWBOX = 512
 
-# (x, y, w, h) in the 512x512 viewBox, matching altf4-brandmark.svg.
+# (x, y, w, h) in the 512x512 viewBox, matching f4-brandmark.svg.
 BARS = [
     # F
     (80, 128, 56, 256),

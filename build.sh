@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2026 Vorssaint
 
-# Builds AltF4, assembles the .app bundle, signs it and (with --install)
+# Builds F4, assembles the .app bundle, signs it and (with --install)
 # installs it into /Applications.
 #
 # The bundle is staged in a temporary directory outside ~/Documents: folders synced
@@ -26,7 +26,7 @@ trap cleanup EXIT
 # into the build sweeps like any other ending.
 trap 'exit 1' INT TERM HUP
 
-# Flags: --dev builds the local-only "AltF4 (Developer)" variant (its own
+# Flags: --dev builds the local-only "F4 (Developer)" variant (its own
 # bundle id, so it coexists with the official app); --install puts it in /Applications.
 DEV=0
 INSTALL=0
@@ -43,16 +43,16 @@ for arg in "$@"; do
 done
 
 if (( DEV )); then
-    APP_NAME="AltF4 (Developer)"
-    EXECUTABLE="AltF4Developer"
-    APP_BUNDLE_ID="com.altf4.utils.dev"
-    BUILD_VARIANT_FLAGS=(-D ALTF4_DEVELOPMENT)
+    APP_NAME="F4 (Developer)"
+    EXECUTABLE="F4Developer"
+    APP_BUNDLE_ID="com.f4.utils.dev"
+    BUILD_VARIANT_FLAGS=(-D F4_DEVELOPMENT)
     APP_OPTIMIZATION_FLAGS=(-Onone)
     BUILD_CONFIGURATION="debug"
 else
-    APP_NAME="AltF4"
-    EXECUTABLE="AltF4"
-    APP_BUNDLE_ID="com.altf4.utils"
+    APP_NAME="F4"
+    EXECUTABLE="F4"
+    APP_BUNDLE_ID="com.f4.utils"
     BUILD_VARIANT_FLAGS=()
     APP_OPTIMIZATION_FLAGS=(-O)
     BUILD_CONFIGURATION="release"
@@ -61,10 +61,10 @@ FAN_HELPER_ID="$APP_BUNDLE_ID.fan-control"
 # Now Playing is read through /usr/bin/perl loading this library; see
 # Sources/NowPlayingAdapter. Staged under Contents/Frameworks, signed on its own.
 NOW_PLAYING_ADAPTER_ID="$APP_BUNDLE_ID.now-playing"
-NOW_PLAYING_ADAPTER="libAltF4NowPlaying.dylib"
+NOW_PLAYING_ADAPTER="libF4NowPlaying.dylib"
 TARGET="arm64-apple-macosx14.0"
-ENTITLEMENTS="Resources/AltF4.entitlements"
-LEGACY_IDENTITY="AltF4 Utils Signing"
+ENTITLEMENTS="Resources/F4.entitlements"
+LEGACY_IDENTITY="F4 Utils Signing"
 
 developer_id_identity() {
     security find-identity -v -p codesigning 2>/dev/null \
@@ -80,8 +80,8 @@ legacy_identity_installed() {
     local probe signed=1
     # A locked keychain still lists its identities but cannot sign with them,
     # and this one is locked after every reboot; unlock it before asking.
-    security unlock-keychain -p altf4-signing \
-        "$HOME/Library/Keychains/altf4-signing.keychain-db" 2>/dev/null || true
+    security unlock-keychain -p f4-signing \
+        "$HOME/Library/Keychains/f4-signing.keychain-db" 2>/dev/null || true
     probe="$(mktemp)"
     cp /bin/echo "$probe"
     /usr/bin/codesign --force --strip-disallowed-xattrs --sign "$LEGACY_IDENTITY" "$probe" \
@@ -184,8 +184,8 @@ finalize_installed_bundle_after_child() {
     echo "✓ Signature ready: $bundle"
 }
 
-if (( INSTALL && ! TEST )) && [[ "${ALTF4_INSTALL_CHILD:-0}" != "1" ]]; then
-    ALTF4_INSTALL_CHILD=1 "$0" "$@"
+if (( INSTALL && ! TEST )) && [[ "${F4_INSTALL_CHILD:-0}" != "1" ]]; then
+    F4_INSTALL_CHILD=1 "$0" "$@"
     child_status=$?
     if (( child_status != 0 )); then
         exit "$child_status"
@@ -225,13 +225,13 @@ discard_test_preferences() {
     # cfprefsd can recreate an emptied domain after the first removal. Require
     # two quiet checks, but keep a hard limit so persistent failures still fail CI.
     for attempt in {1..10}; do
-        for name in "vorss.tests." "com.altf4.tests."; do
+        for name in "vorss.tests." "com.f4.tests."; do
             rm -f "$preferences"/$name*.plist(N)
         done
         rm -f "$preferences/metrics-tests.plist"
         sleep 0.2
         survivors=$(find "$preferences" -maxdepth 1 \
-            \( -name "vorss.tests.*.plist" -o -name "com.altf4.tests.*.plist" \
+            \( -name "vorss.tests.*.plist" -o -name "com.f4.tests.*.plist" \
                -o -name "metrics-tests.plist" \) 2>/dev/null | wc -l | tr -d ' ')
         if [[ "$survivors" == "0" ]]; then
             quiet_passes=$((quiet_passes + 1))
@@ -251,235 +251,235 @@ if (( TEST )); then
     TEST_OBJECT_DIR="build/objects/tests"
     mkdir -p "$TEST_OBJECT_DIR"
     TEST_SOURCES=(
-        Sources/AltF4/Services/Media/MediaSupport.swift
-        Sources/AltF4/Core/QuitProtectionSupport.swift
-        Sources/AltF4/Core/QuitProtectionStrings.swift
-        Sources/AltF4/Core/Defaults.swift
-        Sources/AltF4/Core/NotchStrings.swift
-        Sources/AltF4/Core/NotchTourStrings.swift
-        Sources/AltF4/Core/NotchEditorStrings.swift
-        Sources/AltF4/Core/NotchActivityStrings.swift
-        Sources/AltF4/Services/Notch/NotchTimerSupport.swift
-        Sources/AltF4/Services/Notch/NotchTimerAlert.swift
-        Sources/AltF4/Services/Notch/NotchAccessorySupport.swift
-        Sources/AltF4/Services/QuickTools/CameraPreviewSupport.swift
-        Sources/AltF4/Core/NotchMusicExtrasStrings.swift
-        Sources/AltF4/Services/Notch/NotchLyricsSupport.swift
-        Sources/AltF4/Services/Notch/NotchQueueSupport.swift
-        Sources/AltF4/Core/NotchFilesStrings.swift
-        Sources/AltF4/Services/Notch/NotchFileToolsSupport.swift
-        Sources/AltF4/Services/Notch/NotchDownloadSupport.swift
-        Sources/AltF4/Services/Notch/NotchDownloadProgressObserver.swift
-        Sources/AltF4/Core/NotchCalendarStrings.swift
-        Sources/AltF4/Core/NotchNotificationStrings.swift
-        Sources/AltF4/Core/NotchGestureStrings.swift
-        Sources/AltF4/Services/Notch/NotchGestureSupport.swift
-        Sources/AltF4/Services/Notch/NotchSliderEditing.swift
-        Sources/AltF4/Services/Notch/NotchNotificationSupport.swift
-        Sources/AltF4/Services/Notch/NotchNotificationReaderCore.swift
-        Sources/AltF4/Services/Notch/NotchCalendarSupport.swift
-        Sources/AltF4/Services/Notch/NotchSupport.swift
-        Sources/AltF4/Services/Notch/NotchAudioLevelSupport.swift
-        Sources/AltF4/Services/Notch/NotchVolumeKeyGate.swift
-        Sources/AltF4/Services/Notch/NotchMusicSupport.swift
-        Sources/AltF4/UI/Notch/NotchEqualizerBars.swift
-        Sources/AltF4/Services/Notch/NotchMusicAutomationSupport.swift
-        Sources/AltF4/Services/Notch/NotchMusicAutomation.swift
-        Sources/AltF4/Services/Notch/NotchPlaybackSource.swift
-        Sources/AltF4/Services/Notch/NotchPlaybackCommand.swift
-        Sources/AltF4/Services/Notch/NotchMusicCommandWriter.swift
-        Sources/AltF4/Core/FeatureCatalog.swift
-        Sources/AltF4/Core/FeaturePresets.swift
-        Sources/AltF4/Core/OnboardingSupport.swift
-        Sources/AltF4/Core/OnboardingStrings.swift
-        Sources/AltF4/Core/FeatureHubStrings.swift
-        Sources/AltF4/Core/ShortcutSettingsStrings.swift
-        Sources/AltF4/Core/SettingsBackupSupport.swift
-        Sources/AltF4/Core/BackupStrings.swift
-        Sources/AltF4/Core/SnippetStrings.swift
-        Sources/AltF4/Core/AlertSoundStrings.swift
-        Sources/AltF4/Core/BrightnessStrings.swift
-        Sources/AltF4/Core/MediaImageStrings.swift
-        Sources/AltF4/Core/QuickToggleStrings.swift
-        Sources/AltF4/Core/ScreenshotStrings.swift
-        Sources/AltF4/Core/RecentCaptureStrings.swift
-        Sources/AltF4/Core/RecorderStrings.swift
-        Sources/AltF4/Core/RecorderShareStrings.swift
-        Sources/AltF4/Core/CameraPreviewStrings.swift
-        Sources/AltF4/Core/ScratchpadStrings.swift
-        Sources/AltF4/Core/FinderRenameStrings.swift
-        Sources/AltF4/Core/CommandBarStrings.swift
-        Sources/AltF4/Core/FeedbackStrings.swift
-        Sources/AltF4/Core/RadialMenuStrings.swift
-        Sources/AltF4/Core/MenuBarAppearanceStrings.swift
-        Sources/AltF4/Core/AppAppearance.swift
-        Sources/AltF4/Core/AppearanceStrings.swift
-        Sources/AltF4/Core/BatteryTimeStrings.swift
-        Sources/AltF4/Core/KeepAwakeStrings.swift
-        Sources/AltF4/Core/BluetoothSleepStrings.swift
-        Sources/AltF4/Core/PermissionGuideStrings.swift
-        Sources/AltF4/Core/FanControlStrings.swift
-        Sources/AltF4/Services/FanControl/FanControlSupport.swift
-        Sources/AltF4/Services/Snippets/TextSnippetSupport.swift
-        Sources/AltF4/Services/RadialMenu/RadialMenuSupport.swift
-        Sources/AltF4/Services/QuickTools/ScratchpadSupport.swift
-        Sources/AltF4/Services/QuickTools/ScratchpadStore.swift
-        Sources/AltF4/Services/KillProcess/KillProcessSupport.swift
-        Sources/AltF4/Services/Recorder/RecorderSupport.swift
-        Sources/AltF4/Services/Recorder/RecorderSampleTiming.swift
-        Sources/AltF4/Services/Recorder/RecorderWriter.swift
-        Sources/AltF4/Services/Recorder/RecorderCaptureEngine.swift
-        Sources/AltF4/Services/Recorder/RecorderComposition.swift
-        Sources/AltF4/Services/Recorder/RecordingSharingSupport.swift
-        Sources/AltF4/Services/PrivateFileStore.swift
-        Sources/AltF4/Services/Recorder/RecorderTakeStore.swift
-        Sources/AltF4/Services/Recorder/RecorderPresetImageStore.swift
-        Sources/AltF4/Services/Recorder/RecorderMotion.swift
-        Sources/AltF4/Services/Recorder/RecorderPointerTrack.swift
-        Sources/AltF4/Services/Recorder/RecorderTypingTrack.swift
-        Sources/AltF4/Services/Recorder/RecorderTimeline.swift
-        Sources/AltF4/Services/Recorder/RecorderTextOverlay.swift
-        Sources/AltF4/Services/Recorder/RecorderImageOverlay.swift
-        Sources/AltF4/Services/Recorder/RecorderBlurRegion.swift
-        Sources/AltF4/Services/Recorder/RecorderEditDocument.swift
-        Sources/AltF4/Core/AppInfo.swift
-        Sources/AltF4/Core/GlobalShortcut.swift
-        Sources/AltF4/Core/SymbolicHotKeys.swift
-        Sources/AltF4/Services/SystemShortcutTakeoverSupport.swift
-        Sources/AltF4/Core/Localization.swift
-        Sources/AltF4/Core/Localizations/Strings+*.swift
-        Sources/AltF4/Core/FeatureStrings.swift
-        Sources/AltF4/Core/KillProcessStrings.swift
-        Sources/AltF4/Core/WhatsAppDownloadStrings.swift
-        Sources/AltF4/Core/WhatsAppOrganizerStrings.swift
-        Sources/AltF4/Core/ReleaseNotes.swift
-        Sources/AltF4/Core/URLCleaning.swift
-        Sources/AltF4/Services/GeneralPasteboardAccess.swift
-        Sources/AltF4/Services/Clipboard/ClipboardHistoryWrite.swift
-        Sources/AltF4/Services/Audio/MixerRoutingSupport.swift
-        Sources/AltF4/Services/Audio/MusicLaunchSupport.swift
-        Sources/AltF4/Services/Bluetooth/BluetoothSleepSupport.swift
-        Sources/AltF4/UI/MenuPanel/MixerPercentNativeTextField.swift
-        Sources/AltF4/UI/MenuPanel/MixerAppDragSource.swift
-        Sources/AltF4/Services/Audio/BoostLimiter.swift
-        Sources/AltF4/Services/Audio/MixerRender.swift
-        Sources/AltF4/Services/Audio/PreciseVolumeRollerSupport.swift
-        Sources/AltF4/Services/DockPreview/DockPreviewSupport.swift
-        Sources/AltF4/Services/Homebrew/HomebrewSupport.swift
-        Sources/AltF4/Services/AppUpdates/AppUpdatesSupport.swift
-        Sources/AltF4/Services/AppUpdates/AppUpdateFeedSupport.swift
-        Sources/AltF4/Core/AppUpdateStrings.swift
-        Sources/AltF4/Core/DiskImageInstallerStrings.swift
-        Sources/AltF4/Services/DiskImageInstaller/DiskImageInstallerSupport.swift
-        Sources/AltF4/Services/Clipboard/ClipboardHistorySupport.swift
-        Sources/AltF4/Core/ClipboardAIStrings.swift
-        Sources/AltF4/Services/ClipboardAI/ClipboardAISupport.swift
-        Sources/AltF4/Core/DictationStrings.swift
-        Sources/AltF4/Services/Dictation/DictationSupport.swift
-        Sources/AltF4/Services/Dictation/DictationHistorySupport.swift
-        Sources/AltF4/Core/NotesStrings.swift
-        Sources/AltF4/Core/SettingsLayoutStrings.swift
-        Sources/AltF4/Services/Notes/NotesSupport.swift
-        Sources/AltF4/Services/Notes/NotesStore.swift
-        Sources/AltF4/Services/Clipboard/ClipboardAutoClearSupport.swift
-        Sources/AltF4/Services/AutoQuit/AutoQuitSupport.swift
-        Sources/AltF4/Services/Shelf/ShelfSupport.swift
-        Sources/AltF4/Services/Shelf/ShelfFilePromiseTransfer.swift
-        Sources/AltF4/Core/ShelfPromiseDeliveryStrings.swift
-        Sources/AltF4/Services/Finder/FinderRenameSupport.swift
-        Sources/AltF4/Services/Update/UpdateInstallerSupport.swift
-        Sources/AltF4/Services/Update/UpdateServiceSupport.swift
-        Sources/AltF4/Services/InstalledApps.swift
-        Sources/AltF4/Services/LaunchAtLoginSupport.swift
-        Sources/AltF4/UI/Settings/SettingsSearchSupport.swift
-        Sources/AltF4/UI/Settings/FeatureVisibilitySupport.swift
-        Sources/AltF4/App/MenuBarSpacingSupport.swift
-        Sources/AltF4/App/StatusItemAnchorSupport.swift
-        Sources/AltF4/Services/DockClick/DockClickSupport.swift
-        Sources/AltF4/Services/Finder/CutPasteProgressSupport.swift
-        Sources/AltF4/Services/Finder/CutPastePrivilegeSupport.swift
-        Sources/AltF4/Services/Finder/FinderPasteImageSupport.swift
-        Sources/AltF4/Services/MiddleClick/MiddleClickSupport.swift
-        Sources/AltF4/Services/MouseNavigation/MouseNavigationSupport.swift
-        Sources/AltF4/Services/MouseButtons/MouseButtonShortcutSupport.swift
-        Sources/AltF4/Services/MouseButtons/MouseSpacesGestureSupport.swift
-        Sources/AltF4/Services/MouseClickDebounce/MouseClickDebounceSupport.swift
-        Sources/AltF4/Services/MouseExceptions/MouseAppExceptionSupport.swift
-        Sources/AltF4/Services/MouseExceptions/MouseAppExceptions.swift
-        Sources/AltF4/Services/WindowServerSupport.swift
-        Sources/AltF4/Core/MouseButtonStrings.swift
-        Sources/AltF4/Core/MouseClickDebounceStrings.swift
-        Sources/AltF4/Core/MouseExceptionStrings.swift
-        Sources/AltF4/Core/ClipboardIgnoredAppsStrings.swift
-        Sources/AltF4/Core/WindowPreviewExclusionStrings.swift
-        Sources/AltF4/Core/DiskExclusionStrings.swift
-        Sources/AltF4/Core/SwitcherAppRulesStrings.swift
-        Sources/AltF4/Services/QuickTools/QuickToolsSupport.swift
-        Sources/AltF4/Services/CommandBar/CommandBarSupport.swift
-        Sources/AltF4/Services/CommandBar/CommandBarPreferences.swift
-        Sources/AltF4/Services/CommandBar/CommandBarMath.swift
-        Sources/AltF4/Services/CommandBar/CommandBarUnits.swift
-        Sources/AltF4/Services/CommandBar/CommandBarEmoji.swift
-        Sources/AltF4/Services/CommandBar/CommandBarLinks.swift
-        Sources/AltF4/Services/CommandBar/CommandBarDates.swift
-        Sources/AltF4/Services/CommandBar/CommandBarRowShortcuts.swift
-        Sources/AltF4/Services/CommandBar/CommandBarSystemSettingsSupport.swift
-        Sources/AltF4/Services/CommandBar/CommandBarFileSearchSupport.swift
-        Sources/AltF4/Services/CommandBar/CommandBarQueryMemory.swift
-        Sources/AltF4/Services/SpotlightNamesSupport.swift
-        Sources/AltF4/Services/QuickTools/MicMuteSupport.swift
-        Sources/AltF4/Services/QuickTools/QuickTogglesSupport.swift
-        Sources/AltF4/Services/QuickTools/ScreenshotCapturePolicy.swift
-        Sources/AltF4/Services/QuickTools/ScreenshotSupport.swift
-        Sources/AltF4/Services/QuickTools/ScreenshotRenderer.swift
-        Sources/AltF4/Services/QuickTools/RecentCaptureStore.swift
-        Sources/AltF4/Services/QuickTools/ScreenshotSharingSupport.swift
-        Sources/AltF4/Services/QuickTools/WindowActivationPolicy.swift
-        Sources/AltF4/Services/KeyboardDebounce/KeyboardDebounceSupport.swift
-        Sources/AltF4/Services/SuperKey/SuperKeySupport.swift
-        Sources/AltF4/Services/SuperKey/SuperKeyMappingGuard.swift
-        Sources/AltF4/Core/SuperKeyStrings.swift
-        Sources/AltF4/Services/SessionActivity.swift
-        Sources/AltF4/Services/SessionActivitySupport.swift
-        Sources/AltF4/Services/ScrollWheelSupport.swift
-        Sources/AltF4/Services/SmoothScrollSupport.swift
-        Sources/AltF4/Services/MouseAcceleration/MouseAccelerationSupport.swift
-        Sources/AltF4/Services/FocusFollowsMouse/FocusFollowsMouseSupport.swift
-        Sources/AltF4/Services/AssistiveKeyboard.swift
-        Sources/AltF4/Services/Switcher/SwitcherModels.swift
-        Sources/AltF4/Services/Switcher/SwitcherSupport.swift
-        Sources/AltF4/Services/Switcher/SpaceHopSupport.swift
-        Sources/AltF4/Services/Switcher/WindowUseOrder.swift
-        Sources/AltF4/Services/Metrics/MetricFormat.swift
-        Sources/AltF4/Services/Metrics/VMStatisticsDecoder.swift
-        Sources/AltF4/Services/KeepAwakeAutomationSupport.swift
-        Sources/AltF4/Services/SudoersSupport.swift
-        Sources/AltF4/Services/Metrics/BatteryTimeSupport.swift
-        Sources/AltF4/Services/BoundedProcessRunner.swift
-        Sources/AltF4/Services/DetachedProcess.swift
-        Sources/AltF4/Services/ShellSupport.swift
-        Sources/AltF4/Services/Metrics/NetworkProcessSupport.swift
-        Sources/AltF4/Services/Metrics/NetworkSampler.swift
-        Sources/AltF4/Services/Metrics/SpeedTest.swift
-        Sources/AltF4/Services/Metrics/PeripheralBatterySampler.swift
-        Sources/AltF4/Services/Metrics/PeripheralBatterySupport.swift
-        Sources/AltF4/Services/Metrics/DiskSupport.swift
-        Sources/AltF4/Services/Metrics/MonitorSamplingPolicy.swift
-        Sources/AltF4/Services/Metrics/MaxCapacityProbe.swift
-        Sources/AltF4/Services/Metrics/TemperatureSensorSelector.swift
-        Sources/AltF4/Services/Metrics/SustainedAlertGate.swift
-        Sources/AltF4/Services/WindowLayout/WindowLayoutSupport.swift
-        Sources/AltF4/Services/WindowLayout/WindowGestureSupport.swift
-        Sources/AltF4/Core/WindowDirectionalStrings.swift
-        Sources/AltF4/Services/CleaningMode/CleaningUnlockCounter.swift
-        Sources/AltF4/Services/Display/ExtraBrightnessSupport.swift
-        Sources/AltF4/Services/Display/BrightnessSupport.swift
-        Sources/AltF4/Services/Cleaner/CleanerSupport.swift
-        Sources/AltF4/Services/Cleaner/CleanerPolicy.swift
-        Sources/AltF4/Services/Cleaner/CleanerSchedule.swift
-        Sources/AltF4/Services/Uninstall/UninstallerSupport.swift
-        Sources/AltF4/Services/ManagedDownloads/WhatsAppDownloadSupport.swift
-        Sources/AltF4/Core/SecureInputSupport.swift
+        Sources/F4/Services/Media/MediaSupport.swift
+        Sources/F4/Core/QuitProtectionSupport.swift
+        Sources/F4/Core/QuitProtectionStrings.swift
+        Sources/F4/Core/Defaults.swift
+        Sources/F4/Core/NotchStrings.swift
+        Sources/F4/Core/NotchTourStrings.swift
+        Sources/F4/Core/NotchEditorStrings.swift
+        Sources/F4/Core/NotchActivityStrings.swift
+        Sources/F4/Services/Notch/NotchTimerSupport.swift
+        Sources/F4/Services/Notch/NotchTimerAlert.swift
+        Sources/F4/Services/Notch/NotchAccessorySupport.swift
+        Sources/F4/Services/QuickTools/CameraPreviewSupport.swift
+        Sources/F4/Core/NotchMusicExtrasStrings.swift
+        Sources/F4/Services/Notch/NotchLyricsSupport.swift
+        Sources/F4/Services/Notch/NotchQueueSupport.swift
+        Sources/F4/Core/NotchFilesStrings.swift
+        Sources/F4/Services/Notch/NotchFileToolsSupport.swift
+        Sources/F4/Services/Notch/NotchDownloadSupport.swift
+        Sources/F4/Services/Notch/NotchDownloadProgressObserver.swift
+        Sources/F4/Core/NotchCalendarStrings.swift
+        Sources/F4/Core/NotchNotificationStrings.swift
+        Sources/F4/Core/NotchGestureStrings.swift
+        Sources/F4/Services/Notch/NotchGestureSupport.swift
+        Sources/F4/Services/Notch/NotchSliderEditing.swift
+        Sources/F4/Services/Notch/NotchNotificationSupport.swift
+        Sources/F4/Services/Notch/NotchNotificationReaderCore.swift
+        Sources/F4/Services/Notch/NotchCalendarSupport.swift
+        Sources/F4/Services/Notch/NotchSupport.swift
+        Sources/F4/Services/Notch/NotchAudioLevelSupport.swift
+        Sources/F4/Services/Notch/NotchVolumeKeyGate.swift
+        Sources/F4/Services/Notch/NotchMusicSupport.swift
+        Sources/F4/UI/Notch/NotchEqualizerBars.swift
+        Sources/F4/Services/Notch/NotchMusicAutomationSupport.swift
+        Sources/F4/Services/Notch/NotchMusicAutomation.swift
+        Sources/F4/Services/Notch/NotchPlaybackSource.swift
+        Sources/F4/Services/Notch/NotchPlaybackCommand.swift
+        Sources/F4/Services/Notch/NotchMusicCommandWriter.swift
+        Sources/F4/Core/FeatureCatalog.swift
+        Sources/F4/Core/FeaturePresets.swift
+        Sources/F4/Core/OnboardingSupport.swift
+        Sources/F4/Core/OnboardingStrings.swift
+        Sources/F4/Core/FeatureHubStrings.swift
+        Sources/F4/Core/ShortcutSettingsStrings.swift
+        Sources/F4/Core/SettingsBackupSupport.swift
+        Sources/F4/Core/BackupStrings.swift
+        Sources/F4/Core/SnippetStrings.swift
+        Sources/F4/Core/AlertSoundStrings.swift
+        Sources/F4/Core/BrightnessStrings.swift
+        Sources/F4/Core/MediaImageStrings.swift
+        Sources/F4/Core/QuickToggleStrings.swift
+        Sources/F4/Core/ScreenshotStrings.swift
+        Sources/F4/Core/RecentCaptureStrings.swift
+        Sources/F4/Core/RecorderStrings.swift
+        Sources/F4/Core/RecorderShareStrings.swift
+        Sources/F4/Core/CameraPreviewStrings.swift
+        Sources/F4/Core/ScratchpadStrings.swift
+        Sources/F4/Core/FinderRenameStrings.swift
+        Sources/F4/Core/CommandBarStrings.swift
+        Sources/F4/Core/FeedbackStrings.swift
+        Sources/F4/Core/RadialMenuStrings.swift
+        Sources/F4/Core/MenuBarAppearanceStrings.swift
+        Sources/F4/Core/AppAppearance.swift
+        Sources/F4/Core/AppearanceStrings.swift
+        Sources/F4/Core/BatteryTimeStrings.swift
+        Sources/F4/Core/KeepAwakeStrings.swift
+        Sources/F4/Core/BluetoothSleepStrings.swift
+        Sources/F4/Core/PermissionGuideStrings.swift
+        Sources/F4/Core/FanControlStrings.swift
+        Sources/F4/Services/FanControl/FanControlSupport.swift
+        Sources/F4/Services/Snippets/TextSnippetSupport.swift
+        Sources/F4/Services/RadialMenu/RadialMenuSupport.swift
+        Sources/F4/Services/QuickTools/ScratchpadSupport.swift
+        Sources/F4/Services/QuickTools/ScratchpadStore.swift
+        Sources/F4/Services/KillProcess/KillProcessSupport.swift
+        Sources/F4/Services/Recorder/RecorderSupport.swift
+        Sources/F4/Services/Recorder/RecorderSampleTiming.swift
+        Sources/F4/Services/Recorder/RecorderWriter.swift
+        Sources/F4/Services/Recorder/RecorderCaptureEngine.swift
+        Sources/F4/Services/Recorder/RecorderComposition.swift
+        Sources/F4/Services/Recorder/RecordingSharingSupport.swift
+        Sources/F4/Services/PrivateFileStore.swift
+        Sources/F4/Services/Recorder/RecorderTakeStore.swift
+        Sources/F4/Services/Recorder/RecorderPresetImageStore.swift
+        Sources/F4/Services/Recorder/RecorderMotion.swift
+        Sources/F4/Services/Recorder/RecorderPointerTrack.swift
+        Sources/F4/Services/Recorder/RecorderTypingTrack.swift
+        Sources/F4/Services/Recorder/RecorderTimeline.swift
+        Sources/F4/Services/Recorder/RecorderTextOverlay.swift
+        Sources/F4/Services/Recorder/RecorderImageOverlay.swift
+        Sources/F4/Services/Recorder/RecorderBlurRegion.swift
+        Sources/F4/Services/Recorder/RecorderEditDocument.swift
+        Sources/F4/Core/AppInfo.swift
+        Sources/F4/Core/GlobalShortcut.swift
+        Sources/F4/Core/SymbolicHotKeys.swift
+        Sources/F4/Services/SystemShortcutTakeoverSupport.swift
+        Sources/F4/Core/Localization.swift
+        Sources/F4/Core/Localizations/Strings+*.swift
+        Sources/F4/Core/FeatureStrings.swift
+        Sources/F4/Core/KillProcessStrings.swift
+        Sources/F4/Core/WhatsAppDownloadStrings.swift
+        Sources/F4/Core/WhatsAppOrganizerStrings.swift
+        Sources/F4/Core/ReleaseNotes.swift
+        Sources/F4/Core/URLCleaning.swift
+        Sources/F4/Services/GeneralPasteboardAccess.swift
+        Sources/F4/Services/Clipboard/ClipboardHistoryWrite.swift
+        Sources/F4/Services/Audio/MixerRoutingSupport.swift
+        Sources/F4/Services/Audio/MusicLaunchSupport.swift
+        Sources/F4/Services/Bluetooth/BluetoothSleepSupport.swift
+        Sources/F4/UI/MenuPanel/MixerPercentNativeTextField.swift
+        Sources/F4/UI/MenuPanel/MixerAppDragSource.swift
+        Sources/F4/Services/Audio/BoostLimiter.swift
+        Sources/F4/Services/Audio/MixerRender.swift
+        Sources/F4/Services/Audio/PreciseVolumeRollerSupport.swift
+        Sources/F4/Services/DockPreview/DockPreviewSupport.swift
+        Sources/F4/Services/Homebrew/HomebrewSupport.swift
+        Sources/F4/Services/AppUpdates/AppUpdatesSupport.swift
+        Sources/F4/Services/AppUpdates/AppUpdateFeedSupport.swift
+        Sources/F4/Core/AppUpdateStrings.swift
+        Sources/F4/Core/DiskImageInstallerStrings.swift
+        Sources/F4/Services/DiskImageInstaller/DiskImageInstallerSupport.swift
+        Sources/F4/Services/Clipboard/ClipboardHistorySupport.swift
+        Sources/F4/Core/ClipboardAIStrings.swift
+        Sources/F4/Services/ClipboardAI/ClipboardAISupport.swift
+        Sources/F4/Core/DictationStrings.swift
+        Sources/F4/Services/Dictation/DictationSupport.swift
+        Sources/F4/Services/Dictation/DictationHistorySupport.swift
+        Sources/F4/Core/NotesStrings.swift
+        Sources/F4/Core/SettingsLayoutStrings.swift
+        Sources/F4/Services/Notes/NotesSupport.swift
+        Sources/F4/Services/Notes/NotesStore.swift
+        Sources/F4/Services/Clipboard/ClipboardAutoClearSupport.swift
+        Sources/F4/Services/AutoQuit/AutoQuitSupport.swift
+        Sources/F4/Services/Shelf/ShelfSupport.swift
+        Sources/F4/Services/Shelf/ShelfFilePromiseTransfer.swift
+        Sources/F4/Core/ShelfPromiseDeliveryStrings.swift
+        Sources/F4/Services/Finder/FinderRenameSupport.swift
+        Sources/F4/Services/Update/UpdateInstallerSupport.swift
+        Sources/F4/Services/Update/UpdateServiceSupport.swift
+        Sources/F4/Services/InstalledApps.swift
+        Sources/F4/Services/LaunchAtLoginSupport.swift
+        Sources/F4/UI/Settings/SettingsSearchSupport.swift
+        Sources/F4/UI/Settings/FeatureVisibilitySupport.swift
+        Sources/F4/App/MenuBarSpacingSupport.swift
+        Sources/F4/App/StatusItemAnchorSupport.swift
+        Sources/F4/Services/DockClick/DockClickSupport.swift
+        Sources/F4/Services/Finder/CutPasteProgressSupport.swift
+        Sources/F4/Services/Finder/CutPastePrivilegeSupport.swift
+        Sources/F4/Services/Finder/FinderPasteImageSupport.swift
+        Sources/F4/Services/MiddleClick/MiddleClickSupport.swift
+        Sources/F4/Services/MouseNavigation/MouseNavigationSupport.swift
+        Sources/F4/Services/MouseButtons/MouseButtonShortcutSupport.swift
+        Sources/F4/Services/MouseButtons/MouseSpacesGestureSupport.swift
+        Sources/F4/Services/MouseClickDebounce/MouseClickDebounceSupport.swift
+        Sources/F4/Services/MouseExceptions/MouseAppExceptionSupport.swift
+        Sources/F4/Services/MouseExceptions/MouseAppExceptions.swift
+        Sources/F4/Services/WindowServerSupport.swift
+        Sources/F4/Core/MouseButtonStrings.swift
+        Sources/F4/Core/MouseClickDebounceStrings.swift
+        Sources/F4/Core/MouseExceptionStrings.swift
+        Sources/F4/Core/ClipboardIgnoredAppsStrings.swift
+        Sources/F4/Core/WindowPreviewExclusionStrings.swift
+        Sources/F4/Core/DiskExclusionStrings.swift
+        Sources/F4/Core/SwitcherAppRulesStrings.swift
+        Sources/F4/Services/QuickTools/QuickToolsSupport.swift
+        Sources/F4/Services/CommandBar/CommandBarSupport.swift
+        Sources/F4/Services/CommandBar/CommandBarPreferences.swift
+        Sources/F4/Services/CommandBar/CommandBarMath.swift
+        Sources/F4/Services/CommandBar/CommandBarUnits.swift
+        Sources/F4/Services/CommandBar/CommandBarEmoji.swift
+        Sources/F4/Services/CommandBar/CommandBarLinks.swift
+        Sources/F4/Services/CommandBar/CommandBarDates.swift
+        Sources/F4/Services/CommandBar/CommandBarRowShortcuts.swift
+        Sources/F4/Services/CommandBar/CommandBarSystemSettingsSupport.swift
+        Sources/F4/Services/CommandBar/CommandBarFileSearchSupport.swift
+        Sources/F4/Services/CommandBar/CommandBarQueryMemory.swift
+        Sources/F4/Services/SpotlightNamesSupport.swift
+        Sources/F4/Services/QuickTools/MicMuteSupport.swift
+        Sources/F4/Services/QuickTools/QuickTogglesSupport.swift
+        Sources/F4/Services/QuickTools/ScreenshotCapturePolicy.swift
+        Sources/F4/Services/QuickTools/ScreenshotSupport.swift
+        Sources/F4/Services/QuickTools/ScreenshotRenderer.swift
+        Sources/F4/Services/QuickTools/RecentCaptureStore.swift
+        Sources/F4/Services/QuickTools/ScreenshotSharingSupport.swift
+        Sources/F4/Services/QuickTools/WindowActivationPolicy.swift
+        Sources/F4/Services/KeyboardDebounce/KeyboardDebounceSupport.swift
+        Sources/F4/Services/SuperKey/SuperKeySupport.swift
+        Sources/F4/Services/SuperKey/SuperKeyMappingGuard.swift
+        Sources/F4/Core/SuperKeyStrings.swift
+        Sources/F4/Services/SessionActivity.swift
+        Sources/F4/Services/SessionActivitySupport.swift
+        Sources/F4/Services/ScrollWheelSupport.swift
+        Sources/F4/Services/SmoothScrollSupport.swift
+        Sources/F4/Services/MouseAcceleration/MouseAccelerationSupport.swift
+        Sources/F4/Services/FocusFollowsMouse/FocusFollowsMouseSupport.swift
+        Sources/F4/Services/AssistiveKeyboard.swift
+        Sources/F4/Services/Switcher/SwitcherModels.swift
+        Sources/F4/Services/Switcher/SwitcherSupport.swift
+        Sources/F4/Services/Switcher/SpaceHopSupport.swift
+        Sources/F4/Services/Switcher/WindowUseOrder.swift
+        Sources/F4/Services/Metrics/MetricFormat.swift
+        Sources/F4/Services/Metrics/VMStatisticsDecoder.swift
+        Sources/F4/Services/KeepAwakeAutomationSupport.swift
+        Sources/F4/Services/SudoersSupport.swift
+        Sources/F4/Services/Metrics/BatteryTimeSupport.swift
+        Sources/F4/Services/BoundedProcessRunner.swift
+        Sources/F4/Services/DetachedProcess.swift
+        Sources/F4/Services/ShellSupport.swift
+        Sources/F4/Services/Metrics/NetworkProcessSupport.swift
+        Sources/F4/Services/Metrics/NetworkSampler.swift
+        Sources/F4/Services/Metrics/SpeedTest.swift
+        Sources/F4/Services/Metrics/PeripheralBatterySampler.swift
+        Sources/F4/Services/Metrics/PeripheralBatterySupport.swift
+        Sources/F4/Services/Metrics/DiskSupport.swift
+        Sources/F4/Services/Metrics/MonitorSamplingPolicy.swift
+        Sources/F4/Services/Metrics/MaxCapacityProbe.swift
+        Sources/F4/Services/Metrics/TemperatureSensorSelector.swift
+        Sources/F4/Services/Metrics/SustainedAlertGate.swift
+        Sources/F4/Services/WindowLayout/WindowLayoutSupport.swift
+        Sources/F4/Services/WindowLayout/WindowGestureSupport.swift
+        Sources/F4/Core/WindowDirectionalStrings.swift
+        Sources/F4/Services/CleaningMode/CleaningUnlockCounter.swift
+        Sources/F4/Services/Display/ExtraBrightnessSupport.swift
+        Sources/F4/Services/Display/BrightnessSupport.swift
+        Sources/F4/Services/Cleaner/CleanerSupport.swift
+        Sources/F4/Services/Cleaner/CleanerPolicy.swift
+        Sources/F4/Services/Cleaner/CleanerSchedule.swift
+        Sources/F4/Services/Uninstall/UninstallerSupport.swift
+        Sources/F4/Services/ManagedDownloads/WhatsAppDownloadSupport.swift
+        Sources/F4/Core/SecureInputSupport.swift
         Tests/*.swift
         build/generated-tests/*.swift
     )
@@ -487,7 +487,7 @@ if (( TEST )); then
     write_swift_output_file_map "$TEST_OUTPUT_FILE_MAP" "$TEST_OBJECT_DIR" "${TEST_SOURCES[@]}"
     echo "▸ Building & running tests against $(basename "$SDK")…"
     swiftc -Onone -incremental -enable-batch-mode -j "$(sysctl -n hw.logicalcpu)" \
-        -module-name AltF4Tests -output-file-map "$TEST_OUTPUT_FILE_MAP" \
+        -module-name F4Tests -output-file-map "$TEST_OUTPUT_FILE_MAP" \
         -target "$TARGET" -sdk "$SDK" "${SDK_COMPAT_FLAGS[@]}" \
         "${VM_STATISTICS_COMPAT_FLAGS[@]}" "${TEST_SOURCES[@]}" -o build/metrics-tests
     test_status=0
@@ -500,7 +500,7 @@ if (( TEST )); then
 fi
 
 echo "▸ Compiling ($BUILD_CONFIGURATION) against $(basename "$SDK")…"
-APP_SOURCES=(Sources/AltF4/**/*.swift)
+APP_SOURCES=(Sources/F4/**/*.swift)
 if (( DEV )); then
     APP_OBJECT_DIR="build/objects/$EXECUTABLE"
     mkdir -p build "$APP_OBJECT_DIR"
@@ -521,23 +521,23 @@ fi
 
 echo "▸ Compiling protected fan helper…"
 swiftc -O -target "$TARGET" -sdk "$SDK" "${SDK_COMPAT_FLAGS[@]}" "${BUILD_VARIANT_FLAGS[@]}" \
-    Sources/AltF4/Services/FanControl/FanControlSupport.swift \
-    Sources/AltF4/Services/FanControl/FanControlXPC.swift \
-    Sources/AltF4/Services/SystemMonitor/SMCClient.swift \
-    Sources/AltF4/Services/Metrics/TemperatureSensorSelector.swift \
-    Sources/AltF4/Services/FanControl/FanControlHardware.swift \
+    Sources/F4/Services/FanControl/FanControlSupport.swift \
+    Sources/F4/Services/FanControl/FanControlXPC.swift \
+    Sources/F4/Services/SystemMonitor/SMCClient.swift \
+    Sources/F4/Services/Metrics/TemperatureSensorSelector.swift \
+    Sources/F4/Services/FanControl/FanControlHardware.swift \
     Sources/FanControlHelper/main.swift \
     -o "build/$FAN_HELPER_ID"
 "build/$FAN_HELPER_ID" --selftest
 
 echo "▸ Compiling Now Playing adapter…"
 swiftc -O -target "$TARGET" -sdk "$SDK" "${SDK_COMPAT_FLAGS[@]}" -emit-library \
-    -module-name AltF4NowPlaying \
+    -module-name F4NowPlaying \
     Sources/NowPlayingAdapter/NowPlayingAdapter.swift \
     Sources/NowPlayingAdapter/NowPlayingQueue.swift \
     Sources/NowPlayingAdapter/NowPlayingSelection.swift \
-    Sources/AltF4/Services/Notch/NotchPlaybackSource.swift \
-    Sources/AltF4/Services/Notch/NotchPlaybackCommand.swift \
+    Sources/F4/Services/Notch/NotchPlaybackSource.swift \
+    Sources/F4/Services/Notch/NotchPlaybackCommand.swift \
     -o "build/$NOW_PLAYING_ADAPTER"
 
 echo "▸ Generating app icon…"
@@ -582,7 +582,7 @@ cp "build/$FAN_HELPER_ID" "$STAGE/Contents/Library/LaunchServices/$FAN_HELPER_ID
 mkdir -p "$STAGE/Contents/Frameworks"
 cp "build/$NOW_PLAYING_ADAPTER" "$STAGE/Contents/Frameworks/$NOW_PLAYING_ADAPTER"
 cp Resources/now-playing.pl "$STAGE/Contents/Resources/now-playing.pl"
-cp Resources/com.altf4.utils.fan-control.plist \
+cp Resources/com.f4.utils.fan-control.plist \
     "$STAGE/Contents/Library/LaunchDaemons/$FAN_HELPER_ID.plist"
 cp Resources/Info.plist "$STAGE/Contents/Info.plist"
 cp CHANGELOG.md "$STAGE/Contents/Resources/CHANGELOG.md"
@@ -599,14 +599,14 @@ if (( DEV )); then
     FAN_PLIST="$STAGE/Contents/Library/LaunchDaemons/$FAN_HELPER_ID.plist"
     /usr/libexec/PlistBuddy -c "Set :Label $FAN_HELPER_ID" "$FAN_PLIST"
     /usr/libexec/PlistBuddy -c "Set :BundleProgram Contents/Library/LaunchServices/$FAN_HELPER_ID" "$FAN_PLIST"
-    /usr/libexec/PlistBuddy -c "Delete :MachServices:com.altf4.utils.fan-control" "$FAN_PLIST"
+    /usr/libexec/PlistBuddy -c "Delete :MachServices:com.f4.utils.fan-control" "$FAN_PLIST"
     /usr/libexec/PlistBuddy -c "Add :MachServices:$FAN_HELPER_ID bool true" "$FAN_PLIST"
     # Stamp the source commit + build time so the running dev app shows (in About)
     # exactly which code it was compiled from. Lets you verify it matches HEAD before
     # testing, instead of unknowingly running a stale build. Dev-only; never shipped.
     SHA="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
     [[ -n "$(git status --porcelain 2>/dev/null)" ]] && SHA="$SHA-dirty"
-    /usr/libexec/PlistBuddy -c "Add :AltF4BuildCommit string '$SHA · $(date '+%Y-%m-%d %H:%M')'" "$STAGE/Contents/Info.plist"
+    /usr/libexec/PlistBuddy -c "Add :F4BuildCommit string '$SHA · $(date '+%Y-%m-%d %H:%M')'" "$STAGE/Contents/Info.plist"
     echo "  stamped dev build: $SHA"
 fi
 FAN_HELPER_VERSION="$(
@@ -617,7 +617,7 @@ FAN_HELPER_VERSION="$(
         | /usr/bin/awk '{print $1}' | /usr/bin/shasum -a 256 \
         | /usr/bin/awk '{print $1}'
 )"
-/usr/libexec/PlistBuddy -c "Add :AltF4FanControlHelperVersion string '$FAN_HELPER_VERSION'" \
+/usr/libexec/PlistBuddy -c "Add :F4FanControlHelperVersion string '$FAN_HELPER_VERSION'" \
     "$STAGE/Contents/Info.plist"
 printf 'APPL????' > "$STAGE/Contents/PkgInfo"
 cp build/AppIcon.icns "$STAGE/Contents/Resources/AppIcon.icns"
@@ -641,7 +641,7 @@ xattr -c -r "$STAGE" 2>/dev/null || true
 #      notarization), the app's entitlements and a secure timestamp. Gives a
 #      stable, team-based designated requirement, so permissions persist across
 #      updates AND Gatekeeper shows no "unverified developer" warning.
-#   2. "AltF4 Utils Signing" — the legacy stable self-signed identity, kept
+#   2. "F4 Utils Signing" — the legacy stable self-signed identity, kept
 #      as a fallback so contributors without a Developer ID still get a constant
 #      designated requirement across their local builds.
 #   3. Ad-hoc — fresh clone with no identity at all.
@@ -803,7 +803,7 @@ if (( INSTALL )); then
     stop_process "$EXECUTABLE"
     # Remove the pre-rename apps so two menu bar items never coexist. Same bundle
     # id, so macOS keeps the granted permissions for the new bundle.
-    for legacy in "Vorss:Vorss" "AltF4 Utils:AltF4Utils"; do
+    for legacy in "Vorss:Vorss" "F4 Utils:F4Utils"; do
         name="${legacy%%:*}"; proc="${legacy##*:}"
         if [[ -d "/Applications/$name.app" ]]; then
             stop_process "$proc"

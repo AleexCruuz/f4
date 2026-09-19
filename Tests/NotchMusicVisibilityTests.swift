@@ -88,7 +88,7 @@ enum NotchMusicVisibilityTests {
     }
 
     static func run(expect: (Bool, String) -> Void) {
-        let domain = "com.altf4.tests.notch-music-visibility"
+        let domain = "com.f4.tests.notch-music-visibility"
         let defaults = UserDefaults(suiteName: domain)!
         defaults.removePersistentDomain(forName: domain)
         ReviewDefaults.current = defaults

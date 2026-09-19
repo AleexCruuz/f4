@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (C) 2026 AltF4 contributors
+// Copyright (C) 2026 F4 contributors
 
 import AppKit
 
@@ -233,7 +233,7 @@ enum NotesTests {
     // MARK: - In the notch
 
     private static func placement(_ suite: TestSuite) {
-        suite.expect(NotchModule.notes.isAvailable(in: UserDefaults(suiteName: "com.altf4.tests.notes")!),
+        suite.expect(NotchModule.notes.isAvailable(in: UserDefaults(suiteName: "com.f4.tests.notes")!),
                      "notes are available wherever the island is")
         let roomy = NotchGeometry(screen: CGRect(x: 0, y: 0, width: 1470, height: 956), safeAreaTop: 32, cameraWidth: 180)
         suite.expect(roomy.expandedSize(module: .notes).width >= 720

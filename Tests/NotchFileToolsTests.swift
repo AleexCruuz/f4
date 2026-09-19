@@ -8,7 +8,7 @@ enum NotchFileToolsTests {
         NotchDownloadFolderChoiceTests.run(expect: expect)
         MediaDialogHostTests.run(expect: expect)
         ShelfDragCompletionTests.run(expect: expect)
-        let suite = "com.altf4.tests.notch-files"
+        let suite = "com.f4.tests.notch-files"
         let defaults = UserDefaults(suiteName: suite)!
         defaults.removePersistentDomain(forName: suite)
         defer { defaults.removePersistentDomain(forName: suite) }

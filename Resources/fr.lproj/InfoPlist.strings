@@ -1,24 +1,24 @@
 /* macOS Automation permission prompt. */
-"NSAppleEventsUsageDescription" = "AltF4 utilise Automatisation pour déplacer des fichiers, placer des éléments dans la Corbeille, ouvrir les commandes demandées et contrôler la lecture dans vos apps multimédias.";
+"NSAppleEventsUsageDescription" = "F4 utilise Automatisation pour déplacer des fichiers, placer des éléments dans la Corbeille, ouvrir les commandes demandées et contrôler la lecture dans vos apps multimédias.";
 
 /* macOS Screen & System Audio Recording permission prompt. */
-"NSAudioCaptureUsageDescription" = "AltF4 utilise le son de chaque app pour régler son volume dans le mixeur, pour animer les barres de musique de Dynamic Island et pour inclure le son du Mac dans les enregistrements d'écran que vous lancez. Rien ne quitte votre Mac.";
+"NSAudioCaptureUsageDescription" = "F4 utilise le son de chaque app pour régler son volume dans le mixeur, pour animer les barres de musique de Dynamic Island et pour inclure le son du Mac dans les enregistrements d'écran que vous lancez. Rien ne quitte votre Mac.";
 
 /* macOS Bluetooth permission prompt. */
-"NSBluetoothAlwaysUsageDescription" = "AltF4 utilise le Bluetooth uniquement pour lire la batterie des périphériques connectés. Rien ne quitte votre Mac.";
+"NSBluetoothAlwaysUsageDescription" = "F4 utilise le Bluetooth uniquement pour lire la batterie des périphériques connectés. Rien ne quitte votre Mac.";
 
 /* macOS Microphone permission prompt. */
-"NSMicrophoneUsageDescription" = "AltF4 enregistre votre micro uniquement quand vous l’activez pour un enregistrement d’écran. Le son reste sur votre Mac, sauf si vous créez un lien temporaire.";
+"NSMicrophoneUsageDescription" = "F4 enregistre votre micro uniquement quand vous l’activez pour un enregistrement d’écran. Le son reste sur votre Mac, sauf si vous créez un lien temporaire.";
 
 /* macOS Camera permission prompt. */
-"NSCameraUsageDescription" = "AltF4 affiche votre caméra uniquement dans la fenêtre d'aperçu que vous ouvrez, pour vérifier votre apparence avant un appel. Rien n'est enregistré et rien ne quitte votre Mac.";
+"NSCameraUsageDescription" = "F4 affiche votre caméra uniquement dans la fenêtre d'aperçu que vous ouvrez, pour vérifier votre apparence avant un appel. Rien n'est enregistré et rien ne quitte votre Mac.";
 
 /* macOS Downloads folder permission prompt. */
-"NSDownloadsFolderUsageDescription" = "AltF4 consulte les métadonnées locales de Téléchargements pour examiner, organiser ou placer dans la Corbeille uniquement les fichiers WhatsApp confirmés que vous choisissez.";
+"NSDownloadsFolderUsageDescription" = "F4 consulte les métadonnées locales de Téléchargements pour examiner, organiser ou placer dans la Corbeille uniquement les fichiers WhatsApp confirmés que vous choisissez.";
 
 /* macOS user-selected organizer destination prompts. */
-"NSDesktopFolderUsageDescription" = "AltF4 organise les téléchargements WhatsApp confirmés dans un dossier de destination que vous choisissez explicitement.";
-"NSDocumentsFolderUsageDescription" = "AltF4 organise les téléchargements WhatsApp confirmés dans un dossier de destination que vous choisissez explicitement.";
-"NSNetworkVolumesUsageDescription" = "AltF4 organise les téléchargements WhatsApp confirmés dans un dossier de destination que vous choisissez explicitement.";
-"NSRemovableVolumesUsageDescription" = "AltF4 organise les téléchargements WhatsApp confirmés dans un dossier de destination que vous choisissez explicitement.";
+"NSDesktopFolderUsageDescription" = "F4 organise les téléchargements WhatsApp confirmés dans un dossier de destination que vous choisissez explicitement.";
+"NSDocumentsFolderUsageDescription" = "F4 organise les téléchargements WhatsApp confirmés dans un dossier de destination que vous choisissez explicitement.";
+"NSNetworkVolumesUsageDescription" = "F4 organise les téléchargements WhatsApp confirmés dans un dossier de destination que vous choisissez explicitement.";
+"NSRemovableVolumesUsageDescription" = "F4 organise les téléchargements WhatsApp confirmés dans un dossier de destination que vous choisissez explicitement.";
 "NSCalendarsFullAccessUsageDescription" = "Affiche vos prochains rendez-vous en haut de l’écran. Les événements du calendrier restent sur ce Mac.";

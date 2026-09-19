@@ -40,7 +40,7 @@ def availability_declaration(path, prefix):
 
 def main():
     OUTPUT.mkdir(parents=True, exist_ok=True)
-    activator = "Sources/AltF4/Services/Switcher/WindowActivator.swift"
+    activator = "Sources/F4/Services/Switcher/WindowActivator.swift"
     write("SwitcherActivationBodies.swift", "import AppKit\nimport ApplicationServices\n"
           + "extension SwitcherActivationTests.Activator {\n"
           + "".join(declaration(activator, prefix).replace("private static", "static", 1)
@@ -48,13 +48,13 @@ def main():
                                    "    private static func activateAppCooperatively(",
                                    "    private static func activateSource("])
           + "}\nextension SwitcherActivationTests.Bridge {\n"
-          + declaration("Sources/AltF4/Services/Switcher/SpaceWindowBridge.swift",
+          + declaration("Sources/F4/Services/Switcher/SpaceWindowBridge.swift",
                         "    static func frontWindow(") + "}\n")
-    uninstall = "Sources/AltF4/Services/Uninstall/AppUninstaller.swift"
-    bar = "Sources/AltF4/Services/CommandBar/CommandBarService.swift"
+    uninstall = "Sources/F4/Services/Uninstall/AppUninstaller.swift"
+    bar = "Sources/F4/Services/CommandBar/CommandBarService.swift"
     write("CommandBarEmojiBodies.swift", "import Foundation\n"
           + "extension CommandBarEmojiContract.Catalog {\n"
-          + declaration("Sources/AltF4/Services/CommandBar/CommandBarCatalog.swift",
+          + declaration("Sources/F4/Services/CommandBar/CommandBarCatalog.swift",
                         "    static func emojiEntries(")
           + "}\nextension CommandBarEmojiContract.Service {\n"
           + "".join(declaration(bar, prefix).replace("private func", "func", 1)
@@ -75,21 +75,21 @@ def main():
               "    private func handleUninstallKey(", "    func stepBack()",
               "    private func finishUninstallReview()"])
           + "}\n}\nextension UninstallerFlowTests.Finder {\n"
-          + declaration("Sources/AltF4/Services/Finder/FinderCutPaste.swift", "    static func selectionURLs(")
+          + declaration("Sources/F4/Services/Finder/FinderCutPaste.swift", "    static func selectionURLs(")
           + "}\n")
-    dock = "Sources/AltF4/Services/DockPreview/DockPreviewService.swift"
+    dock = "Sources/F4/Services/DockPreview/DockPreviewService.swift"
     write("DockPreviewScope.swift", "import Foundation\nextension DockPreviewScopeTests.Service {\n"
           + "".join(declaration(dock, prefix).replace("private func", "func", 1)
                     for prefix in ["    private func syncSpaceObservation()",
                                    "    private func stopSpaceObservation()"])
           + "}\nextension DockPreviewScopeTests.WindowEnumerator {\n"
-          + declaration("Sources/AltF4/Services/Switcher/WindowEnumerator.swift",
+          + declaration("Sources/F4/Services/Switcher/WindowEnumerator.swift",
                         "    static func dockPreviewMayActivate(")
           + "}\n")
     # Entire input/mute services retain their production control flow. Only
     # visibility, scheduling, defaults and HAL transport are replaced by fixtures.
-    input_source = "Sources/AltF4/Services/Audio/AudioInputDeviceManager.swift"
-    mute_source = "Sources/AltF4/Services/QuickTools/MicMuteService.swift"
+    input_source = "Sources/F4/Services/Audio/AudioInputDeviceManager.swift"
+    mute_source = "Sources/F4/Services/QuickTools/MicMuteService.swift"
     input_bodies = (declaration(input_source, "struct MixerInputDevice:")
                     + declaration(input_source, "final class AudioInputDeviceManager:")
                     + declaration(mute_source, "final class MicMuteService:"))
@@ -102,7 +102,7 @@ def main():
         input_bodies = input_bodies.replace("AudioObject" + operation + "(", "HAL." + operation + "(")
     write("MixerInputVolume.swift", "import Foundation\nimport Combine\nimport CoreAudio\nimport AudioToolbox\n"
           + "extension MixerInputVolumeContract {\n" + input_bodies + "}\n")
-    mixer = "Sources/AltF4/Services/Audio/AppVolumeMixer.swift"
+    mixer = "Sources/F4/Services/Audio/AppVolumeMixer.swift"
     write("MixerOutputAdjustment.swift", "import CoreAudio\nimport Foundation\n"
           + "extension MixerOutputAdjustmentContract {\nfinal class Mixer {\n"
           + declaration(mixer, "    private struct OutputAdjustment {")
@@ -131,7 +131,7 @@ def main():
               "    private func isCurrentOutputAdjustment(", "    private var hasCurrentOutputAdjustment:",
               "    private func applyOutputControls(", "    private func drainOutputAdjustment("])
           + "}\n}\n")
-    cleaner = "Sources/AltF4/Services/Cleaner/JunkCleaner.swift"
+    cleaner = "Sources/F4/Services/Cleaner/JunkCleaner.swift"
     write("CleanerEligibilityBodies.swift", "import Foundation\nextension CleanerEligibilityTests {\n"
           + "".join(declaration(cleaner, "    private static func " + name)
                     .replace("private static func", "static func", 1)
@@ -145,14 +145,14 @@ def main():
           + "static func canRemove(_ item: Item, installed: Set<String> = []) -> Bool {\n"
           + "mayRemove(item, installed: installed)\n}\n}\n")
 
-    updates = "Sources/AltF4/Services/AppUpdates/AppUpdatesService.swift"
-    loader = "Sources/AltF4/Services/AppUpdates/AppUpdateFeedLoader.swift"
+    updates = "Sources/F4/Services/AppUpdates/AppUpdatesService.swift"
+    loader = "Sources/F4/Services/AppUpdates/AppUpdateFeedLoader.swift"
     # Only the network configuration, clock and declaration visibility change.
     # The loader, batch loop, catalog matching and fallback resolution stay verbatim.
     write("AppUpdates.swift", "import Foundation\nimport Darwin\nextension AppUpdatesContract {\n"
           + declaration(loader, "final class AppUpdateFeedLoader:")
           + "final class Service {\nlet workQueue = DispatchQueue(label: \"app-updates.contract\")\n"
-          + "let clock = Clock()\nstatic let ownPackageTokens: Set<String> = [\"altf4\", \"altf4@beta\", \"altf4-beta\"]\n"
+          + "let clock = Clock()\nstatic let ownPackageTokens: Set<String> = [\"f4\", \"f4@beta\", \"f4-beta\"]\n"
           + "static let onlineCatalogCacheLifetime: TimeInterval = 60 * 60\n"
           + "var onlineCatalogCache: (loadedAt: Foundation.Date, entries: [AppUpdatesSupport.CatalogEntry])?\n"
           + "lazy var catalogSession = URLSession(configuration: URLSessionConfiguration.ephemeral)\n"
@@ -174,10 +174,10 @@ def main():
           + declaration("Sources/NowPlayingAdapter/NowPlayingAdapter.swift", "private func sendPlaybackCommand(")
             .replace("private func", "static func", 1) + "}\n")
     write("NotchActivationButton.swift", "import AppKit\n"
-          + declaration("Sources/AltF4/Services/Notch/NotchWindowHost.swift", "final class NotchActivationButton:"))
+          + declaration("Sources/F4/Services/Notch/NotchWindowHost.swift", "final class NotchActivationButton:"))
     write("NotchPanel.swift", "import AppKit\n"
-          + declaration("Sources/AltF4/Services/Notch/NotchWindowHost.swift", "final class NotchPanel:"))
-    shelf = "Sources/AltF4/Services/Shelf/ShelfService.swift"
+          + declaration("Sources/F4/Services/Notch/NotchWindowHost.swift", "final class NotchPanel:"))
+    shelf = "Sources/F4/Services/Shelf/ShelfService.swift"
     write("ShelfDragCompletion.swift", "import Foundation\n\nextension ShelfDragCompletionContract {\n"
           + "final class Service {\nvar activeInternalDragIDs: [UUID] = []\n"
           + "weak var internalDragWindow: NSWindow?\nvar internalDragWasMerged = false\n"
@@ -191,7 +191,7 @@ def main():
           + declaration(shelf, "    func finishInternalDrag(")
           + declaration(shelf, "    func completeInternalDrag(")
           + "}\n}\n")
-    notch = "Sources/AltF4/Services/Notch/NotchService.swift"
+    notch = "Sources/F4/Services/Notch/NotchService.swift"
     write("NotchNotice.swift", "import AppKit\n" + declaration(notch, "struct NotchNotice:"))
     write("NotchVolumeFeedback.swift", "import Foundation\nimport Combine\n"
           + "extension NotchVolumeFeedbackTests {\nfinal class Service: State {\n"
@@ -199,20 +199,20 @@ def main():
               "    private func bindVolumeEvents(", "    private func volumeChanged(",
               "    private func showVolume(", "    func showCurrentVolume("])
           + "}\n}\n")
-    update = "Sources/AltF4/Services/Update/UpdateService.swift"
-    update_view = "Sources/AltF4/UI/Notch/NotchUpdateControl.swift"
+    update = "Sources/F4/Services/Update/UpdateService.swift"
+    update_view = "Sources/F4/UI/Notch/NotchUpdateControl.swift"
     write("NotchUpdate.swift", "import AppKit\nimport SwiftUI\nimport Combine\nextension NotchUpdateTests {\n"
           + "final class UpdateService: ObservableObject {\nstatic let shared = UpdateService()\n"
           + declaration(update, "    enum State:")
           + "@Published var state: State = .idle\n}\n"
           + "final class L10n: ObservableObject {\nstatic let shared = L10n()\n@Published var language = AppLanguage.enUS\n"
-          + declaration("Sources/AltF4/Core/Localization.swift", "    var s: Strings")
+          + declaration("Sources/F4/Core/Localization.swift", "    var s: Strings")
           + "}\nfinal class Service: State {\n"
           + declaration(notch, "    func showUpdate()")
           + "}\n"
           + declaration(update_view, "struct NotchUpdateControl:")
           + "}\n")
-    canvas = "Sources/AltF4/Services/Notch/NotchWindowHost.swift"
+    canvas = "Sources/F4/Services/Notch/NotchWindowHost.swift"
     write("NotchHover.swift", "import AppKit\nextension NotchHoverTests {\nfinal class Service: State {\n"
           + "".join(declaration(notch, prefix).replace("    private ", "    ", 1) for prefix in [
               "    private var hiddenUntilHover:", "    func hover(",
@@ -267,9 +267,9 @@ def main():
           + declaration(notch, "    func removeCapture(")
           + declaration(notch, "    private func clearCapture(")
           + "}\n}\n")
-    metric_view = "Sources/AltF4/UI/MenuPanel/MetricDetailView.swift"
-    navigation = "Sources/AltF4/Services/Notch/NotchNavigation.swift"
-    renderer = "Sources/AltF4/App/MenuBarRenderer.swift"
+    metric_view = "Sources/F4/UI/MenuPanel/MetricDetailView.swift"
+    navigation = "Sources/F4/Services/Notch/NotchNavigation.swift"
+    renderer = "Sources/F4/App/MenuBarRenderer.swift"
     metric_cases = "\n".join(line for line in declaration(metric_view, "enum MetricDetailKind:").splitlines()
                              if line.startswith("    case "))
     menu_metric_cases = "\n".join(line for line in declaration(renderer, "enum MenuBarMetric:").splitlines()
@@ -302,20 +302,20 @@ def main():
           + "}\n")
     write("ShelfDropRouting.swift", "import AppKit\n\nextension ShelfDropRoutingContract {\n"
           + declaration(canvas, "struct NotchFileDropActions {")
-          + declaration("Sources/AltF4/Services/Notch/NotchFileToolsService.swift", "struct NotchMediaSession:")
+          + declaration("Sources/F4/Services/Notch/NotchFileToolsService.swift", "struct NotchMediaSession:")
           + "final class ShelfService: ShelfState {\nstatic var shared = ShelfService()\n"
           + declaration(shelf, "    func acceptDrop(pasteboard:")
           + declaration(shelf, "    func accept(draggingInfo:")
           + declaration(shelf, "    func fileURLs(from")
           + declaration(shelf, "    private func unique(")
           + "}\nfinal class NotchFileToolsService: FileToolsState {\nstatic var shared = NotchFileToolsService()\n"
-          + declaration("Sources/AltF4/Services/Notch/NotchFileToolsService.swift", "    var offersMediaDrop:")
-          + declaration("Sources/AltF4/Services/Notch/NotchFileToolsService.swift", "    var canAcceptMediaDrop:")
-          + declaration("Sources/AltF4/Services/Notch/NotchFileToolsService.swift", "    func mediaDropContent(")
-          + declaration("Sources/AltF4/Services/Notch/NotchFileToolsService.swift", "    func openMediaDrop(")
-          + declaration("Sources/AltF4/Services/Notch/NotchFileToolsService.swift", "    func updateMediaHeight(")
-          + declaration("Sources/AltF4/Services/Notch/NotchFileToolsService.swift", "    func hideMedia(")
-          + declaration("Sources/AltF4/Services/Notch/NotchFileToolsService.swift", "    func showMedia(")
+          + declaration("Sources/F4/Services/Notch/NotchFileToolsService.swift", "    var offersMediaDrop:")
+          + declaration("Sources/F4/Services/Notch/NotchFileToolsService.swift", "    var canAcceptMediaDrop:")
+          + declaration("Sources/F4/Services/Notch/NotchFileToolsService.swift", "    func mediaDropContent(")
+          + declaration("Sources/F4/Services/Notch/NotchFileToolsService.swift", "    func openMediaDrop(")
+          + declaration("Sources/F4/Services/Notch/NotchFileToolsService.swift", "    func updateMediaHeight(")
+          + declaration("Sources/F4/Services/Notch/NotchFileToolsService.swift", "    func hideMedia(")
+          + declaration("Sources/F4/Services/Notch/NotchFileToolsService.swift", "    func showMedia(")
           + "}\nfinal class Notch: NotchState {\n"
           + declaration(notch, "    var canAcceptFileDrop:")
           + declaration(notch, "    func beginFileDrop(")
@@ -333,7 +333,7 @@ def main():
           + declaration(canvas, "    override func draggingExited(").replace("override func", "func", 1)
           + declaration(canvas, "    override func performDragOperation(").replace("override func", "func", 1)
           + "}\n}\n")
-    media_workspace = "Sources/AltF4/UI/Media/MediaWorkspaceView.swift"
+    media_workspace = "Sources/F4/UI/Media/MediaWorkspaceView.swift"
     write("MediaWorkspaceLayout.swift", "import AppKit\nimport SwiftUI\nimport UniformTypeIdentifiers\n"
           + "extension MediaWorkspaceLayoutTests {\n"
           + "struct Workspace: View {\nlet compact = true\n@ObservedObject var fixture: Fixture\n"
@@ -352,7 +352,7 @@ def main():
           + "var selectedTool: MediaTool { get { fixture.tool } nonmutating set { fixture.tool = newValue } }\n"
           + declaration(media_workspace, "    private var selectedToolBinding:").replace("private var", "var", 1)
           + "}\nfinal class FileView: HeightState {\n"
-          + declaration("Sources/AltF4/UI/Notch/NotchFilesView.swift", "    private func mediaHeightChanged(").replace("private func", "func", 1)
+          + declaration("Sources/F4/UI/Notch/NotchFilesView.swift", "    private func mediaHeightChanged(").replace("private func", "func", 1)
           + "}\n}\n")
     write("MediaDialogHost.swift", "import AppKit\n\nextension MediaDialogHostContract {\nenum Dialogs {\n"
           + "static var panelModalActive = false\n"
@@ -362,10 +362,10 @@ def main():
           + "struct Chip: View {\n@ObservedObject var model: Model\nlet strings = Strings()\n"
           + "var exportProgressLabel: String { strings.exportingLabel }\n"
           + "var body: some View { exportProgressChip }\n"
-          + declaration("Sources/AltF4/UI/Recorder/RecorderEditorView.swift", "    private var exportProgressChip:")
+          + declaration("Sources/F4/UI/Recorder/RecorderEditorView.swift", "    private var exportProgressChip:")
           + "}\n}\n")
-    switcher = "Sources/AltF4/UI/Switcher/SwitcherView.swift"
-    switcher_service = "Sources/AltF4/Services/Switcher/AppSwitcher.swift"
+    switcher = "Sources/F4/UI/Switcher/SwitcherView.swift"
+    switcher_service = "Sources/F4/Services/Switcher/AppSwitcher.swift"
     write("SwitcherScroll.swift", "import AppKit\nimport SwiftUI\n"
           + "extension SwitcherScrollContract {\nstruct Strip: View {\n"
           + "@ObservedObject var switcher: Model\n"
@@ -385,9 +385,9 @@ def main():
           + declaration(switcher_service, "    private var selectedItemID:")
           + declaration(switcher_service, "    private func applySearchFilter(")
           + "}\n")
-    service = "Sources/AltF4/Services/QuickTools/QuickLauncherService.swift"
-    view = "Sources/AltF4/UI/QuickLauncher/QuickLauncherView.swift"
-    panel_layout = (ROOT / "Sources/AltF4/UI/MenuPanel/PanelLayout.swift").read_text()
+    service = "Sources/F4/Services/QuickTools/QuickLauncherService.swift"
+    view = "Sources/F4/UI/QuickLauncher/QuickLauncherView.swift"
+    panel_layout = (ROOT / "Sources/F4/UI/MenuPanel/PanelLayout.swift").read_text()
     protocol = next(line for line in panel_layout.splitlines() if line.startswith("protocol PanelOrderItem:"))
     write("QuickLauncherBodies.swift", "import Foundation\nimport Carbon.HIToolbox\n" + protocol + "\n\nextension QuickLauncherContract {\n"
           + declaration(service, "enum QuickLauncherItem:")
@@ -410,8 +410,8 @@ def main():
           + declaration(view, "    private func isActive(_ item: QuickLauncherItem)")
           + "func display(_ item: QuickLauncherItem) -> (String, Bool) { (icon(for: item), isActive(item)) }\n}\n}\n")
 
-    preview = "Sources/AltF4/Services/QuickTools/ScreenshotQuickPreviewController.swift"
-    selection = "Sources/AltF4/Services/QuickTools/ScreenshotSelectionController.swift"
+    preview = "Sources/F4/Services/QuickTools/ScreenshotQuickPreviewController.swift"
+    selection = "Sources/F4/Services/QuickTools/ScreenshotSelectionController.swift"
     refresh_methods = [
         "    private func screenCaptureToolDidChange()",
         "    private func adoptCapturePolicy(",
@@ -440,7 +440,7 @@ def main():
           + "var showingSettings = false\n"
           + "var showingSections = false\nvar selectedMetric: Int?\nvar captureControls: Int?\n"
           + "var captureID: UUID?\nvar captureContent: Bool? = true\n"
-          + declaration("Sources/AltF4/Services/Notch/NotchService.swift", "    func isCaptureVisible(")
+          + declaration("Sources/F4/Services/Notch/NotchService.swift", "    func isCaptureVisible(")
           + "}\nfinal class Preview {\n"
           + declaration(preview, "    enum Action {")
           + "var keyMonitor: Any?\nvar closed = false\nvar shownInNotch = true\nlet presentationID = UUID()\n"
@@ -469,7 +469,7 @@ def main():
           + declaration(selection, "    private func installKeyMonitor()")
           + "}\n}\n")
 
-    lyrics = "Sources/AltF4/Services/Notch/NotchLyricsService.swift"
+    lyrics = "Sources/F4/Services/Notch/NotchLyricsService.swift"
     write("NotchLyricsLifecycle.swift", "import Foundation\nimport UniformTypeIdentifiers\n\nextension NotchLyricsContract {\n"
           + "final class Service {\nvar memory = NotchLyricsMemory()\n"
           + "var lyrics: NotchLyrics? { memory.lyrics }\nvar track: NotchMusicIdentity? { memory.track }\n"
@@ -485,7 +485,7 @@ def main():
           + declaration(lyrics, "    private func canReturnToLyrics(")
           + "}\n}\n")
 
-    music = "Sources/AltF4/Services/Notch/NotchMusicService.swift"
+    music = "Sources/F4/Services/Notch/NotchMusicService.swift"
     write("NotchMusicControls.swift", "import Foundation\n\nextension NotchMusicCommandContract {\n"
           + "final class Service {\ntypealias Command = NotchPlaybackCommand\n"
           + "var playback: NotchPlayback?\nvar generation = UUID()\nvar queueRequest: UUID?\n"
@@ -529,9 +529,9 @@ def main():
           + declaration(music, "    private func receiveValidation(").replace("private func", "func", 1)
           + declaration(music, "    private func cancelAutomationAction()").replace("private func", "func", 1)
           + "}\n}\nextension NotchMusicAutomationFlowContract.NotchMusicAutomation {\n"
-          + declaration("Sources/AltF4/Services/Notch/NotchMusicAutomation.swift", "    static func send(") + "}\n")
+          + declaration("Sources/F4/Services/Notch/NotchMusicAutomation.swift", "    static func send(") + "}\n")
 
-    keep_awake = "Sources/AltF4/Services/KeepAwakeManager.swift"
+    keep_awake = "Sources/F4/Services/KeepAwakeManager.swift"
     write("KeepAwakeTimerHandoff.swift", "import Foundation\n\nextension KeepAwakeTimerHandoffContract {\n"
           + "final class Service {\nvar sessionTrigger = SessionTrigger.manual\n"
           + "var automationSuppressedUntilConditionsClear = false\n"
@@ -549,7 +549,7 @@ def main():
             .replace("private func", "func", 1)
           + "}\n}\n")
 
-    downloads = "Sources/AltF4/Services/Notch/NotchDownloadService.swift"
+    downloads = "Sources/F4/Services/Notch/NotchDownloadService.swift"
     write("NotchDownloadFolderChoice.swift", "import Foundation\n\nextension NotchDownloadFolderChoiceContract {\n"
           + "final class Service {\nvar chooser: NSOpenPanel?\nvar chooserID = UUID()\n"
           + "var folderUnavailable = false\nvar syncs = 0\nvar stops = 0\n"
@@ -563,7 +563,7 @@ def main():
 
     factories = []
     pattern = r"static\s+func\s+(\w+)\s*\(\s*_\s+\w+:\s*AppLanguage\s*\)\s*->"
-    for path in sorted((ROOT / "Sources/AltF4/Core").glob("*Strings.swift")):
+    for path in sorted((ROOT / "Sources/F4/Core").glob("*Strings.swift")):
         source = path.read_text()
         if "extension FeatureStrings" in source or "enum FeatureStrings" in source:
             scopes = re.findall(r"(?:extension|enum) FeatureStrings \{(.*?)^\}", source, re.S | re.M)

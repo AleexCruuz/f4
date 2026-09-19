@@ -20,8 +20,8 @@ fi
 
 TMP="${RUNNER_TEMP:-/tmp}"
 KCPASS="ci-signing"
-KC="$TMP/altf4-signing.keychain-db"
-P12="$TMP/altf4-signing.p12"
+KC="$TMP/f4-signing.keychain-db"
+P12="$TMP/f4-signing.p12"
 
 printf '%s' "$SIGNING_CERT_P12" | base64 --decode > "$P12"
 security create-keychain -p "$KCPASS" "$KC"
