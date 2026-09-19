@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>AltF4</title>
+<title>F4</title>
 <meta name="description" content="Herramientas para el notch y la barra de menús de tu Mac. Privado y seguro.">
-<meta property="og:title" content="AltF4">
+<meta property="og:title" content="F4">
 <meta property="og:description" content="Herramientas para el notch y la barra de menús de tu Mac.">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#f2f2f2" media="(prefers-color-scheme: light)">
@@ -288,17 +288,17 @@
 
 <main>
   <div class="intro">
-    <h1 class="reveal" style="--d: 60ms">AltF4</h1>
+    <h1 class="reveal" style="--d: 60ms">F4</h1>
     <p class="lede reveal" style="--d: 140ms">Herramientas para el notch y la barra de menús de tu Mac. Privado y seguro.</p>
   </div>
 
   <section class="get reveal" id="get-mac" style="--d: 240ms" aria-label="Descarga">
-    <a class="button" href="https://github.com/AleexCruuz/f4/releases/latest/download/AltF4.dmg">
+    <a class="button" href="https://github.com/AleexCruuz/f4/releases/latest/download/F4.dmg">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>
       Descargar para Mac
     </a>
     <p class="meta">Gratis · <a href="https://github.com/AleexCruuz/f4">Código abierto</a> · Apple Silicon, macOS 14 o posterior</p>
-    <p class="note" id="intel" hidden>Este Mac parece tener procesador Intel. AltF4 solo funciona en <strong>Apple Silicon</strong> (M1 o posterior).</p>
+    <p class="note" id="intel" hidden>Este Mac parece tener procesador Intel. F4 solo funciona en <strong>Apple Silicon</strong> (M1 o posterior).</p>
     <details class="help">
       <summary><span class="plus" aria-hidden="true"></span>¿macOS no te deja abrirla?</summary>
       <p>Es normal la primera vez. Ve a Ajustes del Sistema › Privacidad y seguridad y pulsa <b>Abrir igualmente</b>.</p>
@@ -306,7 +306,7 @@
   </section>
 
   <section class="get reveal" id="get-phone" style="--d: 240ms" aria-label="Abrir en el Mac" hidden>
-    <p class="note">AltF4 se instala en el Mac. Abre este enlace desde tu ordenador:</p>
+    <p class="note">F4 se instala en el Mac. Abre este enlace desde tu ordenador:</p>
     <p class="url" id="url"></p>
     <div class="row">
       <button class="button" id="copy" type="button">Copiar enlace</button>
@@ -315,8 +315,8 @@
   </section>
 
   <section class="get reveal" id="get-other" style="--d: 240ms" aria-label="Solo para Mac" hidden>
-    <p class="note">AltF4 es una app para Mac con <strong>Apple Silicon</strong>. Abre esta página desde un Mac para descargarla.</p>
-    <p class="meta"><a href="https://github.com/AleexCruuz/f4/releases/latest/download/AltF4.dmg">Descargar de todos modos</a></p>
+    <p class="note">F4 es una app para Mac con <strong>Apple Silicon</strong>. Abre esta página desde un Mac para descargarla.</p>
+    <p class="meta"><a href="https://github.com/AleexCruuz/f4/releases/latest/download/F4.dmg">Descargar de todos modos</a></p>
   </section>
 
   <ul class="features">
@@ -386,7 +386,7 @@
       if (navigator.share) {
         $("share").hidden = false;
         $("share").addEventListener("click", () => {
-          navigator.share({ title: "AltF4", url: link }).catch(() => {});
+          navigator.share({ title: "F4", url: link }).catch(() => {});
         });
       }
     } else if (!mac) {
