@@ -1,0 +1,684 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AltF4</title>
+<meta name="description" content="Herramientas para el notch y la barra de menús de tu Mac. Privado y seguro.">
+<meta property="og:title" content="AltF4">
+<meta property="og:description" content="Herramientas para el notch y la barra de menús de tu Mac.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f2f2f2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='72 72 368 368'%3E%3Cstyle%3Eg%7Bfill:%23000%7D@media (prefers-color-scheme:dark)%7Bg%7Bfill:%23fff%7D%7D%3C/style%3E%3Cg%3E%3Crect x='80' y='128' width='56' height='256'/%3E%3Crect x='80' y='128' width='160' height='56'/%3E%3Crect x='80' y='228' width='132' height='56'/%3E%3Crect x='272' y='128' width='56' height='156'/%3E%3Crect x='272' y='228' width='160' height='56'/%3E%3Crect x='376' y='128' width='56' height='256'/%3E%3C/g%3E%3C/svg%3E">
+<style>
+  :root {
+    --sweep-hi: #ffffff;
+    --sweep-mid: #f2f2f2;
+    --sweep-edge: #e6e6e6;
+    --ink: #0a0a0a;
+    --muted: #666666;
+    --line: #d6d6d6;
+    --press: #2b2b2b;
+    --btn-glint: rgba(255, 255, 255, 0.18);
+    --key-top: #ffffff;
+    --key-bottom: #f3f3f3;
+    --key-ring: rgba(0, 0, 0, 0.08);
+    --key-side: #d2d2d2;
+    --key-glint: #ffffff;
+    --key-shadow: rgba(0, 0, 0, 0.22);
+    --vol-lo: #000000;
+    --vol-hi: #5c5c5c;
+    --vol-edge: rgba(255, 255, 255, 0.4);
+    --vol-shadow: rgba(0, 0, 0, 0.3);
+    --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --sweep-hi: #1d1d1d;
+      --sweep-mid: #0c0c0c;
+      --sweep-edge: #000000;
+      --ink: #f2f2f2;
+      --muted: #8c8c8c;
+      --line: #262626;
+      --press: #d0d0d0;
+      --btn-glint: rgba(255, 255, 255, 0);
+      --key-top: #262626;
+      --key-bottom: #191919;
+      --key-ring: rgba(255, 255, 255, 0.07);
+      --key-side: #000000;
+      --key-glint: rgba(255, 255, 255, 0.1);
+      --key-shadow: rgba(0, 0, 0, 0.9);
+      --vol-lo: #000000;
+      --vol-hi: #3c3c3c;
+      --vol-edge: rgba(255, 255, 255, 0.3);
+      --vol-shadow: rgba(0, 0, 0, 0.85);
+    }
+  }
+  :root[data-theme="dark"] {
+    --sweep-hi: #1d1d1d;
+    --sweep-mid: #0c0c0c;
+    --sweep-edge: #000000;
+    --ink: #f2f2f2;
+    --muted: #8c8c8c;
+    --line: #262626;
+    --press: #d0d0d0;
+    --btn-glint: rgba(255, 255, 255, 0);
+    --key-top: #262626;
+    --key-bottom: #191919;
+    --key-ring: rgba(255, 255, 255, 0.07);
+    --key-side: #000000;
+    --key-glint: rgba(255, 255, 255, 0.1);
+    --key-shadow: rgba(0, 0, 0, 0.9);
+    --vol-lo: #000000;
+    --vol-hi: #3c3c3c;
+    --vol-edge: rgba(255, 255, 255, 0.3);
+    --vol-shadow: rgba(0, 0, 0, 0.85);
+  }
+
+  [hidden] { display: none !important; }
+  html { background: var(--sweep-edge); }
+  body {
+    margin: 0;
+    background: var(--sweep-edge);
+    color: var(--ink);
+    font: 400 15px/1.55 var(--sans);
+    -webkit-font-smoothing: antialiased;
+    -webkit-text-size-adjust: 100%;
+    overflow-x: hidden;
+  }
+
+  /* Studio sweep: one soft key light behind the mark, falling off to the edges. */
+  .sweep {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: radial-gradient(120% 95% at var(--sx, 72%) var(--sy, 46%), var(--sweep-hi) 0%, var(--sweep-mid) 42%, var(--sweep-edge) 100%);
+  }
+  .object {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 0;
+    display: block;
+    width: 100%;
+    height: 100vh;
+    height: 100svh;
+    min-height: 560px;
+    touch-action: pan-y;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .object.grab { cursor: grab; }
+  .object.grabbing { cursor: grabbing; }
+
+  /* The column lets pointers through its empty padding, so the block behind it stays reachable. */
+  main {
+    position: relative;
+    z-index: 1;
+    pointer-events: none;
+    max-width: 30rem;
+    padding-inline: clamp(24px, 9vw, 144px) 24px;
+    padding-block: clamp(64px, 14vh, 156px) 72px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 36px;
+  }
+  main > * { pointer-events: auto; }
+
+  .intro { display: grid; gap: 12px; }
+  h1 {
+    margin: 0;
+    font-size: clamp(46px, 5.2vw, 64px);
+    line-height: 1;
+    font-weight: 700;
+    letter-spacing: -0.035em;
+  }
+  .lede { margin: 0; font-size: 18px; line-height: 1.45; max-width: 24em; text-wrap: pretty; }
+
+  .get { display: grid; gap: 14px; justify-items: start; }
+
+  .button {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 24px;
+    background: var(--ink);
+    color: var(--sweep-hi);
+    font: 600 15px/1 var(--sans);
+    text-decoration: none;
+    border: 0;
+    border-radius: 0;
+    cursor: pointer;
+    box-shadow: inset 0 1px 0 var(--btn-glint), 0 16px 30px -18px var(--key-shadow);
+    transition: background-color 140ms ease, transform 140ms ease;
+  }
+  .button:hover { background: var(--press); }
+  .button:active { transform: translateY(1px); }
+  .button svg { width: 17px; height: 17px; margin-top: -3px; fill: currentColor; }
+  .button.quiet { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--ink); }
+  .button.quiet:hover { background: var(--line); }
+
+  .meta { margin: 0; font-size: 13px; color: var(--muted); }
+  .meta a { color: inherit; text-underline-offset: 3px; }
+  .meta a:hover { color: var(--ink); }
+
+  .note { margin: 0; max-width: 26em; }
+  .note strong { font-weight: 600; }
+
+  .help { font-size: 13px; color: var(--muted); max-width: 26em; }
+  .help summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    list-style: none;
+  }
+  .help summary::-webkit-details-marker { display: none; }
+  .help summary:hover { color: var(--ink); }
+  .help p { margin: 8px 0 0 17px; line-height: 1.5; }
+  .help b { color: var(--ink); font-weight: 500; }
+  .plus { position: relative; width: 9px; height: 9px; flex: none; }
+  .plus::before, .plus::after {
+    content: "";
+    position: absolute;
+    background: currentColor;
+    transition: transform 200ms var(--ease);
+  }
+  .plus::before { left: 0; top: 3.75px; width: 9px; height: 1.5px; }
+  .plus::after { left: 3.75px; top: 0; width: 1.5px; height: 9px; }
+  .help[open] .plus::after { transform: scaleY(0); }
+
+  .url {
+    margin: 0;
+    font: 500 19px/1.3 var(--mono);
+    letter-spacing: -0.01em;
+    overflow-wrap: anywhere;
+    user-select: all;
+    -webkit-user-select: all;
+  }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; }
+
+  .features {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px 20px;
+  }
+  .feature { display: flex; align-items: flex-start; gap: 14px; }
+  .feature .label { display: grid; gap: 1px; font-size: 13px; line-height: 1.4; color: var(--muted); }
+  .feature b { font-size: 14px; font-weight: 600; color: var(--ink); }
+
+  /* Keycaps: Alt and F4 are keys, so the icons sit on keys. */
+  .key {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 7px;
+    color: var(--ink);
+    background: linear-gradient(180deg, var(--key-top), var(--key-bottom));
+    box-shadow: inset 0 1px 0 var(--key-glint), 0 0 0 1px var(--key-ring), 0 2px 0 var(--key-side), 0 10px 18px -10px var(--key-shadow);
+    transition: transform 150ms var(--ease), box-shadow 150ms var(--ease);
+  }
+  .feature:is(:hover, .play) .key {
+    transform: translateY(2px);
+    box-shadow: inset 0 1px 0 var(--key-glint), 0 0 0 1px var(--key-ring), 0 0 0 var(--key-side), 0 5px 10px -8px var(--key-shadow);
+  }
+
+  .icon { width: 22px; height: 22px; fill: currentColor; overflow: visible; }
+  .icon * { transform-box: fill-box; }
+
+  .island { transform-origin: 50% 0; }
+  .feature:is(:hover, .play) .island { animation: island 1000ms var(--ease); }
+  @keyframes island { 35%, 60% { transform: scale(2.1, 1.7); } }
+
+  .line { transform-origin: 0 50%; }
+  .feature:is(:hover, .play) .line { animation: write 900ms var(--ease) both; }
+  .feature:is(:hover, .play) .line + .line { animation-delay: 120ms; }
+  @keyframes write { 0% { transform: scaleX(0); } }
+
+  .corner { --x: 0px; --y: 0px; }
+  .corner.tl { --x: 2px; --y: 2px; }
+  .corner.tr { --x: -2px; --y: 2px; }
+  .corner.bl { --x: 2px; --y: -2px; }
+  .corner.br { --x: -2px; --y: -2px; }
+  .feature:is(:hover, .play) .corner { animation: aim 900ms var(--ease); }
+  @keyframes aim { 40% { transform: translate(var(--x), var(--y)); } }
+  .shutter { transform-origin: 50% 50%; }
+  .feature:is(:hover, .play) .shutter { animation: shutter 900ms var(--ease); }
+  @keyframes shutter { 40% { transform: scale(0); } 60% { transform: scale(1.5); } }
+
+  .bar { transform-origin: 50% 100%; }
+  .feature:is(:hover, .play) .bar { animation: level 1000ms var(--ease); }
+  .feature:is(:hover, .play) .bar:nth-child(2) { animation-delay: 90ms; }
+  .feature:is(:hover, .play) .bar:nth-child(3) { animation-delay: 180ms; }
+  @keyframes level { 30% { transform: scaleY(0.35); } 65% { transform: scaleY(1.12); } }
+
+  .more { margin: -8px 0 0; font-size: 13px; color: var(--muted); }
+
+  .reveal { animation: rise 760ms var(--ease) both; animation-delay: var(--d, 0ms); }
+  @keyframes rise { from { opacity: 0; transform: translateY(12px); } }
+
+  a:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+
+  @media (max-width: 899px) {
+    .object { height: 300px; min-height: 0; }
+    main { padding-top: 296px; }
+    .sweep { --sx: 30%; --sy: 10%; }
+  }
+  @media (max-width: 359px) {
+    .features { grid-template-columns: minmax(0, 1fr); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal, .feature * { animation: none !important; }
+    .button, .key, .plus::before, .plus::after { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="sweep" aria-hidden="true"></div>
+<canvas class="object" id="object" aria-hidden="true"></canvas>
+
+<main>
+  <div class="intro">
+    <h1 class="reveal" style="--d: 60ms">AltF4</h1>
+    <p class="lede reveal" style="--d: 140ms">Herramientas para el notch y la barra de menús de tu Mac. Privado y seguro.</p>
+  </div>
+
+  <section class="get reveal" id="get-mac" style="--d: 240ms" aria-label="Descarga">
+    <a class="button" href="https://github.com/AleexCruuz/f4/releases/latest/download/AltF4.dmg">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>
+      Descargar para Mac
+    </a>
+    <p class="meta">Gratis · <a href="https://github.com/AleexCruuz/f4">Código abierto</a> · Apple Silicon, macOS 14 o posterior</p>
+    <p class="note" id="intel" hidden>Este Mac parece tener procesador Intel. AltF4 solo funciona en <strong>Apple Silicon</strong> (M1 o posterior).</p>
+    <details class="help">
+      <summary><span class="plus" aria-hidden="true"></span>¿macOS no te deja abrirla?</summary>
+      <p>Es normal la primera vez. Ve a Ajustes del Sistema › Privacidad y seguridad y pulsa <b>Abrir igualmente</b>.</p>
+    </details>
+  </section>
+
+  <section class="get reveal" id="get-phone" style="--d: 240ms" aria-label="Abrir en el Mac" hidden>
+    <p class="note">AltF4 se instala en el Mac. Abre este enlace desde tu ordenador:</p>
+    <p class="url" id="url"></p>
+    <div class="row">
+      <button class="button" id="copy" type="button">Copiar enlace</button>
+      <button class="button quiet" id="share" type="button" hidden>Compartir</button>
+    </div>
+  </section>
+
+  <section class="get reveal" id="get-other" style="--d: 240ms" aria-label="Solo para Mac" hidden>
+    <p class="note">AltF4 es una app para Mac con <strong>Apple Silicon</strong>. Abre esta página desde un Mac para descargarla.</p>
+    <p class="meta"><a href="https://github.com/AleexCruuz/f4/releases/latest/download/AltF4.dmg">Descargar de todos modos</a></p>
+  </section>
+
+  <ul class="features">
+    <li class="feature reveal" style="--d: 380ms">
+      <span class="key" aria-hidden="true">
+        <svg class="icon" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M2 5h20v14H2zM4 7v10h16V7z"/><rect class="island" x="9" y="7" width="6" height="2.5"/></svg>
+      </span>
+      <span class="label"><b>El notch, útil</b>Música, avisos y archivos junto a la cámara.</span>
+    </li>
+    <li class="feature reveal" style="--d: 450ms">
+      <span class="key" aria-hidden="true">
+        <svg class="icon" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M5 5h14v16H5zM7 7v12h10V7z"/><rect x="8" y="3" width="8" height="4"/><rect class="line" x="9" y="10.5" width="6" height="2"/><rect class="line" x="9" y="14.5" width="4" height="2"/></svg>
+      </span>
+      <span class="label"><b>Portapapeles</b>Historial y acciones con IA local.</span>
+    </li>
+    <li class="feature reveal" style="--d: 520ms">
+      <span class="key" aria-hidden="true">
+        <svg class="icon" viewBox="0 0 24 24"><path class="corner tl" d="M3 3h7v2H5v5H3z"/><path class="corner tr" d="M21 3h-7v2h5v5h2z"/><path class="corner bl" d="M3 21h7v-2H5v-5H3z"/><path class="corner br" d="M21 21h-7v-2h5v-5h2z"/><rect class="shutter" x="10.5" y="10.5" width="3" height="3"/></svg>
+      </span>
+      <span class="label"><b>Capturas</b>Recorta, anota y graba la pantalla.</span>
+    </li>
+    <li class="feature reveal" style="--d: 590ms">
+      <span class="key" aria-hidden="true">
+        <svg class="icon" viewBox="0 0 24 24"><rect class="bar" x="3" y="12" width="4" height="9"/><rect class="bar" x="10" y="5" width="4" height="16"/><rect class="bar" x="17" y="9" width="4" height="12"/></svg>
+      </span>
+      <span class="label"><b>Sistema</b>CPU, memoria y batería de un vistazo.</span>
+    </li>
+  </ul>
+  <p class="more reveal" style="--d: 660ms">Y más de 60 funciones: instalas solo las que uses.</p>
+</main>
+
+<script>
+  (() => {
+    const $ = (id) => document.getElementById(id);
+    const motion = matchMedia("(prefers-reduced-motion: reduce)");
+
+    // Where the page was opened decides what it offers: a phone gets the link to carry to a Mac.
+    const ua = navigator.userAgent;
+    const iPadOS = /Macintosh/.test(ua) && navigator.maxTouchPoints > 1;
+    const phone = iPadOS || /iPhone|iPad|iPod|Android|Mobile/i.test(ua);
+    const mac = !phone && /Macintosh|Mac OS X/.test(ua);
+
+    if (phone) {
+      $("get-mac").hidden = true;
+      $("get-phone").hidden = false;
+      const link = location.href.split("#")[0];
+      $("url").textContent = link.replace(/^https?:\/\//, "").replace(/\/$/, "");
+      const selectURL = () => {
+        const range = document.createRange();
+        range.selectNodeContents($("url"));
+        const selection = getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+      };
+      $("copy").addEventListener("click", (event) => {
+        const button = event.currentTarget;
+        const done = () => {
+          button.textContent = "Copiado";
+          setTimeout(() => { button.textContent = "Copiar enlace"; }, 1800);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(link).then(done, selectURL);
+        } else {
+          selectURL();
+        }
+      });
+      if (navigator.share) {
+        $("share").hidden = false;
+        $("share").addEventListener("click", () => {
+          navigator.share({ title: "AltF4", url: link }).catch(() => {});
+        });
+      }
+    } else if (!mac) {
+      $("get-mac").hidden = true;
+      $("get-other").hidden = false;
+    } else if (navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) {
+      navigator.userAgentData.getHighEntropyValues(["architecture"]).then((v) => {
+        if (v.architecture === "x86") $("intel").hidden = false;
+      }, () => {});
+    }
+
+    if (!motion.matches) {
+      document.querySelectorAll(".feature").forEach((el, i) => {
+        setTimeout(() => {
+          el.classList.add("play");
+          setTimeout(() => el.classList.remove("play"), 1100);
+        }, 1300 + i * 160);
+      });
+    }
+
+    // The brandmark, extruded: the same six bars as the logo, traced as two outlines.
+    const canvas = $("object");
+    const ctx = canvas.getContext && canvas.getContext("2d");
+    if (!ctx) return;
+
+    const GLYPHS = [
+      { delay: 0.15, poly: [[80, 128], [240, 128], [240, 184], [136, 184], [136, 228], [212, 228], [212, 284], [136, 284], [136, 384], [80, 384]] },
+      { delay: 0.32, poly: [[272, 128], [328, 128], [328, 228], [376, 228], [376, 128], [432, 128], [432, 384], [376, 384], [376, 284], [272, 284]] },
+    ].map((g) => ({ delay: g.delay, pts: g.poly.map(([x, y]) => [x - 256, y - 256]) }));
+    const DEPTH = 80;
+    const FOCAL = 1900;
+    const REST = [0.32, -0.2];
+    const LIGHT = (() => { const v = [0.25, -0.75, 0.6], l = Math.hypot(...v); return v.map((c) => c / l); })();
+    const OFFSCREEN = 10000;
+    const DRAG = 0.008;
+    const RETURN = 2;
+
+    const target = { x: 0, y: 0 };
+    const tilt = { x: 0, y: 0 };
+    const spin = { x: 0, y: 0, vx: 0, vy: 0 };
+    const born = performance.now();
+    let W = 0, H = 0, dpr = 1, cx = 0, cy = 0, k = 1, colors = null, raf = 0, onScreen = true;
+    let grab = null, bounds = null, last = born;
+
+    const clamp = (t) => Math.min(1, Math.max(0, t));
+    const out = (t) => 1 - Math.pow(1 - t, 3);
+    const inOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+
+    const rgb = (value) => {
+      const c = value.trim();
+      if (c[0] === "#") {
+        const h = c.length === 4 ? c.slice(1).split("").map((x) => x + x).join("") : c.slice(1, 7);
+        return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16));
+      }
+      return (c.match(/[\d.]+/g) || [128, 128, 128]).slice(0, 3).map(Number);
+    };
+    const readColors = () => {
+      const s = getComputedStyle(document.documentElement);
+      colors = {
+        lo: rgb(s.getPropertyValue("--vol-lo")),
+        hi: rgb(s.getPropertyValue("--vol-hi")),
+        edge: s.getPropertyValue("--vol-edge").trim(),
+        shadow: s.getPropertyValue("--vol-shadow").trim(),
+      };
+    };
+    const shade = (i) => {
+      const g = Math.pow(i, 2.2);
+      return "rgb(" + colors.lo.map((lo, c) => Math.round(lo + (colors.hi[c] - lo) * g)).join(",") + ")";
+    };
+
+    const measure = () => {
+      const box = canvas.getBoundingClientRect();
+      W = box.width;
+      H = box.height;
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.round(W * dpr);
+      canvas.height = Math.round(H * dpr);
+      const column = document.querySelector(".intro").getBoundingClientRect();
+      let width;
+      if (W >= 900) {
+        const left = column.right + 48, room = W - left - 48;
+        width = Math.max(180, Math.min(room * 0.8, H * 0.58 * 352 / 256, 620));
+        cx = left + room / 2;
+        cy = H * 0.48;
+      } else {
+        width = Math.min(W * 0.56, 240);
+        cx = column.left + width / 2 + 16;
+        cy = H * 0.5;
+      }
+      k = width / 352;
+    };
+
+    // Released, the block returns to rest on a critically damped spring: no bounce, about two seconds.
+    const settle = (dt) => {
+      for (const axis of ["x", "y"]) {
+        const v = "v" + axis;
+        spin[v] += (-RETURN * RETURN * spin[axis] - 2 * RETURN * spin[v]) * dt;
+        spin[axis] += spin[v] * dt;
+        if (Math.abs(spin[axis]) < 1e-4 && Math.abs(spin[v]) < 1e-3) { spin[axis] = 0; spin[v] = 0; }
+      }
+    };
+
+    const draw = (now) => {
+      const dt = Math.min(0.05, Math.max(0, (now - last) / 1000));
+      last = now;
+      const still = motion.matches;
+      const t = still ? 60 : (now - born) / 1000;
+      if (still) { tilt.x = 0; tilt.y = 0; } else {
+        tilt.x += (target.x - tilt.x) * 0.05;
+        tilt.y += (target.y - tilt.y) * 0.05;
+      }
+      if (!grab) settle(dt);
+      const turn = inOut(clamp((t - 0.15) / 1.8));
+      const sway = still ? 0 : 1;
+      const a = turn * (REST[0] + sway * 0.1 * Math.sin(t * 0.35)) + tilt.x * 0.22 + spin.x;
+      const b = turn * (REST[1] + sway * 0.05 * Math.sin(t * 0.27)) + tilt.y * 0.12 + spin.y;
+      const ca = Math.cos(a), sa = Math.sin(a), cb = Math.cos(b), sb = Math.sin(b);
+      const rot = (x, y, z) => {
+        const x1 = x * ca + z * sa, z1 = z * ca - x * sa;
+        return [x1, y * cb - z1 * sb, y * sb + z1 * cb];
+      };
+      const project = (p) => {
+        const s = (FOCAL / (FOCAL - p[2])) * k;
+        return [cx + p[0] * s, cy + p[1] * s];
+      };
+      const edge = [Infinity, Infinity, -Infinity, -Infinity];
+      const trace = (points) => {
+        ctx.beginPath();
+        points.forEach((v, i) => {
+          const [x, y] = project(v);
+          if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y);
+          edge[0] = Math.min(edge[0], x); edge[1] = Math.min(edge[1], y);
+          edge[2] = Math.max(edge[2], x); edge[3] = Math.max(edge[3], y);
+        });
+        ctx.closePath();
+      };
+      const dot = (n, m) => n[0] * m[0] + n[1] * m[1] + n[2] * m[2];
+      const seen = (n, p) => n[0] * -p[0] + n[1] * -p[1] + n[2] * (FOCAL - p[2]) > 0;
+
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, W, H);
+
+      // Each letter is a prism: its visible cap is never hidden by its own walls, so walls go first.
+      const solids = GLYPHS.map((g) => {
+        const d = DEPTH * out(clamp((t - g.delay) / 1.3));
+        const zf = d / 2, zb = -d / 2, n = g.pts.length;
+        const walls = [];
+        if (d > 0.5) {
+          for (let i = 0; i < n; i++) {
+            const A = g.pts[i], B = g.pts[(i + 1) % n];
+            const len = Math.hypot(B[0] - A[0], B[1] - A[1]);
+            const normal = rot((B[1] - A[1]) / len, (A[0] - B[0]) / len, 0);
+            const vs = [rot(A[0], A[1], zf), rot(B[0], B[1], zf), rot(B[0], B[1], zb), rot(A[0], A[1], zb)];
+            if (!seen(normal, vs[0])) continue;
+            walls.push({ vs, normal, depth: (vs[0][2] + vs[1][2] + vs[2][2] + vs[3][2]) / 4 });
+          }
+          walls.sort((p, q) => p.depth - q.depth);
+        }
+        const front = { vs: g.pts.map(([x, y]) => rot(x, y, zf)), normal: rot(0, 0, 1) };
+        const cap = d <= 0.5 || seen(front.normal, front.vs[0])
+          ? front
+          : { vs: g.pts.map(([x, y]) => rot(x, y, zb)), normal: rot(0, 0, -1) };
+        return { pts: g.pts, walls, cap };
+      });
+      // F and 4 sit either side of the plane x = 0; the letter on the camera's side is drawn last.
+      const order = rot(1, 0, 0)[2] > 0 ? solids : [solids[1], solids[0]];
+
+      // Cast shadow: the outlines drawn far off-canvas so only their blurred shadow lands.
+      const lift = out(clamp((t - 0.15) / 1.4));
+      ctx.save();
+      ctx.globalAlpha = lift;
+      ctx.shadowColor = colors.shadow;
+      ctx.shadowBlur = 0.16 * 352 * k * dpr;
+      ctx.shadowOffsetX = (OFFSCREEN - 14 * lift) * dpr;
+      ctx.shadowOffsetY = 34 * lift * dpr;
+      ctx.translate(-OFFSCREEN, 0);
+      ctx.fillStyle = "#000";
+      for (const s of solids) { trace(s.cap.vs); ctx.fill(); }
+      ctx.restore();
+
+      const paint = (f) => {
+        const fill = shade(0.15 + 0.85 * Math.max(0, dot(f.normal, LIGHT)));
+        trace(f.vs);
+        ctx.fillStyle = fill;
+        ctx.fill();
+        ctx.strokeStyle = fill;
+        ctx.lineWidth = 0.75;
+        ctx.stroke();
+      };
+      ctx.lineJoin = "round";
+      for (const s of order) {
+        s.walls.forEach(paint);
+        paint(s.cap);
+        // Edges that face the light catch a thin highlight, like a machined bevel.
+        ctx.strokeStyle = colors.edge;
+        ctx.lineWidth = 1;
+        const n = s.pts.length;
+        for (let i = 0; i < n; i++) {
+          const A = s.pts[i], B = s.pts[(i + 1) % n];
+          const len = Math.hypot(B[0] - A[0], B[1] - A[1]);
+          const lit = dot(rot((B[1] - A[1]) / len, (A[0] - B[0]) / len, 0), LIGHT);
+          if (lit <= 0.2) continue;
+          ctx.globalAlpha = Math.min(1, lit * 1.3);
+          const p = project(s.cap.vs[i]), q = project(s.cap.vs[(i + 1) % n]);
+          ctx.beginPath();
+          ctx.moveTo(p[0], p[1]);
+          ctx.lineTo(q[0], q[1]);
+          ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+      }
+      bounds = edge;
+    };
+
+    const moving = () => grab || spin.x || spin.y || spin.vx || spin.vy;
+    const tick = (now) => {
+      raf = 0;
+      draw(now);
+      if ((!motion.matches || moving()) && onScreen && !document.hidden) raf = requestAnimationFrame(tick);
+    };
+    const wake = () => { if (!raf) raf = requestAnimationFrame(tick); };
+    const restyle = () => { readColors(); wake(); };
+
+    readColors();
+    measure();
+    wake();
+
+    addEventListener("resize", () => { measure(); wake(); });
+    addEventListener("pointermove", (e) => {
+      if (e.pointerType !== "mouse" || grab) return;
+      target.x = (e.clientX / innerWidth) * 2 - 1;
+      target.y = (e.clientY / innerHeight) * 2 - 1;
+    }, { passive: true });
+
+    const over = (e) => {
+      if (!bounds) return false;
+      const box = canvas.getBoundingClientRect(), x = e.clientX - box.left, y = e.clientY - box.top;
+      return x > bounds[0] - 12 && x < bounds[2] + 12 && y > bounds[1] - 12 && y < bounds[3] + 12;
+    };
+    canvas.addEventListener("pointerdown", (e) => {
+      if (grab || !over(e) || (e.pointerType === "mouse" && e.button !== 0)) return;
+      e.preventDefault();
+      canvas.setPointerCapture(e.pointerId);
+      grab = { id: e.pointerId, x: e.clientX, y: e.clientY, ox: spin.x, oy: spin.y, t: e.timeStamp, vx: 0, vy: 0 };
+      spin.vx = 0;
+      spin.vy = 0;
+      canvas.classList.add("grabbing");
+      wake();
+    });
+    canvas.addEventListener("pointermove", (e) => {
+      if (!grab) {
+        canvas.classList.toggle("grab", e.pointerType === "mouse" && over(e));
+        return;
+      }
+      if (e.pointerId !== grab.id) return;
+      const x = grab.ox + (e.clientX - grab.x) * DRAG;
+      const y = Math.max(-1.3, Math.min(1.3, grab.oy - (e.clientY - grab.y) * DRAG));
+      const dt = Math.max(0.008, (e.timeStamp - grab.t) / 1000);
+      grab.vx = 0.7 * ((x - spin.x) / dt) + 0.3 * grab.vx;
+      grab.vy = 0.7 * ((y - spin.y) / dt) + 0.3 * grab.vy;
+      grab.t = e.timeStamp;
+      spin.x = x;
+      spin.y = y;
+    });
+    // Letting go keeps the flick's momentum, then the spring brings it home by the shortest turn.
+    const release = (e) => {
+      if (!grab || e.pointerId !== grab.id) return;
+      const flicked = e.timeStamp - grab.t < 90;
+      const limit = (v) => Math.max(-10, Math.min(10, v));
+      spin.vx = flicked ? limit(grab.vx) : 0;
+      spin.vy = flicked ? limit(grab.vy) : 0;
+      spin.x = Math.atan2(Math.sin(spin.x), Math.cos(spin.x));
+      if (motion.matches) { spin.x = 0; spin.y = 0; spin.vx = 0; spin.vy = 0; }
+      grab = null;
+      canvas.classList.remove("grabbing");
+      wake();
+    };
+    canvas.addEventListener("pointerup", release);
+    canvas.addEventListener("pointercancel", release);
+    canvas.addEventListener("pointerleave", () => { if (!grab) canvas.classList.remove("grab"); });
+    document.addEventListener("visibilitychange", wake);
+    if (motion.addEventListener) motion.addEventListener("change", wake);
+    const scheme = matchMedia("(prefers-color-scheme: dark)");
+    if (scheme.addEventListener) scheme.addEventListener("change", restyle);
+    new MutationObserver(restyle).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    if ("IntersectionObserver" in window) {
+      new IntersectionObserver((entries) => {
+        onScreen = entries[0].isIntersecting;
+        if (onScreen) wake();
+      }).observe(canvas);
+    }
+  })();
+</script>
+</body>
+</html>
